@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CommerceApi.Authentication\CommerceApi.Authentication.csproj" />
+    <ProjectReference Include="..\CommerceApi.Database\CommerceApi.Database.sqlproj" />
+    <ProjectReference Include="..\CommerceApi.SharedServices\CommerceApi.SharedServices.csproj" />
+    <ProjectReference Include="..\CommerceApi.Shared\CommerceApi.Shared.csproj" />
+  </ItemGroup>
+
+</Project>
