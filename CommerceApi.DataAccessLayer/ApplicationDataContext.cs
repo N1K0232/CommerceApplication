@@ -63,13 +63,13 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext
         return GetDataInternal<T>(ignoreAutoIncludes, ignoreQueryFilters, trackingChanges);
     }
 
-    public void Insert<T>(T entity) where T : BaseEntity
+    public void Create<T>(T entity) where T : BaseEntity
     {
         var set = Set<T>();
         set.Add(entity);
     }
 
-    public void Insert<T>(IEnumerable<T> entities) where T : BaseEntity
+    public void Create<T>(IEnumerable<T> entities) where T : BaseEntity
     {
         var set = Set<T>();
         set.AddRange(entities);
