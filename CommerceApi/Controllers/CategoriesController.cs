@@ -56,7 +56,7 @@ public class CategoriesController : ControllerBase
     public async Task<IActionResult> Get(Guid categoryId)
     {
         var categoryResult = await categoryService.GetAsync(categoryId);
-        return CreateResponse(categoryResult);
+        return CreateResponse(categoryResult, StatusCodes.Status200OK);
     }
 
     [HttpPost]

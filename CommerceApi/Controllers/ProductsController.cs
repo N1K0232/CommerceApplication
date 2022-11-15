@@ -56,7 +56,7 @@ public class ProductsController : ControllerBase
     public async Task<IActionResult> Get(Guid productId)
     {
         var productResult = await productService.GetAsync(productId);
-        return CreateResponse(productResult);
+        return CreateResponse(productResult, StatusCodes.Status200OK);
     }
 
     [HttpPost]
