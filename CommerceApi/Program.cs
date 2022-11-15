@@ -71,6 +71,11 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
+    services.AddFluentValidationAutoValidation(options =>
+    {
+        options.DisableDataAnnotationsValidation = true;
+    });
+
     services.AddApiVersioning(options =>
     {
         options.ReportApiVersions = true;
@@ -206,6 +211,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
 
     services.TryAddScoped<IUserService, UserService>();
     services.TryAddScoped<ICategoryService, CategoryService>();
+    services.TryAddScoped<IProductService, ProductService>();
 
     var adminUserSection = configuration.GetSection(nameof(AdministratorUser));
     services.Configure<AdministratorUser>(adminUserSection);
