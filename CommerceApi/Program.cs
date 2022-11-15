@@ -205,6 +205,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     });
 
     services.TryAddScoped<IUserService, UserService>();
+    services.TryAddScoped<ICategoryService, CategoryService>();
 
     var adminUserSection = configuration.GetSection(nameof(AdministratorUser));
     services.Configure<AdministratorUser>(adminUserSection);
