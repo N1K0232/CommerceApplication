@@ -21,10 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\CommerceApi.Authorization\CommerceApi.Authorization.csproj" />
     <ProjectReference Include="..\CommerceApi.BusinessLayer\CommerceApi.BusinessLayer.csproj" />
     <ProjectReference Include="..\CommerceApi.Logging\CommerceApi.Logging.csproj" />

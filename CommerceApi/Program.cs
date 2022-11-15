@@ -1,18 +1,32 @@
 using System.Net.Mime;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using CommerceApi.Authentication;
+using CommerceApi.Authentication.Entities;
+using CommerceApi.Authentication.Models;
+using CommerceApi.Authentication.Settings;
+using CommerceApi.Authentication.StartupTasks;
+using CommerceApi.Authorization.Handlers;
+using CommerceApi.Authorization.Requirements;
+using CommerceApi.BusinessLayer.Services;
+using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.Documentation;
 using CommerceApi.Security;
 using FluentValidation.AspNetCore;
 using Hellang.Middleware.ProblemDetails;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using OperationResults.AspNetCore;
 using Serilog;
@@ -39,8 +53,14 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     {
         options.Map<Exception>(ex => new StatusCodeProblemDetails(StatusCodes.Status500InternalServerError));
     });
+
+    services.AddHttpContextAccessor();
     services.AddMemoryCache();
     services.AddOperationResult();
+    services.AddUserClaimService();
+
+    services.AddMapperProfiles();
+    services.AddValidators();
 
     services.AddControllers().AddJsonOptions(options =>
     {
@@ -111,6 +131,60 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     var hashedConnectionString = configuration.GetConnectionString("SqlConnection");
     var connectionString = StringHasher.GetString(hashedConnectionString);
 
+    services.AddSqlServer<AuthenticationDataContext>(connectionString);
+    services.AddIdentity<AuthenticationUser, AuthenticationRole>(options =>
+    {
+        options.User.RequireUniqueEmail = true;
+        options.Password.RequiredLength = 8;
+        options.Password.RequireNonAlphanumeric = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireDigit = true;
+    })
+    .AddEntityFrameworkStores<AuthenticationDataContext>()
+    .AddDefaultTokenProviders();
+
+    var jwtSection = configuration.GetSection(nameof(JwtSettings));
+    var jwtSettings = jwtSection.Get<JwtSettings>();
+    services.Configure<JwtSettings>(jwtSection);
+
+    services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidAudience = jwtSettings.Audience,
+            ValidIssuer = jwtSettings.Issuer,
+            ValidateAudience = true,
+            ValidateIssuer = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.Default.GetBytes(jwtSettings.SecurityKey)),
+            RequireExpirationTime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+    services.AddAuthorization(options =>
+    {
+        var policyBuilder = new AuthorizationPolicyBuilder().RequireAuthenticatedUser();
+        policyBuilder.Requirements.Add(new UserActiveRequirement());
+
+        var policy = policyBuilder.Build();
+        options.FallbackPolicy = options.DefaultPolicy = policy;
+
+        options.AddPolicy("UserActive", policy =>
+        {
+            policy.Requirements.Add(new UserActiveRequirement());
+        });
+    });
+
+    services.AddScoped<IAuthorizationHandler, UserActiveHandler>();
+
     services.AddHealthChecks().AddAsyncCheck("sql", async () =>
     {
         try
@@ -125,6 +199,13 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
 
         return HealthCheckResult.Healthy();
     });
+
+    services.TryAddScoped<IUserService, UserService>();
+
+    var adminUserSection = configuration.GetSection(nameof(AdministratorUser));
+    services.Configure<AdministratorUser>(adminUserSection);
+
+    services.AddHostedService<AuthenticationStartupTask>();
 }
 
 void Configure(IApplicationBuilder app, IApiVersionDescriptionProvider provider)
@@ -145,6 +226,9 @@ void Configure(IApplicationBuilder app, IApiVersionDescriptionProvider provider)
     app.UseRouting();
 
     app.UseCors();
+
+    app.UseAuthentication();
+    app.UseAuthorization();
 
     app.UseSerilogRequestLogging(options =>
     {
