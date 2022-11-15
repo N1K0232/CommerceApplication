@@ -12,6 +12,7 @@ using CommerceApi.Authorization.Handlers;
 using CommerceApi.Authorization.Requirements;
 using CommerceApi.BusinessLayer.Services;
 using CommerceApi.BusinessLayer.Services.Interfaces;
+using CommerceApi.DataAccessLayer;
 using CommerceApi.Documentation;
 using CommerceApi.Security;
 using FluentValidation.AspNetCore;
@@ -130,6 +131,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
 
     var hashedConnectionString = configuration.GetConnectionString("SqlConnection");
     var connectionString = StringHasher.GetString(hashedConnectionString);
+
+    services.AddSqlServer<ApplicationDataContext>(connectionString);
+    services.AddScoped<IDataContext>(provider => provider.GetRequiredService<ApplicationDataContext>());
 
     services.AddSqlServer<AuthenticationDataContext>(connectionString);
     services.AddIdentity<AuthenticationUser, AuthenticationRole>(options =>
