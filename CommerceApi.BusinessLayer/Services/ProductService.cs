@@ -107,7 +107,7 @@ public class ProductService : IProductService
             return Result.Fail(FailureReasons.ItemNotFound, "invalid category");
         }
 
-        var product = request.Id != null ? await dataContext.GetData<Entities.Product>(trackingChanges: true)
+        var product = request.Id != null ? await dataContext.GetData<Entities.Product>(ignoreAutoIncludes: false, ignoreQueryFilters: true, trackingChanges: true)
             .FirstOrDefaultAsync(p => p.Id == request.Id) : null;
 
         if (product is null)
