@@ -4,6 +4,8 @@ using CommerceApi.Authentication;
 using CommerceApi.DataAccessLayer.Entities.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace CommerceApi.DataAccessLayer;
@@ -17,6 +19,7 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext
     public ApplicationDataContext(DbContextOptions<ApplicationDataContext> options, ILogger<ApplicationDataContext> logger) : base(options, logger)
     {
     }
+
 
     public void Delete<T>(T entity) where T : BaseEntity
     {
@@ -77,12 +80,24 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext
 
     public Task<int> SaveAsync()
     {
-        using var tokenSource = new CancellationTokenSource();
-        var cancellationToken = tokenSource.Token;
-        return SaveChangesAsync(cancellationToken);
+        return SaveAsyncInternal();
     }
 
-    public Task ExecuteTransactionAsync() => throw new NotImplementedException();
+#pragma warning disable IDE0007
+    public Task ExecuteTransactionAsync()
+    {
+        Func<Task> action = SaveAsyncInternal;
+        DatabaseFacade database = Database;
+        IExecutionStrategy strategy = database.CreateExecutionStrategy();
+
+        return strategy.ExecuteAsync(async () =>
+        {
+            using var transaction = await database.BeginTransactionAsync().ConfigureAwait(false);
+            await action.Invoke().ConfigureAwait(false);
+            await transaction.CommitAsync().ConfigureAwait(false);
+        });
+    }
+#pragma warning restore IDE0007
 
 #pragma warning disable IDE0007 // Use implicit type
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -152,6 +167,13 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext
                 genericMethod.Invoke(this, new object[] { builder });
             }
         }
+    }
+
+    private Task<int> SaveAsyncInternal()
+    {
+        using var tokenSource = new CancellationTokenSource();
+        var cancellationToken = tokenSource.Token;
+        return SaveChangesAsync(cancellationToken);
     }
 
     private IEnumerable<EntityEntry> GetEntries()
