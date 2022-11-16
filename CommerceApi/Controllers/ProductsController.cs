@@ -34,15 +34,9 @@ public class ProductsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetList(int pageIndex = 0, int itemsPerPage = 10, string orderBy = "Name")
     {
         var products = await productService.GetListAsync(pageIndex, itemsPerPage, orderBy);
-        if (!products.Content.Any())
-        {
-            return NotFound("no product found");
-        }
-
         return Ok(products);
     }
 
@@ -55,8 +49,8 @@ public class ProductsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Get(Guid productId)
     {
-        var productResult = await productService.GetAsync(productId);
-        return CreateResponse(productResult, StatusCodes.Status200OK);
+        var product = await productService.GetAsync(productId);
+        return CreateResponse(product, StatusCodes.Status200OK);
     }
 
     [HttpPost]

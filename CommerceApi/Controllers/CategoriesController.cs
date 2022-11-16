@@ -34,15 +34,9 @@ public class CategoriesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetList()
     {
         var categories = await categoryService.GetListAsync();
-        if (!categories.Content.Any())
-        {
-            return NotFound("no category found");
-        }
-
         return Ok(categories);
     }
 
@@ -55,8 +49,8 @@ public class CategoriesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Get(Guid categoryId)
     {
-        var categoryResult = await categoryService.GetAsync(categoryId);
-        return CreateResponse(categoryResult, StatusCodes.Status200OK);
+        var category = await categoryService.GetAsync(categoryId);
+        return CreateResponse(category, StatusCodes.Status200OK);
     }
 
     [HttpPost]
