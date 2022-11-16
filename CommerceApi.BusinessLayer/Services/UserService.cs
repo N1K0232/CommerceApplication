@@ -71,7 +71,7 @@ public class UserService : IUserService
     public async Task<LoginResponse> LoginAsync(LoginRequest request)
     {
         var user = await userManager.FindByEmailAsync(request.Email);
-        if (user == null)
+        if (user is null)
         {
             return null;
         }
