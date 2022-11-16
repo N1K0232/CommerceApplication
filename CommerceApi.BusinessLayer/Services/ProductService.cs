@@ -34,7 +34,9 @@ public class ProductService : IProductService
             return Result.Fail(FailureReasons.GenericError, "Invalid id");
         }
 
-        var product = await dataContext.GetAsync<Entities.Product>(productId);
+        var product = await dataContext.GetData<Entities.Product>(trackingChanges: true)
+            .FirstOrDefaultAsync(p => p.Id == productId);
+
         if (product is not null)
         {
             dataContext.Delete(product);
