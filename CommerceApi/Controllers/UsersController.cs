@@ -1,4 +1,6 @@
-﻿using CommerceApi.Authentication.Extensions;
+﻿using CommerceApi.Authentication.Common;
+using CommerceApi.Authentication.Extensions;
+using CommerceApi.Authorization.Filters;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.Shared.Models;
 using CommerceApi.Shared.Requests;
@@ -14,6 +16,22 @@ public class UsersController : ControllerBase
     public UsersController(IUserService userService)
     {
         this.userService = userService;
+    }
+
+
+    [HttpDelete("DeleteAccount")]
+    [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> DeleteAccount(Guid userId)
+    {
+        var response = await userService.DeleteAccountAsync(userId);
+        if (response.Succeeded)
+        {
+            return Ok("User successfully deleted");
+        }
+
+        return BadRequest(response);
     }
 
     [HttpPost("Login")]

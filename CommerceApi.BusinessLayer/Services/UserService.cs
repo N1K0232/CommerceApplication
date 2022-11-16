@@ -50,6 +50,24 @@ public class UserService : IUserService
     }
 
 
+    public async Task<RegisterResponse> DeleteAccountAsync(Guid userId)
+    {
+        var user = await GetUserAsync(userId);
+        if (user is null)
+        {
+            return new RegisterResponse(false, new List<string> { "User not found" });
+        }
+
+        var roles = await GetRolesAsync(user);
+        if (roles.Any(r => r.Equals(RoleNames.Administrator)))
+        {
+            return new RegisterResponse(false, new List<string> { "can't delete an administrator" });
+        }
+
+        var result = await userManager.DeleteAsync(user);
+        return new RegisterResponse(result.Succeeded, result.Errors.Select(e => e.Description));
+    }
+
     public async Task<LoginResponse> LoginAsync(LoginRequest request)
     {
         var user = await userManager.FindByEmailAsync(request.Email);
@@ -69,7 +87,7 @@ public class UserService : IUserService
 
         await userManager.UpdateSecurityStampAsync(user);
 
-        var roles = await userManager.GetRolesAsync(user);
+        var roles = await GetRolesAsync(user);
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -158,6 +176,17 @@ public class UserService : IUserService
 
         var user = await userManager.FindByIdAsync(userId.ToString());
         return user;
+    }
+
+    private async Task<IList<string>> GetRolesAsync(AuthenticationUser user)
+    {
+        if (user is null)
+        {
+            return null;
+        }
+
+        var roles = await userManager.GetRolesAsync(user);
+        return roles;
     }
 
     private async Task SaveRefreshTokenAsync(AuthenticationUser user, string refreshToken)
