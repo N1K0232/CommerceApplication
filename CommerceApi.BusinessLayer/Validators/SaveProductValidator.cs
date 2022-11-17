@@ -23,6 +23,12 @@ internal class SaveProductValidator : AbstractValidator<SaveProductRequest>
             .MaximumLength(2000)
             .WithMessage("insert a valid description");
 
+        RuleFor(p => p.Specifications)
+            .NotNull()
+            .NotEmpty()
+            .MaximumLength(2000)
+            .WithMessage("Insert a valid description");
+
         RuleFor(p => p.Brand)
             .NotNull()
             .NotEmpty()

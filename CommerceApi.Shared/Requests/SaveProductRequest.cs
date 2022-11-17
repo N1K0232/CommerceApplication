@@ -11,6 +11,8 @@ public class SaveProductRequest : BaseRequestModel
 
     public string Description { get; set; }
 
+    public string Specifications { get; set; }
+
     public string Brand { get; set; }
 
     public string Model { get; set; }

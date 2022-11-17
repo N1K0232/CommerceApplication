@@ -12,6 +12,7 @@ public class ProductConfiguration : DeletableEntityConfiguration<Product>
         builder.ToTable("Products");
         builder.Property(p => p.Name).HasMaxLength(100).IsRequired();
         builder.Property(p => p.Description).HasMaxLength(2000).IsRequired();
+        builder.Property(p => p.Specifications).HasMaxLength(2000).IsRequired();
 
         builder.Property(p => p.Brand).HasMaxLength(100).IsRequired();
         builder.Property(p => p.Model).HasMaxLength(100).IsRequired();

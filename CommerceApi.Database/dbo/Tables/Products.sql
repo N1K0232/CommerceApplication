@@ -4,6 +4,7 @@
     [CategoryId] UNIQUEIDENTIFIER NOT NULL,
     [Name] NVARCHAR(100) NOT NULL,
     [Description] NVARCHAR(2000) NOT NULL,
+    [Specifications] NVARCHAR(2000) NOT NULL,
     [Brand] NVARCHAR(100) NOT NULL,
     [Model] NVARCHAR(100) NOT NULL,
     [Condition] NVARCHAR(10) NOT NULL,
