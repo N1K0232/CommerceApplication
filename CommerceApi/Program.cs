@@ -212,6 +212,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.TryAddScoped<IUserService, UserService>();
     services.TryAddScoped<ICategoryService, CategoryService>();
     services.TryAddScoped<IProductService, ProductService>();
+    services.TryAddScoped<IOrderService, OrderService>();
+
+    services.TryAddScoped<IAuthenticationService, AuthenticationService>();
 
     var adminUserSection = configuration.GetSection(nameof(AdministratorUser));
     services.Configure<AdministratorUser>(adminUserSection);
