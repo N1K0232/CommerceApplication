@@ -10,6 +10,7 @@ using CommerceApi.Shared.Requests;
 using CommerceApi.SharedServices;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using OperationResults;
 using TinyHelpers.Extensions;
 using Entities = CommerceApi.DataAccessLayer.Entities;
@@ -22,6 +23,7 @@ public class OrderService : IOrderService
     private readonly IMapper mapper;
     private readonly IAuthenticationService authenticationService;
     private readonly IValidator<SaveOrderRequest> orderValidator;
+    private readonly ILogger<OrderService> logger;
 
     private readonly Guid userId;
 
@@ -29,12 +31,14 @@ public class OrderService : IOrderService
         IMapper mapper,
         IAuthenticationService authenticationService,
         IUserClaimService claimService,
-        IValidator<SaveOrderRequest> orderValidator)
+        IValidator<SaveOrderRequest> orderValidator,
+        ILogger<OrderService> logger)
     {
         this.dataContext = dataContext;
         this.mapper = mapper;
         this.authenticationService = authenticationService;
         this.orderValidator = orderValidator;
+        this.logger = logger;
 
         userId = claimService.GetId();
     }
@@ -42,8 +46,11 @@ public class OrderService : IOrderService
 
     public async Task<Result> DeleteAsync(Guid orderId)
     {
+        logger.LogInformation("deleting order");
+
         if (orderId == Guid.Empty)
         {
+            logger.LogError("Invalid id", orderId);
             return Result.Fail(FailureReasons.GenericError, "Invalid id");
         }
 
@@ -56,19 +63,25 @@ public class OrderService : IOrderService
             var deletedEntries = await dataContext.SaveAsync();
             if (deletedEntries > 0)
             {
+                logger.LogInformation("order successfully deleted");
                 return Result.Ok();
             }
 
+            logger.LogError("Cannot delete order");
             return Result.Fail(FailureReasons.DatabaseError, "Cannot delete order");
         }
 
+        logger.LogError("No order found");
         return Result.Fail(FailureReasons.ItemNotFound, "No order found");
     }
 
     public async Task<Result<Order>> GetAsync(Guid orderId)
     {
+        logger.LogInformation("get the single order");
+
         if (orderId == Guid.Empty)
         {
+            logger.LogError("Invalid id", orderId);
             return Result.Fail(FailureReasons.GenericError, "Invalid id");
         }
 
@@ -91,11 +104,14 @@ public class OrderService : IOrderService
             return order;
         }
 
+        logger.LogError("No order found");
         return Result.Fail(FailureReasons.ItemNotFound, "No order found");
     }
 
     public async Task<ListResult<Order>> GetListAsync(int pageIndex, int itemsPerPage, string orderBy)
     {
+        logger.LogInformation("get the list of orders");
+
         var query = dataContext.GetData<Entities.Order>(ignoreAutoIncludes: false);
 
         var totalCount = await query.CountAsync();
@@ -142,12 +158,14 @@ public class OrderService : IOrderService
                 validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
             }
 
+            logger.LogError("Invalid request", validationErrors);
             return Result.Fail(FailureReasons.GenericError, "Invalid request", validationErrors);
         }
 
         var productExists = await dataContext.ExistsAsync<Entities.Product>(request.ProductId);
         if (!productExists)
         {
+            logger.LogError("Invalid product", request.ProductId);
             return Result.Fail(FailureReasons.GenericError, "the product doesn't exist");
         }
 
@@ -158,6 +176,8 @@ public class OrderService : IOrderService
 
         if (order is null)
         {
+            logger.LogInformation("saving new order");
+
             var now = DateTime.UtcNow;
 
             order = new Entities.Order
@@ -190,6 +210,8 @@ public class OrderService : IOrderService
         }
         else
         {
+            logger.LogInformation("updating order");
+
             var orderDetail = order.OrderDetails.FirstOrDefault(o => o.OrderId == order.Id);
             order.OrderDetails.Remove(orderDetail);
 
@@ -208,14 +230,17 @@ public class OrderService : IOrderService
         {
             await dataContext.ExecuteTransactionAsync();
 
+            logger.LogInformation("successfully saved order");
             var user = await authenticationService.GetAsync(userId);
 
             var savedOrder = mapper.Map<Order>(order);
             savedOrder.User = user;
+
             return savedOrder;
         }
         catch (Exception ex)
         {
+            logger.LogError(ex, "cannot save order", request);
             return Result.Fail(FailureReasons.DatabaseError, ex);
         }
     }

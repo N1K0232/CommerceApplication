@@ -7,6 +7,7 @@ using CommerceApi.Shared.Models;
 using CommerceApi.Shared.Requests;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using OperationResults;
 using Entities = CommerceApi.DataAccessLayer.Entities;
 
@@ -17,19 +18,27 @@ public class CategoryService : ICategoryService
     private readonly IDataContext dataContext;
     private readonly IMapper mapper;
     private readonly IValidator<SaveCategoryRequest> categoryValidator;
+    private readonly ILogger<CategoryService> logger;
 
-    public CategoryService(IDataContext dataContext, IMapper mapper, IValidator<SaveCategoryRequest> categoryValidator)
+    public CategoryService(IDataContext dataContext,
+        IMapper mapper,
+        IValidator<SaveCategoryRequest> categoryValidator,
+        ILogger<CategoryService> logger)
     {
         this.dataContext = dataContext;
         this.mapper = mapper;
         this.categoryValidator = categoryValidator;
+        this.logger = logger;
     }
 
 
     public async Task<Result> DeleteAsync(Guid categoryId)
     {
+        logger.LogInformation("deleting category");
+
         if (categoryId == Guid.Empty)
         {
+            logger.LogError("Invalid id", categoryId);
             return Result.Fail(FailureReasons.GenericError, "Invalid id");
         }
 
@@ -41,19 +50,25 @@ public class CategoryService : ICategoryService
             var deletedEntries = await dataContext.SaveAsync();
             if (deletedEntries > 0)
             {
+                logger.LogInformation("category successfully deleted");
                 return Result.Ok();
             }
 
+            logger.LogError("cannot delete category");
             return Result.Fail(FailureReasons.DatabaseError, "cannot delete category");
         }
 
+        logger.LogError("no category found");
         return Result.Fail(FailureReasons.ItemNotFound, "no category found");
     }
 
     public async Task<Result<Category>> GetAsync(Guid categoryId)
     {
+        logger.LogInformation("get the single category");
+
         if (categoryId == Guid.Empty)
         {
+            logger.LogError("invalid id", categoryId);
             return Result.Fail(FailureReasons.GenericError, "Invalid id");
         }
 
@@ -66,11 +81,14 @@ public class CategoryService : ICategoryService
             return category;
         }
 
+        logger.LogError("no category found");
         return Result.Fail(FailureReasons.ItemNotFound, "no category found");
     }
 
     public async Task<ListResult<Category>> GetListAsync()
     {
+        logger.LogInformation("get list of categories");
+
         var categories = await dataContext.GetData<Entities.Category>()
             .OrderBy(c => c.Name)
             .ProjectTo<Category>(mapper.ConfigurationProvider)
@@ -91,6 +109,7 @@ public class CategoryService : ICategoryService
                 validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
             }
 
+            logger.LogError("Invalid request", validationErrors);
             return Result.Fail(FailureReasons.GenericError, "Invalid request", validationErrors);
         }
 
@@ -99,6 +118,8 @@ public class CategoryService : ICategoryService
 
         if (category is null)
         {
+            logger.LogInformation("saving new category", request);
+
             category = mapper.Map<Entities.Category>(request);
 
             var categoryExists = await dataContext.ExistsAsync<Entities.Category>(c => c.Name == category.Name);
@@ -111,6 +132,8 @@ public class CategoryService : ICategoryService
         }
         else
         {
+            logger.LogInformation("updating category");
+
             mapper.Map(request, category);
             dataContext.Edit(category);
         }
@@ -118,10 +141,13 @@ public class CategoryService : ICategoryService
         var savedEntries = await dataContext.SaveAsync();
         if (savedEntries > 0)
         {
+            logger.LogInformation("category successfully saved");
+
             var savedCategory = mapper.Map<Category>(category);
             return savedCategory;
         }
 
+        logger.LogError("cannot save the category", request);
         return Result.Fail(FailureReasons.DatabaseError, "cannot save the category");
     }
 }

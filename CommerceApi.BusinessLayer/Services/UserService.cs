@@ -52,6 +52,8 @@ public class UserService : IUserService
 
     public async Task<RegisterResponse> DeleteAccountAsync(Guid userId)
     {
+        logger.LogInformation("deleting account");
+
         var user = await GetUserAsync(userId);
         if (user is null)
         {
@@ -70,6 +72,8 @@ public class UserService : IUserService
 
     public async Task<LoginResponse> LoginAsync(LoginRequest request)
     {
+        logger.LogInformation("user login", request);
+
         var user = await userManager.FindByEmailAsync(request.Email);
         if (user is null)
         {
@@ -108,6 +112,8 @@ public class UserService : IUserService
 
     public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
     {
+        logger.LogInformation("user registration", request);
+
         var user = await CreateUserAsync(request);
 
         var userExists = await userManager.Users.AnyAsync(u => u.Id == user.Id);
@@ -130,6 +136,8 @@ public class UserService : IUserService
 
     public async Task<LoginResponse> RefreshTokenAsync(RefreshTokenRequest request)
     {
+        logger.LogInformation("user refresh token", request);
+
         var user = ValidateAccessToken(request.AccessToken);
         if (user is not null)
         {
