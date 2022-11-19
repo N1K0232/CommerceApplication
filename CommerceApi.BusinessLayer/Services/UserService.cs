@@ -186,7 +186,7 @@ public class UserService : IUserService
         return user;
     }
 
-    private async Task<IList<string>> GetRolesAsync(AuthenticationUser user)
+    private async Task<IEnumerable<string>> GetRolesAsync(AuthenticationUser user)
     {
         if (user is null)
         {
