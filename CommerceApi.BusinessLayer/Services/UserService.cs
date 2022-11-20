@@ -8,6 +8,7 @@ using CommerceApi.Authentication.Entities;
 using CommerceApi.Authentication.Extensions;
 using CommerceApi.Authentication.Settings;
 using CommerceApi.BusinessLayer.Services.Interfaces;
+using CommerceApi.Shared.Models;
 using CommerceApi.Shared.Requests;
 using CommerceApi.Shared.Responses;
 using Microsoft.AspNetCore.Identity;
@@ -21,6 +22,8 @@ namespace CommerceApi.BusinessLayer.Services;
 
 public class UserService : IUserService
 {
+    private const string AuthenticatedUser = nameof(AuthenticatedUser);
+
     private readonly JwtSettings jwtSettings;
 
     private readonly UserManager<AuthenticationUser> userManager;
@@ -89,6 +92,8 @@ public class UserService : IUserService
             return null;
         }
 
+        SaveAuthenticateUser(user);
+
         await userManager.UpdateSecurityStampAsync(user);
 
         var roles = await GetRolesAsync(user);
@@ -148,6 +153,8 @@ public class UserService : IUserService
             {
                 return null;
             }
+
+            SaveAuthenticateUser(dbUser);
 
             var loginResponse = CreateResponse(user.Claims);
             await SaveRefreshTokenAsync(dbUser, loginResponse.RefreshToken);
@@ -236,7 +243,7 @@ public class UserService : IUserService
             ValidAudience = jwtSettings.Audience,
             ValidateLifetime = false,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecurityKey)),
+            IssuerSigningKey = GetSecurityKey(),
             RequireExpirationTime = true,
             ClockSkew = TimeSpan.Zero
         };
@@ -262,5 +269,26 @@ public class UserService : IUserService
     {
         var bytes = Encoding.UTF8.GetBytes(jwtSettings.SecurityKey);
         return new SymmetricSecurityKey(bytes);
+    }
+
+    private void SaveAuthenticateUser(AuthenticationUser dbUser)
+    {
+        var found = cache.TryGetValue(AuthenticatedUser, out var user);
+        if (!found || user is null)
+        {
+            CreateEntry(dbUser);
+        }
+        else
+        {
+            cache.Remove(AuthenticatedUser);
+            CreateEntry(dbUser);
+        }
+    }
+
+    private void CreateEntry(AuthenticationUser user)
+    {
+        var entry = cache.CreateEntry(AuthenticatedUser);
+        entry.Value = mapper.Map<User>(user);
+        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(jwtSettings.ExpirationMinutes);
     }
 }
