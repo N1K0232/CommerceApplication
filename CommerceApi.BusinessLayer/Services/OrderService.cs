@@ -10,6 +10,7 @@ using CommerceApi.Shared.Requests;
 using CommerceApi.SharedServices;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using OperationResults;
 using TinyHelpers.Extensions;
@@ -21,7 +22,7 @@ public class OrderService : IOrderService
 {
     private readonly IDataContext dataContext;
     private readonly IMapper mapper;
-    private readonly IAuthenticationService authenticationService;
+    private readonly IMemoryCache cache;
     private readonly IValidator<SaveOrderRequest> orderValidator;
     private readonly ILogger<OrderService> logger;
 
@@ -29,14 +30,14 @@ public class OrderService : IOrderService
 
     public OrderService(IDataContext dataContext,
         IMapper mapper,
-        IAuthenticationService authenticationService,
+        IMemoryCache cache,
         IUserClaimService claimService,
         IValidator<SaveOrderRequest> orderValidator,
         ILogger<OrderService> logger)
     {
         this.dataContext = dataContext;
         this.mapper = mapper;
-        this.authenticationService = authenticationService;
+        this.cache = cache;
         this.orderValidator = orderValidator;
         this.logger = logger;
 
@@ -125,7 +126,9 @@ public class OrderService : IOrderService
         foreach (var dbOrder in dbOrders)
         {
             var order = mapper.Map<Order>(dbOrder);
-            order.User = await authenticationService.GetAsync(userId);
+
+            var user = GetUser();
+            order.User = user;
 
             var products = new List<Product>();
 
@@ -231,7 +234,7 @@ public class OrderService : IOrderService
             await dataContext.ExecuteTransactionAsync();
 
             logger.LogInformation("successfully saved order");
-            var user = await authenticationService.GetAsync(userId);
+            var user = GetUser();
 
             var savedOrder = mapper.Map<Order>(order);
             savedOrder.User = user;
@@ -243,5 +246,11 @@ public class OrderService : IOrderService
             logger.LogError(ex, "cannot save order", request);
             return Result.Fail(FailureReasons.DatabaseError, ex);
         }
+    }
+
+    private User GetUser()
+    {
+        var user = (User)cache.Get("AuthenticatedUser");
+        return user;
     }
 }
