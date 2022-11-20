@@ -268,27 +268,31 @@ public class UserService : IUserService
     private SymmetricSecurityKey GetSecurityKey()
     {
         var bytes = Encoding.UTF8.GetBytes(jwtSettings.SecurityKey);
-        return new SymmetricSecurityKey(bytes);
+
+        var securityKey = new SymmetricSecurityKey(bytes);
+        return securityKey;
     }
 
     private void SaveAuthenticateUser(AuthenticationUser dbUser)
     {
-        var found = cache.TryGetValue(AuthenticatedUser, out var user);
-        if (!found || user is null)
+        var found = cache.TryGetValue<User>(AuthenticatedUser, out var user);
+        if (found && user is not null)
         {
-            CreateEntry(dbUser);
+            cache.Remove(AuthenticatedUser);
+            CreateEntry(user);
         }
         else
         {
-            cache.Remove(AuthenticatedUser);
-            CreateEntry(dbUser);
+            user = mapper.Map<User>(dbUser);
+            CreateEntry(user);
         }
     }
 
-    private void CreateEntry(AuthenticationUser user)
+    private void CreateEntry(User user)
     {
         var entry = cache.CreateEntry(AuthenticatedUser);
-        entry.Value = mapper.Map<User>(user);
+
+        entry.Value = user;
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(jwtSettings.ExpirationMinutes);
     }
 }
