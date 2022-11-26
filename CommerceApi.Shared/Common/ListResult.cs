@@ -8,7 +8,6 @@ public class ListResult<T> where T : BaseModel
         TotalCount = content?.Count() ?? 0;
         HasNextPage = false;
     }
-
     public ListResult(IEnumerable<T> content, int totalCount, bool hasNextPage = false)
     {
         Content = content;
@@ -16,9 +15,9 @@ public class ListResult<T> where T : BaseModel
         HasNextPage = hasNextPage;
     }
 
-    public IEnumerable<T> Content { get; }
+    public IEnumerable<T> Content { get; set; }
 
-    public int TotalCount { get; }
+    public int TotalCount { get; set; }
 
-    public bool HasNextPage { get; }
+    public bool HasNextPage { get; set; }
 }
