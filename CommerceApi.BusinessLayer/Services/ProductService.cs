@@ -10,6 +10,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using OperationResults;
+using TinyHelpers.Extensions;
 using Entities = CommerceApi.DataAccessLayer.Entities;
 
 namespace CommerceApi.BusinessLayer.Services;
@@ -95,9 +96,14 @@ public class ProductService : IProductService
 
         var query = dataContext.GetData<Entities.Product>();
 
+        if (orderBy.HasValue())
+        {
+            query = query.OrderBy(orderBy);
+        }
+
         var totalCount = await query.CountAsync();
+
         var products = await query.Include(p => p.Category)
-            .OrderBy(orderBy)
             .Skip(pageIndex * itemsPerPage).Take(itemsPerPage + 1)
             .ProjectTo<Product>(mapper.ConfigurationProvider)
             .ToListAsync();
