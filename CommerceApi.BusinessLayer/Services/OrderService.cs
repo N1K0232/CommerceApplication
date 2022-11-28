@@ -146,7 +146,11 @@ public class OrderService : IOrderService
             orders.Add(order);
         }
 
-        var result = new ListResult<Order>(orders.Take(itemsPerPage), totalCount, orders.Count > itemsPerPage);
+        var result = new ListResult<Order>();
+        result.Content = orders.Take(itemsPerPage);
+        result.TotalCount = totalCount;
+        result.HasNextPage = orders.Count > itemsPerPage;
+
         return result;
     }
 

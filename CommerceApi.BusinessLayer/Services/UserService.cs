@@ -12,7 +12,6 @@ using CommerceApi.Shared.Models;
 using CommerceApi.Shared.Requests;
 using CommerceApi.Shared.Responses;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -60,17 +59,30 @@ public class UserService : IUserService
         var user = await GetUserAsync(userId);
         if (user is null)
         {
-            return new RegisterResponse(false, new List<string> { "User not found" });
+            return new RegisterResponse
+            {
+                Succeeded = false,
+                Errors = new List<string> { "User not found" }
+            };
         }
 
         var roles = await GetRolesAsync(user);
         if (roles.Any(r => r.Equals(RoleNames.Administrator)))
         {
-            return new RegisterResponse(false, new List<string> { "can't delete an administrator" });
+            return new RegisterResponse
+            {
+                Succeeded = false,
+                Errors = new List<string> { "can't delete an administrator" }
+            };
         }
 
         var result = await userManager.DeleteAsync(user);
-        return new RegisterResponse(result.Succeeded, result.Errors.Select(e => e.Description));
+
+        return new RegisterResponse
+        {
+            Succeeded = result.Succeeded,
+            Errors = result.Errors.Select(e => e.Description)
+        };
     }
 
     public async Task<LoginResponse> LoginAsync(LoginRequest request)
@@ -119,24 +131,29 @@ public class UserService : IUserService
     {
         logger.LogInformation("user registration", request);
 
-        var user = await CreateUserAsync(request);
-
-        var userExists = await userManager.Users.AnyAsync(u => u.Id == user.Id);
-        if (userExists)
+        var user = new AuthenticationUser
         {
-            var result = await userManager.UpdateAsync(user);
-            return new RegisterResponse(result.Succeeded, result.Errors.Select(e => e.Description));
-        }
-        else
-        {
-            var result = await userManager.CreateAsync(user, request.Password);
-            if (result.Succeeded)
-            {
-                result = await userManager.AddToRoleAsync(user, RoleNames.User);
-            }
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            DateOfBirth = request.DateOfBirth,
+            PhoneNumber = request.PhoneNumber,
+            Email = request.Email,
+            UserName = request.UserName
+        };
 
-            return new RegisterResponse(result.Succeeded, result.Errors.Select(e => e.Description));
+        var result = await userManager.CreateAsync(user, request.Password);
+        if (result.Succeeded)
+        {
+            result = await userManager.AddToRoleAsync(user, RoleNames.User);
         }
+
+        var registerResponse = new RegisterResponse
+        {
+            Succeeded = result.Succeeded,
+            Errors = result.Errors.Select(e => e.Description)
+        };
+
+        return registerResponse;
     }
 
     public async Task<LoginResponse> RefreshTokenAsync(RefreshTokenRequest request)
@@ -220,16 +237,22 @@ public class UserService : IUserService
         var jwtSecurityToken = new JwtSecurityToken(jwtSettings.Issuer, jwtSettings.Audience, claims,
             DateTime.UtcNow, DateTime.UtcNow.AddMinutes(jwtSettings.ExpirationMinutes), credentials);
 
+        var tokenHandler = new JwtSecurityTokenHandler();
+
+        var accessToken = tokenHandler.WriteToken(jwtSecurityToken);
+
         using var generator = RandomNumberGenerator.Create();
         var randomNumber = new byte[256];
         generator.GetBytes(randomNumber);
 
-        var tokenHandler = new JwtSecurityTokenHandler();
-
-        var accessToken = tokenHandler.WriteToken(jwtSecurityToken);
         var refreshToken = Convert.ToBase64String(randomNumber);
 
-        var loginResponse = new LoginResponse(accessToken, refreshToken);
+        var loginResponse = new LoginResponse
+        {
+            AccessToken = accessToken,
+            RefreshToken = refreshToken
+        };
+
         return loginResponse;
     }
 

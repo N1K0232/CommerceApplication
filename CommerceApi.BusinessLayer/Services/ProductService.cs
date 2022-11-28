@@ -108,7 +108,11 @@ public class ProductService : IProductService
             .ProjectTo<Product>(mapper.ConfigurationProvider)
             .ToListAsync();
 
-        var result = new ListResult<Product>(products.Take(itemsPerPage), totalCount, products.Count > itemsPerPage);
+        var result = new ListResult<Product>();
+        result.Content = products.Take(itemsPerPage);
+        result.TotalCount = totalCount;
+        result.HasNextPage = products.Count > itemsPerPage;
+
         return result;
     }
 

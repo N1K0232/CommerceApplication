@@ -2,13 +2,7 @@
 
 public class LoginResponse
 {
-    public LoginResponse(string accessToken, string refreshToken)
-    {
-        AccessToken = accessToken;
-        RefreshToken = refreshToken;
-    }
+    public string AccessToken { get; set; }
 
-    public string AccessToken { get; }
-
-    public string RefreshToken { get; }
+    public string RefreshToken { get; set; }
 }

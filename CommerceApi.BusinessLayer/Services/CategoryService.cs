@@ -94,7 +94,11 @@ public class CategoryService : ICategoryService
             .ProjectTo<Category>(mapper.ConfigurationProvider)
             .ToListAsync();
 
-        var result = new ListResult<Category>(categories);
+        var result = new ListResult<Category>();
+        result.Content = categories;
+        result.TotalCount = categories.Count;
+        result.HasNextPage = false;
+
         return result;
     }
 
