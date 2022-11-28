@@ -100,6 +100,10 @@ public class UsersController : ControllerBase
 
 
     [HttpGet("Me")]
+    [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser, RoleNames.User)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult GetMe()
     {
         var user = new User
