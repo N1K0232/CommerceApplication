@@ -139,6 +139,13 @@ public class ProductService : IProductService
             return Result.Fail(FailureReasons.ItemNotFound, "invalid category");
         }
 
+        var supplierExists = await dataContext.ExistsAsync<Entities.Supplier>(request.SupplierId);
+        if (!supplierExists)
+        {
+            logger.LogError("invalid supplier", request.SupplierId);
+            return Result.Fail(FailureReasons.ItemNotFound, "invalid supplier");
+        }
+
         var product = request.Id != null ? await dataContext.GetData<Entities.Product>(ignoreAutoIncludes: false, ignoreQueryFilters: true, trackingChanges: true)
             .FirstOrDefaultAsync(p => p.Id == request.Id) : null;
 
@@ -172,6 +179,7 @@ public class ProductService : IProductService
 
             var savedProduct = mapper.Map<Product>(product);
             savedProduct.Category = mapper.Map<Category>(product.Category);
+            savedProduct.Supplier = mapper.Map<Supplier>(product.Supplier);
             return savedProduct;
         }
 

@@ -73,6 +73,7 @@
     <Build Include="dbo\Tables\Products.sql" />
     <Build Include="dbo\Tables\Orders.sql" />
     <Build Include="dbo\Tables\OrderDetails.sql" />
+    <Build Include="dbo\Tables\Suppliers.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="CommerceApi.Database.publish.xml" />

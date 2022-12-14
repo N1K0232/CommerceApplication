@@ -7,6 +7,8 @@ public class Product : BaseModel
 {
     public Category Category { get; set; }
 
+    public Supplier Supplier { get; set; }
+
     public string Name { get; set; }
 
     public string Description { get; set; }

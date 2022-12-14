@@ -7,6 +7,8 @@ public class SaveProductRequest : BaseRequestModel
 {
     public Guid CategoryId { get; set; }
 
+    public Guid SupplierId { get; set; }
+
     public string Name { get; set; }
 
     public string Description { get; set; }

@@ -7,6 +7,8 @@ public class Product : DeletableEntity
 {
     public Guid CategoryId { get; set; }
 
+    public Guid SupplierId { get; set; }
+
     public string Name { get; set; }
 
     public string Description { get; set; }
@@ -26,6 +28,10 @@ public class Product : DeletableEntity
     public decimal Price { get; set; }
 
     public virtual Category Category { get; set; }
+
+    public virtual Supplier Supplier { get; set; }
+
+    public virtual ICollection<Invoice> Invoices { get; set; }
 
     public virtual ICollection<OrderDetail> OrderDetails { get; set; }
 }

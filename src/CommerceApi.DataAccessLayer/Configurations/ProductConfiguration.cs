@@ -10,6 +10,7 @@ public class ProductConfiguration : DeletableEntityConfiguration<Product>
     public override void Configure(EntityTypeBuilder<Product> builder)
     {
         builder.ToTable("Products");
+
         builder.Property(p => p.Name).HasMaxLength(100).IsRequired();
         builder.Property(p => p.Description).HasMaxLength(2000).IsRequired();
         builder.Property(p => p.Specifications).HasMaxLength(2000).IsRequired();
@@ -26,6 +27,11 @@ public class ProductConfiguration : DeletableEntityConfiguration<Product>
         builder.HasOne(p => p.Category)
             .WithMany(c => c.Products)
             .HasForeignKey(p => p.CategoryId)
+            .IsRequired();
+
+        builder.HasOne(p => p.Supplier)
+            .WithMany(s => s.Products)
+            .HasForeignKey(p => p.SupplierId)
             .IsRequired();
 
         base.Configure(builder);
