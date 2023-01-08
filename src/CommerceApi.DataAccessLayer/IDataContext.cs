@@ -3,7 +3,7 @@ using CommerceApi.DataAccessLayer.Entities.Common;
 
 namespace CommerceApi.DataAccessLayer;
 
-public interface IDataContext
+public interface IDataContext : IDisposable
 {
     void Delete<T>(T entity) where T : BaseEntity;
 
