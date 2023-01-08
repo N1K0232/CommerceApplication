@@ -4,8 +4,6 @@ using CommerceApi.Authentication;
 using CommerceApi.DataAccessLayer.Entities.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace CommerceApi.DataAccessLayer;
@@ -21,28 +19,45 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext
     }
 
 
-    public void Delete<T>(T entity) where T : BaseEntity
+    public Task CreateAsync<TEntity>(TEntity entity) where TEntity : BaseEntity
     {
-        var set = Set<T>();
-        set.Remove(entity);
+        if (entity is DeletableEntity deletableEntity)
+        {
+            deletableEntity.IsDeleted = false;
+            deletableEntity.DeletedDate = null;
+        }
+
+        entity.CreationDate = DateTime.UtcNow;
+        entity.UpdatedDate = null;
+
+        Set<TEntity>().Add(entity);
+        return SaveChangesAsync();
     }
 
-    public void Delete<T>(IEnumerable<T> entities) where T : BaseEntity
+    public Task UpdateAsync<TEntity>(TEntity entity) where TEntity : BaseEntity
     {
-        var set = Set<T>();
-        set.RemoveRange(entities);
+        if (entity is DeletableEntity deletableEntity)
+        {
+            deletableEntity.IsDeleted = false;
+            deletableEntity.DeletedDate = null;
+        }
+
+        entity.UpdatedDate = DateTime.UtcNow;
+
+        Set<TEntity>().Update(entity);
+        return SaveChangesAsync();
     }
 
-    public void Edit<T>(T entity) where T : BaseEntity
+    public Task DeleteAsync<TEntity>(TEntity entity) where TEntity : BaseEntity
     {
-        var set = Set<T>();
-        set.Update(entity);
+        Set<TEntity>().Remove(entity);
+        return SaveChangesAsync();
     }
 
-    public void Edit<T>(IEnumerable<T> entities) where T : BaseEntity
+    public Task DeleteAsync<TEntity>(IEnumerable<TEntity> entities) where TEntity : BaseEntity
     {
-        var set = Set<T>();
-        set.UpdateRange(entities);
+        Set<TEntity>().RemoveRange(entities);
+        return SaveChangesAsync();
     }
 
     public Task<bool> ExistsAsync<T>(Guid id) where T : BaseEntity
@@ -50,102 +65,50 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext
         return ExistsAsyncInternal<T>(x => x.Id == id);
     }
 
-    public Task<bool> ExistsAsync<T>(Expression<Func<T, bool>> predicate) where T : BaseEntity
+    public Task<bool> ExistsAsync<TEntity>(Expression<Func<TEntity, bool>> predicate) where TEntity : BaseEntity
     {
-        return ExistsAsyncInternal<T>(predicate);
+        return ExistsAsyncInternal(predicate);
     }
 
-    public Task<T> GetAsync<T>(Guid id) where T : BaseEntity
+    public Task<TEntity> GetAsync<TEntity>(Guid id) where TEntity : BaseEntity
     {
-        var set = Set<T>();
+        var set = Set<TEntity>();
         return set.FindAsync(id).AsTask();
     }
 
-    public IQueryable<T> GetData<T>(bool ignoreAutoIncludes = true, bool ignoreQueryFilters = false, bool trackingChanges = false) where T : BaseEntity
+    public IQueryable<TEntity> GetData<TEntity>(bool ignoreQueryFilters = false, bool trackingChanges = false) where TEntity : BaseEntity
     {
-        return GetDataInternal<T>(ignoreAutoIncludes, ignoreQueryFilters, trackingChanges);
+        return GetDataInternal<TEntity>(ignoreQueryFilters, trackingChanges);
     }
 
-    public void Create<T>(T entity) where T : BaseEntity
+    public Task ExecuteTransactionAsync(Func<Task> action)
     {
-        var set = Set<T>();
-        set.Add(entity);
-    }
-
-    public void Create<T>(IEnumerable<T> entities) where T : BaseEntity
-    {
-        var set = Set<T>();
-        set.AddRange(entities);
-    }
-
-    public Task<int> SaveAsync()
-    {
-        return SaveAsyncInternal();
-    }
-
-#pragma warning disable IDE0007
-    public Task ExecuteTransactionAsync()
-    {
-        Func<Task> action = SaveAsyncInternal;
-        DatabaseFacade database = Database;
-        IExecutionStrategy strategy = database.CreateExecutionStrategy();
+        var strategy = Database.CreateExecutionStrategy();
 
         return strategy.ExecuteAsync(async () =>
         {
-            using var transaction = await database.BeginTransactionAsync().ConfigureAwait(false);
+            using var transaction = await Database.BeginTransactionAsync().ConfigureAwait(false);
             await action.Invoke().ConfigureAwait(false);
             await transaction.CommitAsync().ConfigureAwait(false);
         });
     }
-#pragma warning restore IDE0007
 
-#pragma warning disable IDE0007 // Use implicit type
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         var entries = GetEntries();
 
         foreach (var entry in entries)
         {
-            BaseEntity baseEntity = entry.Entity as BaseEntity;
-
-            if (entry.State is EntityState.Added)
+            if (entry.State is EntityState.Deleted && entry.Entity is DeletableEntity deletableEntity)
             {
-                if (baseEntity is DeletableEntity deletableEntity)
-                {
-                    deletableEntity.IsDeleted = false;
-                    deletableEntity.DeletedDate = null;
-                }
-
-                baseEntity.CreationDate = DateTime.UtcNow;
-                baseEntity.UpdatedDate = null;
-            }
-
-            if (entry.State is EntityState.Modified)
-            {
-                if (baseEntity is DeletableEntity deletableEntity)
-                {
-                    deletableEntity.IsDeleted = false;
-                    deletableEntity.DeletedDate = null;
-                }
-
-                baseEntity.UpdatedDate = DateTime.UtcNow;
-            }
-
-            if (entry.State is EntityState.Deleted)
-            {
-                if (baseEntity is DeletableEntity deletableEntity)
-                {
-                    entry.State = EntityState.Modified;
-
-                    deletableEntity.IsDeleted = true;
-                    deletableEntity.DeletedDate = DateTime.UtcNow;
-                }
+                entry.State = EntityState.Modified;
+                deletableEntity.IsDeleted = true;
+                deletableEntity.DeletedDate = DateTime.UtcNow;
             }
         }
 
         return base.SaveChangesAsync(cancellationToken);
     }
-#pragma warning restore IDE0007 // Use implicit type
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -169,49 +132,35 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext
         }
     }
 
-    private Task<int> SaveAsyncInternal()
-    {
-        using var tokenSource = new CancellationTokenSource();
-        var cancellationToken = tokenSource.Token;
-        return SaveChangesAsync(cancellationToken);
-    }
-
     private IEnumerable<EntityEntry> GetEntries()
     {
         var entries = ChangeTracker.Entries()
-            .Where(e => e.Entity.GetType().IsSubclassOf(typeof(BaseEntity))).ToList();
+            .Where(e => e.Entity.GetType().IsSubclassOf(typeof(BaseEntity)))
+            .ToList();
 
-        return entries.Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted);
+        return entries.Where(e => e.State is EntityState.Deleted);
     }
 
-#pragma warning disable IDE0007 // Use implicit type
     private static IEnumerable<MethodInfo> SetGlobalQueryFilter(Type entityType)
     {
-        Type deletableEntityType = typeof(DeletableEntity);
         var result = new List<MethodInfo>();
 
-        if (deletableEntityType.IsAssignableFrom(entityType))
+        if (typeof(DeletableEntity).IsAssignableFrom(entityType))
         {
             result.Add(setQueryFilter);
         }
 
         return result;
     }
-#pragma warning restore IDE0007 // Use implicit type
 
-    private void SetQueryFilter<T>(ModelBuilder builder) where T : DeletableEntity
+    private void SetQueryFilter<TEntity>(ModelBuilder builder) where TEntity : DeletableEntity
     {
-        builder.Entity<T>().HasQueryFilter(x => !x.IsDeleted && x.DeletedDate == null);
+        builder.Entity<TEntity>().HasQueryFilter(x => !x.IsDeleted && x.DeletedDate == null);
     }
 
-    private IQueryable<T> GetDataInternal<T>(bool ignoreAutoIncludes = true, bool ignoreQueryFilters = false, bool trackingChanges = false) where T : BaseEntity
+    private IQueryable<TEntity> GetDataInternal<TEntity>(bool ignoreQueryFilters = false, bool trackingChanges = false) where TEntity : BaseEntity
     {
-        var set = Set<T>().AsQueryable();
-
-        if (ignoreAutoIncludes)
-        {
-            set = set.IgnoreAutoIncludes();
-        }
+        var set = Set<TEntity>().AsQueryable();
 
         if (ignoreQueryFilters)
         {
@@ -223,9 +172,9 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext
             set.AsNoTrackingWithIdentityResolution();
     }
 
-    private Task<bool> ExistsAsyncInternal<T>(Expression<Func<T, bool>> predicate) where T : BaseEntity
+    private Task<bool> ExistsAsyncInternal<TEntity>(Expression<Func<TEntity, bool>> predicate) where TEntity : BaseEntity
     {
-        var set = GetDataInternal<T>(ignoreAutoIncludes: false);
+        var set = GetDataInternal<TEntity>();
         return set.AnyAsync(predicate);
     }
 }

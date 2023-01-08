@@ -227,10 +227,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     });
 
     services.TryAddScoped<IUserService, UserService>();
-    services.TryAddScoped<ICategoryService, CategoryService>();
-    services.TryAddScoped<IProductService, ProductService>();
-    services.TryAddScoped<IOrderService, OrderService>();
-    services.TryAddScoped<ISupplierService, SupplierService>();
     services.TryAddScoped<IImageService, ImageService>();
 
     services.TryAddScoped<IAuthenticationService, AuthenticationService>();

@@ -5,27 +5,21 @@ namespace CommerceApi.DataAccessLayer;
 
 public interface IDataContext : IDisposable
 {
-    void Delete<T>(T entity) where T : BaseEntity;
+    Task DeleteAsync<TEntity>(TEntity entity) where TEntity : BaseEntity;
 
-    void Delete<T>(IEnumerable<T> entities) where T : BaseEntity;
-
-    void Edit<T>(T entity) where T : BaseEntity;
-
-    void Edit<T>(IEnumerable<T> entities) where T : BaseEntity;
+    Task DeleteAsync<TEntity>(IEnumerable<TEntity> entities) where TEntity : BaseEntity;
 
     Task<bool> ExistsAsync<T>(Guid id) where T : BaseEntity;
 
     Task<bool> ExistsAsync<T>(Expression<Func<T, bool>> predicate) where T : BaseEntity;
 
-    Task<T> GetAsync<T>(Guid id) where T : BaseEntity;
+    Task<TEntity> GetAsync<TEntity>(Guid id) where TEntity : BaseEntity;
 
-    IQueryable<T> GetData<T>(bool ignoreAutoIncludes = true, bool ignoreQueryFilters = false, bool trackingChanges = false) where T : BaseEntity;
+    IQueryable<TEntity> GetData<TEntity>(bool ignoreQueryFilters = false, bool trackingChanges = false) where TEntity : BaseEntity;
 
-    void Create<T>(T entity) where T : BaseEntity;
+    Task CreateAsync<TEntity>(TEntity entity) where TEntity : BaseEntity;
 
-    void Create<T>(IEnumerable<T> entities) where T : BaseEntity;
+    Task UpdateAsync<TEntity>(TEntity entity) where TEntity : BaseEntity;
 
-    Task<int> SaveAsync();
-
-    Task ExecuteTransactionAsync();
+    Task ExecuteTransactionAsync(Func<Task> action);
 }
