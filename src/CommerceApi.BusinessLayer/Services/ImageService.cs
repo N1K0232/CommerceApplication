@@ -40,8 +40,7 @@ public class ImageService : IImageService
         var image = await dataContext.GetAsync<Entities.Image>(imageId);
         if (image is not null)
         {
-            dataContext.Delete(image);
-            await dataContext.SaveAsync();
+            await dataContext.DeleteAsync(image);
             await storageProvider.DeleteAsync(image.Path);
 
             return Result.Ok();
@@ -84,31 +83,29 @@ public class ImageService : IImageService
     {
         var path = CreatePath(content.FileName);
 
-        var image = await dataContext.GetData<Entities.Image>(trackingChanges: true).FirstOrDefaultAsync(i => i.FileName.Contains(content.FileName));
-        if (image is null)
-        {
-            image = new Entities.Image
-            {
-                FileName = content.FileName,
-                Path = path,
-                ContentType = content.ContentType,
-                Length = content.Length,
-                Description = content.Description
-            };
-
-            dataContext.Create(image);
-        }
-        else
-        {
-            image.Description = content.Description;
-            dataContext.Edit(image);
-        }
-
         try
         {
-            await dataContext.SaveAsync();
-            await storageProvider.UploadAsync(path, content.Stream);
+            var image = await dataContext.GetData<Entities.Image>(trackingChanges: true).FirstOrDefaultAsync(i => i.FileName.Contains(content.FileName));
+            if (image is null)
+            {
+                image = new Entities.Image
+                {
+                    FileName = content.FileName,
+                    Path = path,
+                    ContentType = content.ContentType,
+                    Length = content.Length,
+                    Description = content.Description
+                };
 
+                await dataContext.CreateAsync(image);
+            }
+            else
+            {
+                image.Description = content.Description;
+                await dataContext.UpdateAsync(image);
+            }
+
+            await storageProvider.UploadAsync(path, content.Stream);
             return Result.Ok();
         }
         catch (Exception ex)
