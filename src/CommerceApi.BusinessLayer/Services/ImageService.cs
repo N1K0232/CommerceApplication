@@ -84,45 +84,37 @@ public class ImageService : IImageService
     {
         var path = CreatePath(content.FileName);
 
+        var image = await dataContext.GetData<Entities.Image>(trackingChanges: true).FirstOrDefaultAsync(i => i.FileName.Contains(content.FileName));
+        if (image is null)
+        {
+            image = new Entities.Image
+            {
+                FileName = content.FileName,
+                Path = path,
+                ContentType = content.ContentType,
+                Length = content.Length,
+                Description = content.Description
+            };
+
+            dataContext.Create(image);
+        }
+        else
+        {
+            image.Description = content.Description;
+            dataContext.Edit(image);
+        }
+
         try
         {
+            await dataContext.SaveAsync();
             await storageProvider.UploadAsync(path, content.Stream);
+
+            return Result.Ok();
         }
         catch (Exception ex)
         {
-            return Result.Fail(FailureReasons.GenericError, ex);
+            return Result.Fail(FailureReasons.DatabaseError, ex);
         }
-
-        var imageExists = await dataContext.ExistsAsync<Entities.Image>(i => i.Path.Contains(path));
-        if (!imageExists)
-        {
-            try
-            {
-                var image = new Entities.Image
-                {
-                    FileName = content.FileName,
-                    Path = path,
-                    Length = content.Length,
-                    ContentType = content.ContentType,
-                    Description = content.Description
-                };
-
-                dataContext.Create(image);
-                await dataContext.SaveAsync();
-
-                return Result.Ok();
-            }
-            catch (FileNotFoundException ex)
-            {
-                return Result.Fail(FailureReasons.InvalidFile, ex);
-            }
-            catch (Exception ex)
-            {
-                return Result.Fail(FailureReasons.DatabaseError, ex);
-            }
-        }
-
-        return Result.Fail(FailureReasons.Conflict, "Image already exists");
     }
 
     private static string CreatePath(string fileName)
