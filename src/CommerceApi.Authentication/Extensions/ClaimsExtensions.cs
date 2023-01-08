@@ -1,14 +1,25 @@
 ﻿using System.Security.Claims;
 using System.Security.Principal;
+using CommerceApi.Authentication.Common;
 
 namespace CommerceApi.Authentication.Extensions;
 
-#pragma warning disable IDE0007 //use implicit type
 public static class ClaimsExtensions
 {
+    public static Guid GetApplicationId(this IPrincipal user)
+    {
+        var value = GetClaimValue(user, CustomClaimTypes.ApplicationId);
+        if (Guid.TryParse(value, out var applicationId))
+        {
+            return applicationId;
+        }
+
+        return Guid.Empty;
+    }
+
     public static Guid GetId(this IPrincipal user)
     {
-        string value = GetClaimValue(user, ClaimTypes.NameIdentifier);
+        var value = GetClaimValue(user, ClaimTypes.NameIdentifier);
         if (Guid.TryParse(value, out var userId))
         {
             return userId;
@@ -23,7 +34,7 @@ public static class ClaimsExtensions
 
     public static DateTime GetDateOfBirth(this IPrincipal user)
     {
-        string value = GetClaimValue(user, ClaimTypes.DateOfBirth);
+        var value = GetClaimValue(user, ClaimTypes.DateOfBirth);
         if (DateTime.TryParse(value, out var dateOfBirth))
         {
             return dateOfBirth;
@@ -32,11 +43,28 @@ public static class ClaimsExtensions
         return DateTime.MinValue;
     }
 
+    public static int GetAge(this IPrincipal user)
+    {
+        var value = GetClaimValue(user, CustomClaimTypes.Age);
+        if (int.TryParse(value, out var age))
+        {
+            return age;
+        }
+
+        return 0;
+    }
+
     public static string GetUserName(this IPrincipal user) => GetClaimValue(user, ClaimTypes.Name);
 
     public static string GetEmail(this IPrincipal user) => GetClaimValue(user, ClaimTypes.Email);
 
     public static string GetPhoneNumber(this IPrincipal user) => GetClaimValue(user, ClaimTypes.MobilePhone);
+
+    public static IEnumerable<string> GetRoles(this IPrincipal user)
+    {
+        var roles = ((ClaimsPrincipal)user).FindAll(ClaimTypes.Role).Select(r => r.Value);
+        return roles;
+    }
 
     public static string GetClaimValue(this IPrincipal user, string claimType)
     {
@@ -45,10 +73,7 @@ public static class ClaimsExtensions
             return null;
         }
 
-        ClaimsPrincipal principal = (ClaimsPrincipal)user;
-        Claim claim = principal.FindFirst(claimType);
-
-        return claim?.Value ?? string.Empty;
+        var value = ((ClaimsPrincipal)user).FindFirst(claimType)?.Value;
+        return value;
     }
 }
-#pragma warning restore IDE0007 //use implicit type

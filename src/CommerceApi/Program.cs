@@ -12,6 +12,7 @@ using CommerceApi.Authorization.Handlers;
 using CommerceApi.Authorization.Requirements;
 using CommerceApi.BusinessLayer.Services;
 using CommerceApi.BusinessLayer.Services.Interfaces;
+using CommerceApi.BusinessLayer.Settings;
 using CommerceApi.DataAccessLayer;
 using CommerceApi.Documentation;
 using CommerceApi.Security;
@@ -153,9 +154,12 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     .AddEntityFrameworkStores<AuthenticationDataContext>()
     .AddDefaultTokenProviders();
 
-    var jwtSection = configuration.GetSection(nameof(JwtSettings));
-    var jwtSettings = jwtSection.Get<JwtSettings>();
-    services.Configure<JwtSettings>(jwtSection);
+    var jwtSettingsSection = configuration.GetSection(nameof(JwtSettings));
+    var jwtSettings = jwtSettingsSection.Get<JwtSettings>();
+    services.Configure<JwtSettings>(jwtSettingsSection);
+
+    var appSettingsSection = configuration.GetSection(nameof(AppSettings));
+    services.Configure<AppSettings>(appSettingsSection);
 
     services.AddAuthentication(options =>
     {
@@ -209,11 +213,25 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
         return HealthCheckResult.Healthy();
     });
 
+#if !DEBUG
+    services.AddAzureStorageProvider(options =>
+    {
+        options.ConnectionString = configuration.GetValue<string>("StorageSettings:StorageConnectionString");
+        options.ContainerName = configuration.GetValue<string>("StorageSettings:ContainerName");
+    });
+#endif
+
+    services.AddFileSystemStorageProvider(options =>
+    {
+        options.StorageFolder = configuration.GetValue<string>("StorageSettings:StorageFolder");
+    });
+
     services.TryAddScoped<IUserService, UserService>();
     services.TryAddScoped<ICategoryService, CategoryService>();
     services.TryAddScoped<IProductService, ProductService>();
     services.TryAddScoped<IOrderService, OrderService>();
     services.TryAddScoped<ISupplierService, SupplierService>();
+    services.TryAddScoped<IImageService, ImageService>();
 
     services.TryAddScoped<IAuthenticationService, AuthenticationService>();
 

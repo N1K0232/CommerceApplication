@@ -8,14 +8,17 @@ using CommerceApi.Authentication.Entities;
 using CommerceApi.Authentication.Extensions;
 using CommerceApi.Authentication.Settings;
 using CommerceApi.BusinessLayer.Services.Interfaces;
+using CommerceApi.BusinessLayer.Settings;
 using CommerceApi.Shared.Models;
 using CommerceApi.Shared.Requests;
 using CommerceApi.Shared.Responses;
+using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using OperationResults;
 
 namespace CommerceApi.BusinessLayer.Services;
 
@@ -24,26 +27,45 @@ public class UserService : IUserService
     private const string AuthenticatedUser = nameof(AuthenticatedUser);
 
     private readonly JwtSettings jwtSettings;
+    private readonly AppSettings appSettings;
 
-    private readonly UserManager<AuthenticationUser> userManager;
-    private readonly SignInManager<AuthenticationUser> signInManager;
+    private UserManager<AuthenticationUser> userManager;
+    private RoleManager<AuthenticationRole> roleManager;
+    private SignInManager<AuthenticationUser> signInManager;
+
+    private readonly IValidator<LoginRequest> loginValidator;
+    private readonly IValidator<RegisterRequest> registerValidator;
+    private readonly IValidator<RefreshTokenRequest> refreshTokenValidator;
 
     private readonly ILogger<UserService> logger;
     private readonly IMemoryCache cache;
-
     private readonly IMapper mapper;
 
+    private bool disposed = false;
+
+
     public UserService(IOptions<JwtSettings> jwtSettingsOptions,
+        IOptions<AppSettings> appSettingsOptions,
         UserManager<AuthenticationUser> userManager,
+        RoleManager<AuthenticationRole> roleManager,
         SignInManager<AuthenticationUser> signInManager,
+        IValidator<LoginRequest> loginValidator,
+        IValidator<RegisterRequest> registerValidator,
+        IValidator<RefreshTokenRequest> refreshTokenValidator,
         ILogger<UserService> logger,
         IMemoryCache cache,
         IMapper mapper)
     {
         jwtSettings = jwtSettingsOptions.Value;
+        appSettings = appSettingsOptions.Value;
 
         this.userManager = userManager;
+        this.roleManager = roleManager;
         this.signInManager = signInManager;
+
+        this.loginValidator = loginValidator;
+        this.registerValidator = registerValidator;
+        this.refreshTokenValidator = refreshTokenValidator;
 
         this.logger = logger;
         this.cache = cache;
@@ -52,8 +74,16 @@ public class UserService : IUserService
     }
 
 
+    ~UserService()
+    {
+        Dispose(disposing: false);
+    }
+
+
     public async Task<RegisterResponse> DeleteAccountAsync(Guid userId)
     {
+        ThrowIfDisposed();
+
         logger.LogInformation("deleting account");
 
         var user = await GetUserAsync(userId);
@@ -85,14 +115,28 @@ public class UserService : IUserService
         };
     }
 
-    public async Task<LoginResponse> LoginAsync(LoginRequest request)
+    public async Task<Result<LoginResponse>> LoginAsync(LoginRequest request)
     {
+        ThrowIfDisposed();
+
         logger.LogInformation("user login", request);
+
+        var validationResult = await loginValidator.ValidateAsync(request);
+        if (!validationResult.IsValid)
+        {
+            var validationErrors = new List<ValidationError>();
+            foreach (var error in validationResult.Errors)
+            {
+                validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
+            }
+
+            return Result.Fail(FailureReasons.ClientError, "error occurred during login", validationErrors);
+        }
 
         var user = await userManager.FindByEmailAsync(request.Email);
         if (user is null)
         {
-            return null;
+            return Result.Fail(FailureReasons.GenericError, "wrong email");
         }
 
         var signInResult = await signInManager.PasswordSignInAsync(user, request.Password, false, false);
@@ -101,24 +145,26 @@ public class UserService : IUserService
             user.AccessFailedCount++;
             await userManager.UpdateAsync(user);
 
-            return null;
+            return Result.Fail(FailureReasons.ClientError, "wrong password");
         }
 
-        SaveAuthenticateUser(user);
+        SaveAuthenticateUser(mapper.Map<User>(user));
 
         await userManager.UpdateSecurityStampAsync(user);
 
         var roles = await GetRolesAsync(user);
         var claims = new List<Claim>
         {
+            new Claim(CustomClaimTypes.ApplicationId, appSettings.ApplicationId),
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.GivenName, user.FirstName),
             new Claim(ClaimTypes.Surname, user.LastName),
             new Claim(ClaimTypes.DateOfBirth, user.DateOfBirth.ToString()),
+            new Claim(CustomClaimTypes.Age, Convert.ToInt32((DateTime.UtcNow.Date - user.DateOfBirth.Date).TotalDays / 365).ToString()),
             new Claim(ClaimTypes.SerialNumber, user.SecurityStamp),
             new Claim(ClaimTypes.MobilePhone, user.PhoneNumber),
             new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Name, user.UserName)
+            new Claim(ClaimTypes.Name, user.UserName),
         }.Union(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
         var loginResponse = CreateResponse(claims);
@@ -127,9 +173,23 @@ public class UserService : IUserService
         return loginResponse;
     }
 
-    public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
+    public async Task<Result<RegisterResponse>> RegisterAsync(RegisterRequest request)
     {
+        ThrowIfDisposed();
+
         logger.LogInformation("user registration", request);
+
+        var validationResult = await registerValidator.ValidateAsync(request);
+        if (!validationResult.IsValid)
+        {
+            var validationErrors = new List<ValidationError>();
+            foreach (var error in validationResult.Errors)
+            {
+                validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
+            }
+
+            return Result.Fail(FailureReasons.ClientError, "validation errors", validationErrors);
+        }
 
         var user = new AuthenticationUser
         {
@@ -156,9 +216,23 @@ public class UserService : IUserService
         return registerResponse;
     }
 
-    public async Task<LoginResponse> RefreshTokenAsync(RefreshTokenRequest request)
+    public async Task<Result<LoginResponse>> RefreshTokenAsync(RefreshTokenRequest request)
     {
+        ThrowIfDisposed();
+
         logger.LogInformation("user refresh token", request);
+
+        var validationResult = await refreshTokenValidator.ValidateAsync(request);
+        if (!validationResult.IsValid)
+        {
+            var validationErrors = new List<ValidationError>();
+            foreach (var error in validationResult.Errors)
+            {
+                validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
+            }
+
+            return Result.Fail(FailureReasons.GenericError, "errors during refresh token", validationErrors);
+        }
 
         var user = ValidateAccessToken(request.AccessToken);
         if (user is not null)
@@ -171,7 +245,7 @@ public class UserService : IUserService
                 return null;
             }
 
-            SaveAuthenticateUser(dbUser);
+            SaveAuthenticateUser(mapper.Map<User>(dbUser));
 
             var loginResponse = CreateResponse(user.Claims);
             await SaveRefreshTokenAsync(dbUser, loginResponse.RefreshToken);
@@ -296,26 +370,47 @@ public class UserService : IUserService
         return securityKey;
     }
 
-    private void SaveAuthenticateUser(AuthenticationUser dbUser)
+    private void SaveAuthenticateUser(User authenticatedUser)
     {
         var found = cache.TryGetValue<User>(AuthenticatedUser, out var user);
         if (found && user is not null)
         {
             cache.Remove(AuthenticatedUser);
-            CreateEntry(user);
         }
-        else
+
+        var entry = cache.CreateEntry(AuthenticatedUser);
+
+        entry.Value = authenticatedUser;
+        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(jwtSettings.ExpirationMinutes);
+    }
+
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    private void Dispose(bool disposing)
+    {
+        if (disposing && !disposed)
         {
-            user = mapper.Map<User>(dbUser);
-            CreateEntry(user);
+            userManager.Dispose();
+            userManager = null;
+
+            roleManager.Dispose();
+            roleManager = null;
+
+            signInManager = null;
+
+            disposed = true;
         }
     }
 
-    private void CreateEntry(User user)
+    private void ThrowIfDisposed()
     {
-        var entry = cache.CreateEntry(AuthenticatedUser);
-
-        entry.Value = user;
-        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(jwtSettings.ExpirationMinutes);
+        if (disposed)
+        {
+            throw new ObjectDisposedException(GetType().FullName);
+        }
     }
 }

@@ -2,6 +2,7 @@
 
 public interface IUserClaimService
 {
+    Guid GetApplicationId();
     Guid GetId();
 
     string GetUserName();

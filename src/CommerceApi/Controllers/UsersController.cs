@@ -4,7 +4,6 @@ using CommerceApi.Authorization.Filters;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.Shared.Models;
 using CommerceApi.Shared.Requests;
-using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -41,61 +40,28 @@ public class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        //var validationResult = await validator.ValidateAsync(request);
-        //if (!validationResult.IsValid)
-        //{
-        //    return BadRequest(validationResult.Errors);
-        //}
-
         var response = await userService.LoginAsync(request);
-        if (response is null)
-        {
-            return BadRequest("wrong email or password");
-        }
-
-        return Ok(response);
+        return CreateResponse(response, StatusCodes.Status200OK);
     }
 
     [HttpPost("Register")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest request, [FromServices] IValidator<RegisterRequest> validator)
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        var validationResult = await validator.ValidateAsync(request);
-        if (!validationResult.IsValid)
-        {
-            return BadRequest(validationResult.Errors);
-        }
-
         var response = await userService.RegisterAsync(request);
-        if (!response.Succeeded)
-        {
-            return BadRequest(response);
-        }
-
-        return Ok("user successfully registrated");
+        return CreateResponse(response, StatusCodes.Status200OK);
     }
 
     [HttpPost("Refresh")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request, [FromServices] IValidator<RefreshTokenRequest> validator)
+    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
     {
-        var validationResult = await validator.ValidateAsync(request);
-        if (!validationResult.IsValid)
-        {
-            return BadRequest(validationResult.Errors);
-        }
-
         var response = await userService.RefreshTokenAsync(request);
-        if (response is null)
-        {
-            return BadRequest("couldn't validate access token");
-        }
-
-        return Ok(response);
+        return CreateResponse(response, StatusCodes.Status200OK);
     }
 
 
@@ -106,15 +72,19 @@ public class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult GetMe()
     {
+        var applicationId = User.GetApplicationId();
+
         var user = new User
         {
             Id = User.GetId(),
             FirstName = User.GetFirstName(),
             LastName = User.GetLastName(),
             DateOfBirth = User.GetDateOfBirth(),
+            Age = User.GetAge(),
             PhoneNumber = User.GetPhoneNumber(),
             Email = User.GetEmail(),
-            UserName = User.GetUserName()
+            UserName = User.GetUserName(),
+            Roles = User.GetRoles()
         };
 
         return Ok(user);
