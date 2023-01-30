@@ -23,6 +23,11 @@ internal class AzureStorageProvider : IStorageProvider
     {
         ThrowIfDisposed();
 
+        if (string.IsNullOrEmpty(path))
+        {
+            throw new ArgumentNullException(nameof(path), "the path is required");
+        }
+
         var blobClient = await GetBlobClientAsync(settings.ContainerName).ConfigureAwait(false);
         await blobClient.DeleteBlobIfExistsAsync(path).ConfigureAwait(false);
     }
@@ -30,6 +35,11 @@ internal class AzureStorageProvider : IStorageProvider
     public async Task<Stream> ReadAsync(string path)
     {
         ThrowIfDisposed();
+
+        if (string.IsNullOrEmpty(path))
+        {
+            throw new ArgumentNullException(nameof(path), "the path is required");
+        }
 
         var blobContainerClient = await GetBlobClientAsync(settings.ContainerName).ConfigureAwait(false);
         var blobClient = blobContainerClient.GetBlobClient(path);
@@ -44,6 +54,11 @@ internal class AzureStorageProvider : IStorageProvider
     public async Task UploadAsync(string path, Stream stream)
     {
         ThrowIfDisposed();
+
+        if (string.IsNullOrEmpty(path))
+        {
+            throw new ArgumentNullException(nameof(path), "the path is required");
+        }
 
         var blobContainerClient = await GetBlobClientAsync(settings.ContainerName, true).ConfigureAwait(false);
         var blobClient = blobContainerClient.GetBlobClient(path);

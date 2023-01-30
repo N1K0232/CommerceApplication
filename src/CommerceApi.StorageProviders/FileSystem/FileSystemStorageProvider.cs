@@ -70,7 +70,15 @@ internal class FileSystemStorageProvider : IStorageProvider
         }
     }
 
-    private string GetFullPath(string path) => Path.Combine(settings.StorageFolder, path);
+    private string GetFullPath(string path)
+    {
+        if (string.IsNullOrEmpty(path))
+        {
+            throw new ArgumentNullException(nameof(path), "the path is required");
+        }
+
+        return Path.Combine(settings.StorageFolder, path);
+    }
 
 
     public void Dispose()
