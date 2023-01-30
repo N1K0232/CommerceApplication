@@ -10,13 +10,10 @@ using CommerceApi.Authentication.Settings;
 using CommerceApi.Authentication.StartupTasks;
 using CommerceApi.Authorization.Handlers;
 using CommerceApi.Authorization.Requirements;
-using CommerceApi.BusinessLayer.Services;
-using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.BusinessLayer.Settings;
 using CommerceApi.DataAccessLayer;
 using CommerceApi.Documentation;
 using CommerceApi.Security;
-using FluentValidation.AspNetCore;
 using Hellang.Middleware.ProblemDetails;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -25,7 +22,6 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -70,11 +66,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
         options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
         options.JsonSerializerOptions.Converters.Add(new TimeSpanTicksConverter());
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
-
-    services.AddFluentValidationAutoValidation(options =>
-    {
-        options.DisableDataAnnotationsValidation = true;
     });
 
     services.AddApiVersioning(options =>
@@ -128,11 +119,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     .AddFluentValidationRulesToSwagger(options =>
     {
         options.SetNotNullableIfMinLengthGreaterThenZero = true;
-    });
-
-    services.AddFluentValidationAutoValidation(options =>
-    {
-        options.DisableDataAnnotationsValidation = true;
     });
 
     var hashedConnectionString = configuration.GetConnectionString("SqlConnection");
@@ -226,10 +212,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
         options.StorageFolder = configuration.GetValue<string>("StorageSettings:StorageFolder");
     });
 
-    services.TryAddScoped<IUserService, UserService>();
-    services.TryAddScoped<IImageService, ImageService>();
-
-    services.TryAddScoped<IAuthenticationService, AuthenticationService>();
+    services.AddServices();
 
     var adminUserSection = configuration.GetSection(nameof(AdministratorUser));
     services.Configure<AdministratorUser>(adminUserSection);
