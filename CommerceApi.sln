@@ -33,6 +33,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommerceApi.Logging", "src\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommerceApi.Security", "src\CommerceApi.Security\CommerceApi.Security.csproj", "{4F56C6D4-FA33-4357-A03C-27DBF849A05F}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommerceApi.Client", "src\CommerceApi.Client\CommerceApi.Client.csproj", "{425947CE-58C8-4A85-97AD-5BA3AC14222E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -85,6 +87,10 @@ Global
 		{4F56C6D4-FA33-4357-A03C-27DBF849A05F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4F56C6D4-FA33-4357-A03C-27DBF849A05F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4F56C6D4-FA33-4357-A03C-27DBF849A05F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{425947CE-58C8-4A85-97AD-5BA3AC14222E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{425947CE-58C8-4A85-97AD-5BA3AC14222E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{425947CE-58C8-4A85-97AD-5BA3AC14222E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{425947CE-58C8-4A85-97AD-5BA3AC14222E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
