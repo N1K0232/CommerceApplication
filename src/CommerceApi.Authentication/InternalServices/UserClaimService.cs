@@ -13,7 +13,7 @@ internal class UserClaimService : IUserClaimService
         httpContext = httpContextAccessor.HttpContext;
     }
 
-    public Guid GetApplicationId() => httpContext.User.GetApplicationId();
+    public string GetApplicationId() => httpContext.User.GetApplicationId();
 
     public Guid GetId() => httpContext.User.GetId();
 

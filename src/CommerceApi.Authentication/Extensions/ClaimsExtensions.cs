@@ -6,16 +6,7 @@ namespace CommerceApi.Authentication.Extensions;
 
 public static class ClaimsExtensions
 {
-    public static Guid GetApplicationId(this IPrincipal user)
-    {
-        var value = GetClaimValue(user, CustomClaimTypes.ApplicationId);
-        if (Guid.TryParse(value, out var applicationId))
-        {
-            return applicationId;
-        }
-
-        return Guid.Empty;
-    }
+    public static string GetApplicationId(this IPrincipal user) => GetClaimValue(user, CustomClaimTypes.ApplicationId);
 
     public static Guid GetId(this IPrincipal user)
     {
