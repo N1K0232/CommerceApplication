@@ -14,6 +14,7 @@ using CommerceApi.Shared.Requests;
 using CommerceApi.Shared.Responses;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -36,6 +37,8 @@ public class UserService : IUserService
     private readonly IValidator<LoginRequest> loginValidator;
     private readonly IValidator<RegisterRequest> registerValidator;
     private readonly IValidator<RefreshTokenRequest> refreshTokenValidator;
+    private readonly IValidator<ValidateEmailRequest> emailValidator;
+    private readonly IValidator<ValidatePhoneNumberRequest> phoneNumberValidator;
 
     private readonly ILogger<UserService> logger;
     private readonly IMemoryCache cache;
@@ -52,6 +55,8 @@ public class UserService : IUserService
         IValidator<LoginRequest> loginValidator,
         IValidator<RegisterRequest> registerValidator,
         IValidator<RefreshTokenRequest> refreshTokenValidator,
+        IValidator<ValidateEmailRequest> emailValidator,
+        IValidator<ValidatePhoneNumberRequest> phoneNumberValidator,
         ILogger<UserService> logger,
         IMemoryCache cache,
         IMapper mapper)
@@ -66,7 +71,8 @@ public class UserService : IUserService
         this.loginValidator = loginValidator;
         this.registerValidator = registerValidator;
         this.refreshTokenValidator = refreshTokenValidator;
-
+        this.emailValidator = emailValidator;
+        this.phoneNumberValidator = phoneNumberValidator;
         this.logger = logger;
         this.cache = cache;
 
@@ -80,39 +86,35 @@ public class UserService : IUserService
     }
 
 
-    public async Task<RegisterResponse> DeleteAccountAsync(Guid userId)
+    public async Task<Result<RegisterResponse>> DeleteAccountAsync(Guid userId)
     {
         ThrowIfDisposed();
 
         logger.LogInformation("deleting account");
 
-        var user = await GetUserAsync(userId);
-        if (user is null)
+        try
         {
-            return new RegisterResponse
+            var user = await GetUserAsync(userId);
+            if (user is null)
             {
-                Succeeded = false,
-                Errors = new List<string> { "User not found" }
-            };
-        }
+                return Result.Fail(FailureReasons.ItemNotFound, "No user found");
+            }
 
-        var roles = await GetRolesAsync(user);
-        if (roles.Any(r => r.Equals(RoleNames.Administrator)))
-        {
-            return new RegisterResponse
+            var roles = await GetRolesAsync(user);
+            if (roles.Any(r => r.Equals(RoleNames.Administrator)))
             {
-                Succeeded = false,
-                Errors = new List<string> { "can't delete an administrator" }
-            };
+                return Result.Fail(FailureReasons.GenericError, "Can't delete an administrator");
+            }
+
+            var result = await userManager.DeleteAsync(user);
+
+            var response = new RegisterResponse(result.Succeeded, result.Errors.Select(e => e.Description));
+            return response;
         }
-
-        var result = await userManager.DeleteAsync(user);
-
-        return new RegisterResponse
+        catch (DbUpdateException ex)
         {
-            Succeeded = result.Succeeded,
-            Errors = result.Errors.Select(e => e.Description)
-        };
+            return Result.Fail(FailureReasons.DatabaseError, ex);
+        }
     }
 
     public async Task<Result<LoginResponse>> LoginAsync(LoginRequest request)
@@ -133,44 +135,51 @@ public class UserService : IUserService
             return Result.Fail(FailureReasons.ClientError, "error occurred during login", validationErrors);
         }
 
-        var user = await userManager.FindByEmailAsync(request.Email);
-        if (user is null)
+        try
         {
-            return Result.Fail(FailureReasons.GenericError, "wrong email");
+            var user = await userManager.FindByEmailAsync(request.Email);
+            if (user is null)
+            {
+                return Result.Fail(FailureReasons.GenericError, "wrong email");
+            }
+
+            var signInResult = await signInManager.PasswordSignInAsync(user, request.Password, false, false);
+            if (!signInResult.Succeeded)
+            {
+                user.AccessFailedCount++;
+                await userManager.UpdateAsync(user);
+
+                return Result.Fail(FailureReasons.ClientError, "wrong password");
+            }
+
+            SaveAuthenticateUser(mapper.Map<User>(user));
+
+            await userManager.UpdateSecurityStampAsync(user);
+
+            var roles = await GetRolesAsync(user);
+            var claims = new List<Claim>
+            {
+                new Claim(CustomClaimTypes.ApplicationId, appSettings.ApplicationId),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.GivenName, user.FirstName),
+                new Claim(ClaimTypes.Surname, user.LastName),
+                new Claim(ClaimTypes.DateOfBirth, user.DateOfBirth.ToString()),
+                new Claim(CustomClaimTypes.Age, Convert.ToInt32((DateTime.UtcNow.Date - user.DateOfBirth.Date).TotalDays / 365).ToString()),
+                new Claim(ClaimTypes.SerialNumber, user.SecurityStamp),
+                new Claim(ClaimTypes.MobilePhone, user.PhoneNumber),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name, user.UserName),
+            }.Union(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+
+            var loginResponse = CreateResponse(claims);
+            await SaveRefreshTokenAsync(user, loginResponse.RefreshToken);
+
+            return loginResponse;
         }
-
-        var signInResult = await signInManager.PasswordSignInAsync(user, request.Password, false, false);
-        if (!signInResult.Succeeded)
+        catch (DbUpdateException ex)
         {
-            user.AccessFailedCount++;
-            await userManager.UpdateAsync(user);
-
-            return Result.Fail(FailureReasons.ClientError, "wrong password");
+            return Result.Fail(FailureReasons.DatabaseError, ex);
         }
-
-        SaveAuthenticateUser(mapper.Map<User>(user));
-
-        await userManager.UpdateSecurityStampAsync(user);
-
-        var roles = await GetRolesAsync(user);
-        var claims = new List<Claim>
-        {
-            new Claim(CustomClaimTypes.ApplicationId, appSettings.ApplicationId),
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.GivenName, user.FirstName),
-            new Claim(ClaimTypes.Surname, user.LastName),
-            new Claim(ClaimTypes.DateOfBirth, user.DateOfBirth.ToString()),
-            new Claim(CustomClaimTypes.Age, Convert.ToInt32((DateTime.UtcNow.Date - user.DateOfBirth.Date).TotalDays / 365).ToString()),
-            new Claim(ClaimTypes.SerialNumber, user.SecurityStamp),
-            new Claim(ClaimTypes.MobilePhone, user.PhoneNumber),
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Name, user.UserName),
-        }.Union(roles.Select(role => new Claim(ClaimTypes.Role, role)));
-
-        var loginResponse = CreateResponse(claims);
-        await SaveRefreshTokenAsync(user, loginResponse.RefreshToken);
-
-        return loginResponse;
     }
 
     public async Task<Result<RegisterResponse>> RegisterAsync(RegisterRequest request)
@@ -191,29 +200,31 @@ public class UserService : IUserService
             return Result.Fail(FailureReasons.ClientError, "validation errors", validationErrors);
         }
 
-        var user = new AuthenticationUser
+        try
         {
-            FirstName = request.FirstName,
-            LastName = request.LastName,
-            DateOfBirth = request.DateOfBirth,
-            PhoneNumber = request.PhoneNumber,
-            Email = request.Email,
-            UserName = request.UserName
-        };
+            var user = new AuthenticationUser
+            {
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                DateOfBirth = request.DateOfBirth,
+                PhoneNumber = request.PhoneNumber,
+                Email = request.Email,
+                UserName = request.Email
+            };
 
-        var result = await userManager.CreateAsync(user, request.Password);
-        if (result.Succeeded)
-        {
-            result = await userManager.AddToRoleAsync(user, RoleNames.User);
+            var result = await userManager.CreateAsync(user, request.Password);
+            if (result.Succeeded)
+            {
+                result = await userManager.AddToRoleAsync(user, RoleNames.User);
+            }
+
+            var registerResponse = new RegisterResponse(result.Succeeded, result.Errors.Select(e => e.Description));
+            return registerResponse;
         }
-
-        var registerResponse = new RegisterResponse
+        catch (DbUpdateException ex)
         {
-            Succeeded = result.Succeeded,
-            Errors = result.Errors.Select(e => e.Description)
-        };
-
-        return registerResponse;
+            return Result.Fail(FailureReasons.DatabaseError, ex);
+        }
     }
 
     public async Task<Result<LoginResponse>> RefreshTokenAsync(RefreshTokenRequest request)
@@ -234,26 +245,103 @@ public class UserService : IUserService
             return Result.Fail(FailureReasons.GenericError, "errors during refresh token", validationErrors);
         }
 
-        var user = ValidateAccessToken(request.AccessToken);
-        if (user is not null)
+        try
         {
-            var userId = user.GetId();
-            var dbUser = await GetUserAsync(userId);
-
-            if (dbUser?.RefreshToken is null || dbUser?.RefreshTokenExpirationDate < DateTime.UtcNow || dbUser?.RefreshToken != request.RefreshToken)
+            var user = ValidateAccessToken(request.AccessToken);
+            if (user is not null)
             {
-                return null;
+                var userId = user.GetId();
+                var dbUser = await GetUserAsync(userId);
+
+                if (dbUser?.RefreshToken is null || dbUser?.RefreshTokenExpirationDate < DateTime.UtcNow || dbUser?.RefreshToken != request.RefreshToken)
+                {
+                    return null;
+                }
+
+                SaveAuthenticateUser(mapper.Map<User>(dbUser));
+
+                var loginResponse = CreateResponse(user.Claims);
+                await SaveRefreshTokenAsync(dbUser, loginResponse.RefreshToken);
+
+                return loginResponse;
             }
-
-            SaveAuthenticateUser(mapper.Map<User>(dbUser));
-
-            var loginResponse = CreateResponse(user.Claims);
-            await SaveRefreshTokenAsync(dbUser, loginResponse.RefreshToken);
-
-            return loginResponse;
+        }
+        catch (DbUpdateException ex)
+        {
+            return Result.Fail(FailureReasons.DatabaseError, ex);
         }
 
-        return null;
+        return Result.Fail(FailureReasons.ClientError, "couldn't validate access token");
+    }
+
+    public async Task<Result<RegisterResponse>> ValidateEmailAsync(ValidateEmailRequest request)
+    {
+        var validationResult = await emailValidator.ValidateAsync(request);
+        if (!validationResult.IsValid)
+        {
+            var validationErrors = new List<ValidationError>();
+            foreach (var error in validationResult.Errors)
+            {
+                validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
+            }
+
+            return Result.Fail(FailureReasons.ClientError, "Invalid request", validationErrors);
+        }
+
+        try
+        {
+            var user = await GetUserAsync(request.Id);
+            if (user is null)
+            {
+                return Result.Fail(FailureReasons.ItemNotFound, "No user found");
+            }
+
+            user.EmailConfirmed = user.Email == request.Email;
+
+            var result = await userManager.UpdateAsync(user);
+
+            var response = new RegisterResponse(result.Succeeded, result.Errors.Select(e => e.Description));
+            return response;
+        }
+        catch (DbUpdateException ex)
+        {
+            return Result.Fail(FailureReasons.DatabaseError, ex);
+        }
+    }
+
+    public async Task<Result<RegisterResponse>> ValidatePhoneNumberAsync(ValidatePhoneNumberRequest request)
+    {
+        var validationResult = await phoneNumberValidator.ValidateAsync(request);
+        if (!validationResult.IsValid)
+        {
+            var validationErrors = new List<ValidationError>();
+            foreach (var error in validationResult.Errors)
+            {
+                validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
+            }
+
+            return Result.Fail(FailureReasons.ClientError, "Invalid request", validationErrors);
+        }
+
+        try
+        {
+            var user = await GetUserAsync(request.Id);
+            if (user is null)
+            {
+                return Result.Fail(FailureReasons.ItemNotFound, "No user found");
+            }
+
+            user.PhoneNumberConfirmed = user.PhoneNumber == request.PhoneNumber;
+
+            var result = await userManager.UpdateAsync(user);
+
+            var response = new RegisterResponse(result.Succeeded, result.Errors.Select(e => e.Description));
+            return response;
+        }
+        catch (DbUpdateException ex)
+        {
+            return Result.Fail(FailureReasons.DatabaseError, ex);
+        }
     }
 
     private async Task<AuthenticationUser> CreateUserAsync(RegisterRequest request)

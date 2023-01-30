@@ -25,13 +25,8 @@ public class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> DeleteAccount(Guid userId)
     {
-        var response = await userService.DeleteAccountAsync(userId);
-        if (response.Succeeded)
-        {
-            return Ok("User successfully deleted");
-        }
-
-        return BadRequest(response);
+        var result = await userService.DeleteAccountAsync(userId);
+        return CreateResponse(result, StatusCodes.Status200OK);
     }
 
     [HttpPost("Login")]
@@ -62,6 +57,26 @@ public class UsersController : ControllerBase
     {
         var response = await userService.RefreshTokenAsync(request);
         return CreateResponse(response, StatusCodes.Status200OK);
+    }
+
+    [HttpPost("ValidateEmail")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ValidateEmail([FromBody] ValidateEmailRequest request)
+    {
+        var result = await userService.ValidateEmailAsync(request);
+        return CreateResponse(result, StatusCodes.Status200OK);
+    }
+
+    [HttpPost("ValidatePhoneNumber")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ValidatePhoneNumber([FromBody] ValidatePhoneNumberRequest request)
+    {
+        var result = await userService.ValidatePhoneNumberAsync(request);
+        return CreateResponse(result, StatusCodes.Status200OK);
     }
 
 
