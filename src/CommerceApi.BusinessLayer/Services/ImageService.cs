@@ -37,16 +37,24 @@ public class ImageService : IImageService
             return Result.Fail(FailureReasons.GenericError, "Invalid id");
         }
 
-        var image = await dataContext.GetAsync<Entities.Image>(imageId);
-        if (image is not null)
+        try
         {
-            await dataContext.DeleteAsync(image);
+            var image = await dataContext.GetAsync<Entities.Image>(imageId);
+            dataContext.Delete(image);
+
+            await dataContext.SaveAsync();
             await storageProvider.DeleteAsync(image.Path);
 
             return Result.Ok();
         }
-
-        return Result.Fail(FailureReasons.ItemNotFound, "No image found");
+        catch (ArgumentNullException ex)
+        {
+            return Result.Fail(FailureReasons.ItemNotFound, ex);
+        }
+        catch (DbUpdateException ex)
+        {
+            return Result.Fail(FailureReasons.DatabaseError, ex);
+        }
     }
 
     public async Task<IEnumerable<Image>> GetAsync()
@@ -59,11 +67,11 @@ public class ImageService : IImageService
         return images;
     }
 
-    public async Task<ImageStream> GetAsync(Guid imageId)
+    public async Task<Result<ImageStream>> GetAsync(Guid imageId)
     {
         if (imageId == Guid.Empty)
         {
-            return null;
+            return Result.Fail(FailureReasons.ClientError, "invalid id");
         }
 
         var image = await dataContext.GetAsync<Entities.Image>(imageId);
@@ -76,16 +84,18 @@ public class ImageService : IImageService
             return imageStream;
         }
 
-        return null;
+        return Result.Fail(FailureReasons.ItemNotFound, "no image found");
     }
 
-    public async Task<Result> UploadAsync(StreamFileContent content)
+    public async Task<Result<Image>> UploadAsync(StreamFileContent content)
     {
-        var path = CreatePath(content.FileName);
-
         try
         {
-            var image = await dataContext.GetData<Entities.Image>(trackingChanges: true).FirstOrDefaultAsync(i => i.FileName.Contains(content.FileName));
+            var path = CreatePath(content.FileName);
+
+            var image = await dataContext.GetData<Entities.Image>(trackingChanges: true)
+                .FirstOrDefaultAsync(i => i.Path.Contains(content.FileName));
+
             if (image is null)
             {
                 image = new Entities.Image
@@ -97,18 +107,25 @@ public class ImageService : IImageService
                     Description = content.Description
                 };
 
-                await dataContext.CreateAsync(image);
+                dataContext.Create(image);
             }
             else
             {
                 image.Description = content.Description;
-                await dataContext.UpdateAsync(image);
+                dataContext.Edit(image);
             }
 
+            await dataContext.SaveAsync();
             await storageProvider.UploadAsync(path, content.Stream);
-            return Result.Ok();
+
+            var savedImage = mapper.Map<Image>(image);
+            return savedImage;
         }
-        catch (Exception ex)
+        catch (ArgumentNullException ex)
+        {
+            return Result.Fail(FailureReasons.GenericError, ex);
+        }
+        catch (DbUpdateException ex)
         {
             return Result.Fail(FailureReasons.DatabaseError, ex);
         }

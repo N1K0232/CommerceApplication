@@ -11,7 +11,7 @@ public interface IImageService : IDisposable
 
     Task<IEnumerable<Image>> GetAsync();
 
-    Task<ImageStream> GetAsync(Guid imageId);
+    Task<Result<ImageStream>> GetAsync(Guid imageId);
 
-    Task<Result> UploadAsync(StreamFileContent content);
+    Task<Result<Image>> UploadAsync(StreamFileContent content);
 }

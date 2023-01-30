@@ -37,13 +37,10 @@ public class ImagesController : ControllerBase
     [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser, RoleNames.User)]
     public async Task<IActionResult> Get(Guid imageId)
     {
-        var imageStream = await imageService.GetAsync(imageId);
-        if (imageStream is null)
-        {
-            return NotFound("no image found");
-        }
-
-        return File(imageStream.Stream, imageStream.ContentType);
+        var result = await imageService.GetAsync(imageId);
+        return result.Success ?
+            File(result.Content.Stream, result.Content.ContentType) :
+            CreateResponse(result);
     }
 
     [HttpPost]
