@@ -5,9 +5,9 @@ namespace CommerceApi.Shared.Models;
 
 public class Order : BaseModel
 {
-    public User User { get; set; }
+    public User? User { get; init; }
 
-    public OrderStatus Status { get; set; }
+    public OrderStatus? Status { get; init; }
 
-    public IEnumerable<Product> Products { get; set; }
+    public IEnumerable<Product>? Products { get; init; }
 }

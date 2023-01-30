@@ -1,10 +1,29 @@
-﻿namespace CommerceApi.Shared.Common;
+﻿using System.Text.Json.Serialization;
+
+namespace CommerceApi.Shared.Common;
 
 public class ListResult<T> where T : BaseModel
 {
-    public IEnumerable<T> Content { get; set; }
+    [JsonConstructor]
+    public ListResult()
+    {
+    }
 
-    public int TotalCount { get; set; }
+    public ListResult(IEnumerable<T>? content) : this(content, content?.Count() ?? 0, false)
+    {
+    }
 
-    public bool HasNextPage { get; set; }
+    public ListResult(IEnumerable<T>? content, int totalCount, bool hasNextPage = false)
+    {
+        Content = content;
+        TotalCount = totalCount;
+        HasNextPage = hasNextPage;
+    }
+
+
+    public IEnumerable<T>? Content { get; init; }
+
+    public int TotalCount { get; init; }
+
+    public bool HasNextPage { get; init; }
 }

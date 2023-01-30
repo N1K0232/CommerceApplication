@@ -1,8 +1,22 @@
-﻿namespace CommerceApi.Shared.Responses;
+﻿using System.Text.Json.Serialization;
+
+namespace CommerceApi.Shared.Responses;
 
 public class LoginResponse
 {
-    public string AccessToken { get; set; }
+    [JsonConstructor]
+    public LoginResponse()
+    {
+    }
 
-    public string RefreshToken { get; set; }
+    public LoginResponse(string? accessToken, string? refreshToken)
+    {
+        AccessToken = accessToken;
+        RefreshToken = refreshToken;
+    }
+
+
+    public string? AccessToken { get; init; }
+
+    public string? RefreshToken { get; init; }
 }

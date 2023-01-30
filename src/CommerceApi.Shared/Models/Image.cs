@@ -4,13 +4,13 @@ namespace CommerceApi.Shared.Models;
 
 public class Image : BaseModel
 {
-    public string FileName { get; set; }
+    public string? FileName { get; init; }
 
-    public string Path { get; set; }
+    public string? Path { get; init; }
 
-    public long Length { get; set; }
+    public long? Length { get; init; }
 
-    public string ContentType { get; set; }
+    public string? ContentType { get; init; }
 
-    public string Description { get; set; }
+    public string? Description { get; init; }
 }

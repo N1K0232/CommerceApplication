@@ -4,9 +4,9 @@ namespace CommerceApi.Shared.Models;
 
 public class Supplier : BaseModel
 {
-    public string CompanyName { get; set; }
+    public string? CompanyName { get; init; }
 
-    public string ContactName { get; set; }
+    public string? ContactName { get; init; }
 
-    public string City { get; set; }
+    public string? City { get; init; }
 }

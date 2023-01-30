@@ -5,25 +5,25 @@ namespace CommerceApi.Shared.Models;
 
 public class Product : BaseModel
 {
-    public Category Category { get; set; }
+    public Category? Category { get; init; }
 
-    public Supplier Supplier { get; set; }
+    public Supplier? Supplier { get; init; }
 
-    public string Name { get; set; }
+    public string? Name { get; init; }
 
-    public string Description { get; set; }
+    public string? Description { get; init; }
 
-    public string Specifications { get; set; }
+    public string? Specifications { get; init; }
 
-    public string Brand { get; set; }
+    public string? Brand { get; init; }
 
-    public string Model { get; set; }
+    public string? Model { get; init; }
 
-    public ProductCondition Condition { get; set; }
+    public ProductCondition? Condition { get; init; }
 
-    public ProductStatus Status { get; set; }
+    public ProductStatus? Status { get; init; }
 
-    public int Quantity { get; set; }
+    public int? Quantity { get; init; }
 
-    public decimal Price { get; set; }
+    public decimal? Price { get; init; }
 }
