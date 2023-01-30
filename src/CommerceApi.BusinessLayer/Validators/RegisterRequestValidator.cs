@@ -32,11 +32,6 @@ internal class RegisterRequestValidator : AbstractValidator<RegisterRequest>
             .NotEmpty()
             .WithMessage("the email is required");
 
-        RuleFor(r => r.UserName)
-            .NotNull()
-            .NotEmpty()
-            .WithMessage("the username is required");
-
         RuleFor(r => r.Password)
             .NotNull()
             .NotEmpty()
