@@ -14,50 +14,35 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext
         .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
         .Single(t => t.IsGenericMethod && t.Name == nameof(SetQueryFilter));
 
+    private CancellationTokenSource cancellationTokenSource = null;
+
     public ApplicationDataContext(DbContextOptions<ApplicationDataContext> options, ILogger<ApplicationDataContext> logger) : base(options, logger)
     {
     }
 
 
-    public Task CreateAsync<TEntity>(TEntity entity) where TEntity : BaseEntity
+    public void Create<TEntity>(TEntity entity) where TEntity : BaseEntity
     {
-        if (entity is DeletableEntity deletableEntity)
-        {
-            deletableEntity.IsDeleted = false;
-            deletableEntity.DeletedDate = null;
-        }
-
-        entity.CreationDate = DateTime.UtcNow;
-        entity.UpdatedDate = null;
-
+        ArgumentNullException.ThrowIfNull(entity, nameof(entity));
         Set<TEntity>().Add(entity);
-        return SaveChangesAsync();
     }
 
-    public Task UpdateAsync<TEntity>(TEntity entity) where TEntity : BaseEntity
+    public void Edit<TEntity>(TEntity entity) where TEntity : BaseEntity
     {
-        if (entity is DeletableEntity deletableEntity)
-        {
-            deletableEntity.IsDeleted = false;
-            deletableEntity.DeletedDate = null;
-        }
-
-        entity.UpdatedDate = DateTime.UtcNow;
-
+        ArgumentNullException.ThrowIfNull(entity, nameof(entity));
         Set<TEntity>().Update(entity);
-        return SaveChangesAsync();
     }
 
-    public Task DeleteAsync<TEntity>(TEntity entity) where TEntity : BaseEntity
+    public void Delete<TEntity>(TEntity entity) where TEntity : BaseEntity
     {
+        ArgumentNullException.ThrowIfNull(entity, nameof(entity));
         Set<TEntity>().Remove(entity);
-        return SaveChangesAsync();
     }
 
-    public Task DeleteAsync<TEntity>(IEnumerable<TEntity> entities) where TEntity : BaseEntity
+    public void Delete<TEntity>(IEnumerable<TEntity> entities) where TEntity : BaseEntity
     {
+        ArgumentNullException.ThrowIfNull(entities, nameof(entities));
         Set<TEntity>().RemoveRange(entities);
-        return SaveChangesAsync();
     }
 
     public Task<bool> ExistsAsync<T>(Guid id) where T : BaseEntity
@@ -70,10 +55,10 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext
         return ExistsAsyncInternal(predicate);
     }
 
-    public Task<TEntity> GetAsync<TEntity>(Guid id) where TEntity : BaseEntity
+    public ValueTask<TEntity> GetAsync<TEntity>(Guid id) where TEntity : BaseEntity
     {
         var set = Set<TEntity>();
-        return set.FindAsync(id).AsTask();
+        return set.FindAsync(id);
     }
 
     public IQueryable<TEntity> GetData<TEntity>(bool ignoreQueryFilters = false, bool trackingChanges = false) where TEntity : BaseEntity
@@ -84,31 +69,64 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext
     public Task ExecuteTransactionAsync(Func<Task> action)
     {
         var strategy = Database.CreateExecutionStrategy();
+        cancellationTokenSource ??= new CancellationTokenSource();
 
         return strategy.ExecuteAsync(async () =>
         {
-            using var transaction = await Database.BeginTransactionAsync().ConfigureAwait(false);
+            using var transaction = await Database.BeginTransactionAsync(cancellationTokenSource.Token).ConfigureAwait(false);
             await action.Invoke().ConfigureAwait(false);
-            await transaction.CommitAsync().ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationTokenSource.Token).ConfigureAwait(false);
         });
     }
 
-    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+#pragma warning disable IDE0007 //Use implicit type
+    public Task SaveAsync()
     {
         var entries = GetEntries();
 
         foreach (var entry in entries)
         {
-            if (entry.State is EntityState.Deleted && entry.Entity is DeletableEntity deletableEntity)
+            BaseEntity baseEntity = entry.Entity as BaseEntity;
+
+            if (entry.State is EntityState.Added)
             {
-                entry.State = EntityState.Modified;
-                deletableEntity.IsDeleted = true;
-                deletableEntity.DeletedDate = DateTime.UtcNow;
+                if (baseEntity is DeletableEntity deletableEntity)
+                {
+                    deletableEntity.IsDeleted = false;
+                    deletableEntity.DeletedDate = null;
+                }
+
+                baseEntity.CreationDate = DateTime.UtcNow;
+                baseEntity.UpdatedDate = null;
+            }
+
+            if (entry.State is EntityState.Modified)
+            {
+                if (baseEntity is DeletableEntity deletableEntity)
+                {
+                    deletableEntity.IsDeleted = false;
+                    deletableEntity.DeletedDate = null;
+                }
+
+                baseEntity.UpdatedDate = DateTime.UtcNow;
+            }
+
+            if (entry.State is EntityState.Deleted)
+            {
+                if (baseEntity is DeletableEntity deletableEntity)
+                {
+                    entry.State = EntityState.Modified;
+
+                    deletableEntity.IsDeleted = true;
+                    deletableEntity.DeletedDate = DateTime.UtcNow;
+                }
             }
         }
 
-        return base.SaveChangesAsync(cancellationToken);
+        cancellationTokenSource ??= new CancellationTokenSource();
+        return SaveChangesAsync(cancellationTokenSource.Token);
     }
+#pragma warning restore IDE0007
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -174,7 +192,19 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext
 
     private Task<bool> ExistsAsyncInternal<TEntity>(Expression<Func<TEntity, bool>> predicate) where TEntity : BaseEntity
     {
+        cancellationTokenSource ??= new CancellationTokenSource();
+
         var set = GetDataInternal<TEntity>();
-        return set.AnyAsync(predicate);
+        return set.AnyAsync(predicate, cancellationTokenSource.Token);
+    }
+
+    public override void Dispose()
+    {
+        base.Dispose();
+
+        cancellationTokenSource?.Dispose();
+        cancellationTokenSource = null;
+
+        GC.SuppressFinalize(this);
     }
 }
