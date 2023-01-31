@@ -35,6 +35,7 @@ public class UserService : IUserService
     private SignInManager<AuthenticationUser> signInManager;
 
     private readonly IValidator<LoginRequest> loginValidator;
+    private readonly IValidator<TwoFactorRequest> twoFactorValidator;
     private readonly IValidator<RegisterRequest> registerValidator;
     private readonly IValidator<RefreshTokenRequest> refreshTokenValidator;
     private readonly IValidator<ValidateEmailRequest> emailValidator;
@@ -53,6 +54,7 @@ public class UserService : IUserService
         RoleManager<AuthenticationRole> roleManager,
         SignInManager<AuthenticationUser> signInManager,
         IValidator<LoginRequest> loginValidator,
+        IValidator<TwoFactorRequest> twoFactorValidator,
         IValidator<RegisterRequest> registerValidator,
         IValidator<RefreshTokenRequest> refreshTokenValidator,
         IValidator<ValidateEmailRequest> emailValidator,
@@ -69,10 +71,12 @@ public class UserService : IUserService
         this.signInManager = signInManager;
 
         this.loginValidator = loginValidator;
+        this.twoFactorValidator = twoFactorValidator;
         this.registerValidator = registerValidator;
         this.refreshTokenValidator = refreshTokenValidator;
         this.emailValidator = emailValidator;
         this.phoneNumberValidator = phoneNumberValidator;
+
         this.logger = logger;
         this.cache = cache;
 
@@ -107,6 +111,30 @@ public class UserService : IUserService
             }
 
             var result = await userManager.DeleteAsync(user);
+
+            var response = new RegisterResponse(result.Succeeded, result.Errors.Select(e => e.Description));
+            return response;
+        }
+        catch (DbUpdateException ex)
+        {
+            return Result.Fail(FailureReasons.DatabaseError, ex);
+        }
+    }
+
+    public async Task<Result<RegisterResponse>> EnableTwoFactorAuthenticationAsync(TwoFactorRequest request)
+    {
+        ThrowIfDisposed();
+
+        try
+        {
+            var user = await userManager.FindByEmailAsync(request.Email);
+            if (user is null)
+            {
+                return Result.Fail(FailureReasons.ItemNotFound, "No user found. Invalid email");
+            }
+
+            user.TwoFactorEnabled = true;
+            var result = await userManager.UpdateAsync(user);
 
             var response = new RegisterResponse(result.Succeeded, result.Errors.Select(e => e.Description));
             return response;
@@ -276,6 +304,8 @@ public class UserService : IUserService
 
     public async Task<Result<RegisterResponse>> ValidateEmailAsync(ValidateEmailRequest request)
     {
+        ThrowIfDisposed();
+
         var validationResult = await emailValidator.ValidateAsync(request);
         if (!validationResult.IsValid)
         {
@@ -311,6 +341,8 @@ public class UserService : IUserService
 
     public async Task<Result<RegisterResponse>> ValidatePhoneNumberAsync(ValidatePhoneNumberRequest request)
     {
+        ThrowIfDisposed();
+
         var validationResult = await phoneNumberValidator.ValidateAsync(request);
         if (!validationResult.IsValid)
         {
@@ -409,12 +441,7 @@ public class UserService : IUserService
 
         var refreshToken = Convert.ToBase64String(randomNumber);
 
-        var loginResponse = new LoginResponse
-        {
-            AccessToken = accessToken,
-            RefreshToken = refreshToken
-        };
-
+        var loginResponse = new LoginResponse(accessToken, refreshToken);
         return loginResponse;
     }
 

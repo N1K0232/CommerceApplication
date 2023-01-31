@@ -29,6 +29,16 @@ public class UsersController : ControllerBase
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
+    [HttpPost("Enable2FA")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> EnableTwoFactorAuthentication([FromBody] TwoFactorRequest request)
+    {
+        var result = await userService.EnableTwoFactorAuthenticationAsync(request);
+        return CreateResponse(result, StatusCodes.Status200OK);
+    }
+
     [HttpPost("Login")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]

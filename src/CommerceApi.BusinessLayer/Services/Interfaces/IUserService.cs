@@ -8,6 +8,8 @@ public interface IUserService : IDisposable
 {
     Task<Result<RegisterResponse>> DeleteAccountAsync(Guid userId);
 
+    Task<Result<RegisterResponse>> EnableTwoFactorAuthenticationAsync(TwoFactorRequest request);
+
     Task<Result<LoginResponse>> LoginAsync(LoginRequest request);
 
     Task<Result<RegisterResponse>> RegisterAsync(RegisterRequest request);
