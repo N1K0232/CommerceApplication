@@ -4,10 +4,12 @@ namespace CommerceApi.Client;
 
 public class EmailClient : IEmailClient
 {
+    private EmailClientSettings settings;
     private bool disposed = false;
 
     public EmailClient(EmailClientSettings settings)
     {
+        this.settings = settings;
     }
 
 
@@ -21,6 +23,7 @@ public class EmailClient : IEmailClient
     {
         if (disposing && !disposed)
         {
+            settings = null;
             disposed = true;
         }
     }

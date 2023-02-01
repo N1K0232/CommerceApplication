@@ -11,6 +11,8 @@ using CommerceApi.Authentication.StartupTasks;
 using CommerceApi.Authorization.Handlers;
 using CommerceApi.Authorization.Requirements;
 using CommerceApi.BusinessLayer.Settings;
+using CommerceApi.Client;
+using CommerceApi.Client.Extensions;
 using CommerceApi.DataAccessLayer;
 using CommerceApi.Documentation;
 using CommerceApi.Security;
@@ -120,6 +122,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     {
         options.SetNotNullableIfMinLengthGreaterThenZero = true;
     });
+
+    services.AddEmailClientSettings(configuration);
+    services.AddScoped<IEmailClient, EmailClient>();
 
     var hashedConnectionString = configuration.GetConnectionString("SqlConnection");
     var connectionString = StringHasher.GetString(hashedConnectionString);
