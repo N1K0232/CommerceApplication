@@ -1,23 +1,28 @@
-﻿using System.Linq.Expressions;
+﻿using System.Data;
+using System.Linq.Expressions;
 using System.Reflection;
 using CommerceApi.Authentication;
 using CommerceApi.DataAccessLayer.Entities.Common;
+using Dapper;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Logging;
 
 namespace CommerceApi.DataAccessLayer;
 
-public class ApplicationDataContext : AuthenticationDataContext, IDataContext
+public class ApplicationDataContext : AuthenticationDataContext, IDataContext, IDapperContext
 {
     private static readonly MethodInfo setQueryFilter = typeof(ApplicationDataContext)
         .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
         .Single(t => t.IsGenericMethod && t.Name == nameof(SetQueryFilter));
 
     private CancellationTokenSource cancellationTokenSource = null;
+    private SqlConnection connection = null;
 
     public ApplicationDataContext(DbContextOptions<ApplicationDataContext> options, ILogger<ApplicationDataContext> logger) : base(options, logger)
     {
+        connection = new SqlConnection(Database.GetConnectionString());
     }
 
 
@@ -198,13 +203,48 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext
         return set.AnyAsync(predicate, cancellationTokenSource.Token);
     }
 
-    public override void Dispose()
+    public override async ValueTask DisposeAsync()
     {
-        base.Dispose();
-
-        cancellationTokenSource?.Dispose();
-        cancellationTokenSource = null;
+        await DisposeAsync(disposing: true);
+        await base.DisposeAsync();
 
         GC.SuppressFinalize(this);
+    }
+
+    private async ValueTask DisposeAsync(bool disposing)
+    {
+        if (disposing)
+        {
+            if (connection != null)
+            {
+                if (connection.State is ConnectionState.Open)
+                {
+                    await connection.CloseAsync();
+                }
+
+                await connection.DisposeAsync();
+                connection = null;
+            }
+
+            if (cancellationTokenSource != null)
+            {
+                cancellationTokenSource.Dispose();
+                cancellationTokenSource = null;
+            }
+        }
+    }
+
+    public async Task<IEnumerable<T>> QueryAsync<T>(string query, object parameter = null, IDbTransaction transaction = null, CommandType? commandType = null) where T : BaseEntity
+    {
+        await connection.OpenAsync();
+
+        var result = await connection.QueryAsync<T>(query, parameter, transaction, commandType: commandType);
+        return result;
+    }
+
+    public async Task ExecuteAsync(string query, object parameter = null, CommandType? commandType = null)
+    {
+        await connection.OpenAsync();
+        await connection.ExecuteAsync(query, parameter, commandType: commandType);
     }
 }

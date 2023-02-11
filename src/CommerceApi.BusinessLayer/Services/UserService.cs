@@ -9,6 +9,7 @@ using CommerceApi.Authentication.Extensions;
 using CommerceApi.Authentication.Settings;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.BusinessLayer.Settings;
+using CommerceApi.Client;
 using CommerceApi.Shared.Models;
 using CommerceApi.Shared.Requests;
 using CommerceApi.Shared.Responses;
@@ -34,6 +35,8 @@ public class UserService : IUserService
     private RoleManager<AuthenticationRole> roleManager;
     private SignInManager<AuthenticationUser> signInManager;
 
+    private IEmailClient emailClient;
+
     private readonly IValidator<LoginRequest> loginValidator;
     private readonly IValidator<TwoFactorRequest> twoFactorValidator;
     private readonly IValidator<RegisterRequest> registerValidator;
@@ -53,6 +56,7 @@ public class UserService : IUserService
         UserManager<AuthenticationUser> userManager,
         RoleManager<AuthenticationRole> roleManager,
         SignInManager<AuthenticationUser> signInManager,
+        IEmailClient emailClient,
         IValidator<LoginRequest> loginValidator,
         IValidator<TwoFactorRequest> twoFactorValidator,
         IValidator<RegisterRequest> registerValidator,
@@ -69,6 +73,8 @@ public class UserService : IUserService
         this.userManager = userManager;
         this.roleManager = roleManager;
         this.signInManager = signInManager;
+
+        this.emailClient = emailClient;
 
         this.loginValidator = loginValidator;
         this.twoFactorValidator = twoFactorValidator;
@@ -124,6 +130,18 @@ public class UserService : IUserService
     public async Task<Result<RegisterResponse>> EnableTwoFactorAuthenticationAsync(TwoFactorRequest request)
     {
         ThrowIfDisposed();
+
+        var validationResult = await twoFactorValidator.ValidateAsync(request);
+        if (!validationResult.IsValid)
+        {
+            var validationErrors = new List<ValidationError>();
+            foreach (var error in validationResult.Errors)
+            {
+                validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
+            }
+
+            return Result.Fail(FailureReasons.ClientError, "validation errors", validationErrors);
+        }
 
         try
         {
@@ -376,23 +394,6 @@ public class UserService : IUserService
         }
     }
 
-    private async Task<AuthenticationUser> CreateUserAsync(RegisterRequest request)
-    {
-        var userId = request.Id.GetValueOrDefault(Guid.Empty);
-        var user = await GetUserAsync(userId);
-
-        if (user is null)
-        {
-            user = mapper.Map<AuthenticationUser>(request);
-        }
-        else
-        {
-            mapper.Map(request, user);
-        }
-
-        return user;
-    }
-
     private async Task<AuthenticationUser> GetUserAsync(Guid userId)
     {
         if (userId == Guid.Empty)
@@ -516,6 +517,9 @@ public class UserService : IUserService
             roleManager = null;
 
             signInManager = null;
+
+            emailClient.Dispose();
+            emailClient = null;
 
             disposed = true;
         }
