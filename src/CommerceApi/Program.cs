@@ -131,6 +131,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
 
     services.AddSqlServer<ApplicationDataContext>(connectionString);
     services.AddScoped<IDataContext>(provider => provider.GetRequiredService<ApplicationDataContext>());
+    services.AddScoped<IDapperContext>(provider => provider.GetRequiredService<ApplicationDataContext>());
 
     services.AddSqlServer<AuthenticationDataContext>(connectionString);
     services.AddIdentity<AuthenticationUser, AuthenticationRole>(options =>

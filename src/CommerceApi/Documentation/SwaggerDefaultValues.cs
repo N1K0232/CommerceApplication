@@ -29,8 +29,6 @@ public class SwaggerDefaultValues : IOperationFilter
             //{
             //    parameter.Default = description.DefaultValue;
             //}
-
-            parameter.Required |= description.IsRequired;
         }
     }
 }

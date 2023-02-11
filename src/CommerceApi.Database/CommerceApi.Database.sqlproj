@@ -70,11 +70,8 @@
     <Build Include="dbo\Tables\AspNetUserRoles.sql" />
     <Build Include="dbo\Tables\AspNetUsers.sql" />
     <Build Include="dbo\Tables\Categories.sql" />
-    <Build Include="dbo\Tables\Products.sql" />
-    <Build Include="dbo\Tables\Orders.sql" />
-    <Build Include="dbo\Tables\OrderDetails.sql" />
-    <Build Include="dbo\Tables\Suppliers.sql" />
     <Build Include="dbo\Tables\Images.sql" />
+    <Build Include="dbo\Tables\ContentPages.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="CommerceApi.Database.publish.xml" />

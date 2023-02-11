@@ -9,11 +9,14 @@ public class ListResult<T> where T : BaseModel
     {
     }
 
-    public ListResult(IEnumerable<T>? content) : this(content, content?.Count() ?? 0, false)
+    public ListResult(IEnumerable<T>? content)
     {
+        Content = content;
+        TotalCount = content?.LongCount() ?? 0L;
+        HasNextPage = false;
     }
 
-    public ListResult(IEnumerable<T>? content, int totalCount, bool hasNextPage = false)
+    public ListResult(IEnumerable<T>? content, long totalCount, bool hasNextPage = false)
     {
         Content = content;
         TotalCount = totalCount;
@@ -23,7 +26,7 @@ public class ListResult<T> where T : BaseModel
 
     public IEnumerable<T>? Content { get; init; }
 
-    public int TotalCount { get; init; }
+    public long TotalCount { get; init; }
 
     public bool HasNextPage { get; init; }
 }
