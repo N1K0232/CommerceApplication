@@ -1,28 +1,25 @@
 ﻿using System.Data;
-using System.Linq.Expressions;
 using System.Reflection;
 using CommerceApi.Authentication;
+using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.DataAccessLayer.Entities.Common;
 using Dapper;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Logging;
 
 namespace CommerceApi.DataAccessLayer;
 
-public class ApplicationDataContext : AuthenticationDataContext, IDataContext, IDapperContext
+public class ApplicationDataContext : AuthenticationDataContext, IDataContext
 {
     private static readonly MethodInfo setQueryFilter = typeof(ApplicationDataContext)
         .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
         .Single(t => t.IsGenericMethod && t.Name == nameof(SetQueryFilter));
 
-    private CancellationTokenSource cancellationTokenSource = null;
-    private SqlConnection connection = null;
+    private CancellationTokenSource tokenSource = null;
 
     public ApplicationDataContext(DbContextOptions<ApplicationDataContext> options, ILogger<ApplicationDataContext> logger) : base(options, logger)
     {
-        connection = new SqlConnection(Database.GetConnectionString());
     }
 
 
@@ -50,16 +47,6 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext, I
         Set<TEntity>().RemoveRange(entities);
     }
 
-    public Task<bool> ExistsAsync<T>(Guid id) where T : BaseEntity
-    {
-        return ExistsAsyncInternal<T>(x => x.Id == id);
-    }
-
-    public Task<bool> ExistsAsync<TEntity>(Expression<Func<TEntity, bool>> predicate) where TEntity : BaseEntity
-    {
-        return ExistsAsyncInternal(predicate);
-    }
-
     public ValueTask<TEntity> GetAsync<TEntity>(Guid id) where TEntity : BaseEntity
     {
         var set = Set<TEntity>();
@@ -74,13 +61,13 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext, I
     public Task ExecuteTransactionAsync(Func<Task> action)
     {
         var strategy = Database.CreateExecutionStrategy();
-        cancellationTokenSource ??= new CancellationTokenSource();
+        tokenSource ??= new CancellationTokenSource();
 
         return strategy.ExecuteAsync(async () =>
         {
-            using var transaction = await Database.BeginTransactionAsync(cancellationTokenSource.Token).ConfigureAwait(false);
+            using var transaction = await Database.BeginTransactionAsync(tokenSource.Token).ConfigureAwait(false);
             await action.Invoke().ConfigureAwait(false);
-            await transaction.CommitAsync(cancellationTokenSource.Token).ConfigureAwait(false);
+            await transaction.CommitAsync(tokenSource.Token).ConfigureAwait(false);
         });
     }
 
@@ -128,8 +115,8 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext, I
             }
         }
 
-        cancellationTokenSource ??= new CancellationTokenSource();
-        return SaveChangesAsync(cancellationTokenSource.Token);
+        tokenSource ??= new CancellationTokenSource();
+        return SaveChangesAsync(tokenSource.Token);
     }
 #pragma warning restore IDE0007
 
@@ -195,56 +182,11 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext, I
             set.AsNoTrackingWithIdentityResolution();
     }
 
-    private Task<bool> ExistsAsyncInternal<TEntity>(Expression<Func<TEntity, bool>> predicate) where TEntity : BaseEntity
+    public override void Dispose()
     {
-        cancellationTokenSource ??= new CancellationTokenSource();
+        tokenSource.Dispose();
 
-        var set = GetDataInternal<TEntity>();
-        return set.AnyAsync(predicate, cancellationTokenSource.Token);
-    }
-
-    public override async ValueTask DisposeAsync()
-    {
-        await DisposeAsync(disposing: true);
-        await base.DisposeAsync();
-
+        base.Dispose();
         GC.SuppressFinalize(this);
-    }
-
-    private async ValueTask DisposeAsync(bool disposing)
-    {
-        if (disposing)
-        {
-            if (connection != null)
-            {
-                if (connection.State is ConnectionState.Open)
-                {
-                    await connection.CloseAsync();
-                }
-
-                await connection.DisposeAsync();
-                connection = null;
-            }
-
-            if (cancellationTokenSource != null)
-            {
-                cancellationTokenSource.Dispose();
-                cancellationTokenSource = null;
-            }
-        }
-    }
-
-    public async Task<IEnumerable<T>> QueryAsync<T>(string query, object parameter = null, IDbTransaction transaction = null, CommandType? commandType = null) where T : BaseEntity
-    {
-        await connection.OpenAsync();
-
-        var result = await connection.QueryAsync<T>(query, parameter, transaction, commandType: commandType);
-        return result;
-    }
-
-    public async Task ExecuteAsync(string query, object parameter = null, CommandType? commandType = null)
-    {
-        await connection.OpenAsync();
-        await connection.ExecuteAsync(query, parameter, commandType: commandType);
     }
 }
