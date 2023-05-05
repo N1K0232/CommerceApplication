@@ -14,6 +14,8 @@ using CommerceApi.BusinessLayer.StartupServices;
 using CommerceApi.Client;
 using CommerceApi.Client.Extensions;
 using CommerceApi.DataAccessLayer;
+using CommerceApi.DataAccessLayer.Abstractions;
+using CommerceApi.DataAccessLayer.Extensions;
 using CommerceApi.Documentation;
 using Hellang.Middleware.ProblemDetails;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
@@ -126,12 +128,17 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IEmailClient, EmailClient>();
 
     var sqlConnectionString = configuration.GetConnectionString("SqlConnection");
-
     services.AddSqlServer<ApplicationDataContext>(sqlConnectionString);
-    services.AddScoped<IDataContext>(provider => provider.GetRequiredService<ApplicationDataContext>());
-    services.AddScoped<IDapperContext>(provider => provider.GetRequiredService<ApplicationDataContext>());
-
     services.AddSqlServer<AuthenticationDataContext>(sqlConnectionString);
+
+    services.AddScoped<IReadOnlyDataContext>(provider => provider.GetRequiredService<ApplicationDataContext>());
+    services.AddScoped<IDataContext>(provider => provider.GetRequiredService<ApplicationDataContext>());
+
+    services.AddSqlContext(options =>
+    {
+        options.ConnectionString = sqlConnectionString;
+    });
+
     services.AddIdentity<AuthenticationUser, AuthenticationRole>(options =>
     {
         options.User.RequireUniqueEmail = true;
@@ -202,7 +209,28 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
 
     services.AddScoped<IIdentityService, IdentityService>();
     services.AddScoped<IUserService, UserService>();
+    services.AddScoped<IImageService, ImageService>();
+
     services.AddHostedService<AuthenticationStartupService>();
+
+    var storageConnectionString = configuration.GetConnectionString("StorageConnection");
+    if (!string.IsNullOrWhiteSpace(storageConnectionString))
+    {
+        var containerName = configuration.GetValue<string>("AppSettings:ContainerName");
+        services.AddAzureStorageProvider(options =>
+        {
+            options.ConnectionString = storageConnectionString;
+            options.ContainerName = containerName;
+        });
+    }
+    else
+    {
+        var storageFolder = configuration.GetValue<string>("AppSettings:StorageFolder");
+        services.AddFileSystemStorageProvider(options =>
+        {
+            options.StorageFolder = storageFolder;
+        });
+    }
 }
 
 void Configure(IApplicationBuilder app, IApiVersionDescriptionProvider provider)
