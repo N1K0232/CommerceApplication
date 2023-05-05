@@ -2,7 +2,7 @@
 using AutoMapper.QueryableExtensions;
 using CommerceApi.BusinessLayer.Models;
 using CommerceApi.BusinessLayer.Services.Interfaces;
-using CommerceApi.DataAccessLayer;
+using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.Shared.Models;
 using CommerceApi.StorageProviders;
 using Microsoft.EntityFrameworkCore;
@@ -135,23 +135,5 @@ public class ImageService : IImageService
     {
         var now = DateTime.UtcNow;
         return Path.Combine(now.Year.ToString(), now.Month.ToString("00"), fileName);
-    }
-
-    public void Dispose()
-    {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
-    }
-
-    private void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            dataContext.Dispose();
-            dataContext = null;
-
-            storageProvider.Dispose();
-            storageProvider = null;
-        }
     }
 }

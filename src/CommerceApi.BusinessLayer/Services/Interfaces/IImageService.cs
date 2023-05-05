@@ -5,7 +5,7 @@ using StreamFileContent = CommerceApi.BusinessLayer.Models.StreamFileContent;
 
 namespace CommerceApi.BusinessLayer.Services.Interfaces;
 
-public interface IImageService : IDisposable
+public interface IImageService
 {
     Task<Result> DeleteAsync(Guid imageId);
 
