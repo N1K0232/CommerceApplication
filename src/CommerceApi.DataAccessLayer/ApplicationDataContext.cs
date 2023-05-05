@@ -3,6 +3,7 @@ using System.Reflection;
 using CommerceApi.Authentication;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.DataAccessLayer.Entities.Common;
+using CommerceApi.SharedServices;
 using Dapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -12,14 +13,22 @@ namespace CommerceApi.DataAccessLayer;
 
 public class ApplicationDataContext : AuthenticationDataContext, IDataContext
 {
-    private static readonly MethodInfo setQueryFilter = typeof(ApplicationDataContext)
+    private static readonly MethodInfo setQueryFilterOnDeletableEntity = typeof(ApplicationDataContext)
         .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-        .Single(t => t.IsGenericMethod && t.Name == nameof(SetQueryFilter));
+        .Single(t => t.IsGenericMethod && t.Name == nameof(SetQueryFilterOnDeletableEntity));
 
+    private static readonly MethodInfo setQueryFilterOnTenantEntity = typeof(ApplicationDataContext)
+        .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
+        .Single(t => t.IsGenericMethod && t.Name == nameof(SetQueryFilterOnTenantEntity));
+
+    private readonly IUserClaimService claimService;
     private CancellationTokenSource tokenSource = null;
 
-    public ApplicationDataContext(DbContextOptions<ApplicationDataContext> options, ILogger<ApplicationDataContext> logger) : base(options, logger)
+    public ApplicationDataContext(DbContextOptions<ApplicationDataContext> options,
+        ILogger<ApplicationDataContext> logger,
+        IUserClaimService claimService) : base(options, logger)
     {
+        this.claimService = claimService;
     }
 
 
@@ -120,13 +129,13 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext
     }
 #pragma warning restore IDE0007
 
-    protected override void OnModelCreating(ModelBuilder builder)
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(builder);
+        base.OnModelCreating(modelBuilder);
 
-        builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+        modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
-        var entries = builder.Model.GetEntityTypes()
+        var entries = modelBuilder.Model.GetEntityTypes()
             .Where(t => typeof(DeletableEntity).IsAssignableFrom(t.ClrType))
             .ToList();
 
@@ -137,7 +146,7 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext
             foreach (var method in methods)
             {
                 var genericMethod = method.MakeGenericMethod(type);
-                genericMethod.Invoke(this, new object[] { builder });
+                genericMethod.Invoke(this, new object[] { modelBuilder });
             }
         }
     }
@@ -157,15 +166,26 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext
 
         if (typeof(DeletableEntity).IsAssignableFrom(entityType))
         {
-            result.Add(setQueryFilter);
+            result.Add(setQueryFilterOnDeletableEntity);
+        }
+
+        if (typeof(TenantEntity).IsAssignableFrom(entityType))
+        {
+            result.Add(setQueryFilterOnTenantEntity);
         }
 
         return result;
     }
 
-    private void SetQueryFilter<TEntity>(ModelBuilder builder) where TEntity : DeletableEntity
+    private void SetQueryFilterOnDeletableEntity<TEntity>(ModelBuilder modelBuilder) where TEntity : DeletableEntity
     {
-        builder.Entity<TEntity>().HasQueryFilter(x => !x.IsDeleted && x.DeletedDate == null);
+        modelBuilder.Entity<TEntity>().HasQueryFilter(e => !e.IsDeleted && e.DeletedDate == null);
+    }
+
+    private void SetQueryFilterOnTenantEntity<TEntity>(ModelBuilder modelBuilder) where TEntity : TenantEntity
+    {
+        var tenantId = claimService.GetTenantId();
+        modelBuilder.Entity<TEntity>().HasQueryFilter(e => e.TenantId == tenantId);
     }
 
     private IQueryable<TEntity> GetDataInternal<TEntity>(bool ignoreQueryFilters = false, bool trackingChanges = false) where TEntity : BaseEntity

@@ -1,4 +1,5 @@
-﻿using CommerceApi.Authentication.Extensions;
+﻿using System.Security.Claims;
+using CommerceApi.Authentication.Extensions;
 using CommerceApi.SharedServices;
 using Microsoft.AspNetCore.Http;
 
@@ -13,9 +14,26 @@ internal class UserClaimService : IUserClaimService
         httpContext = httpContextAccessor.HttpContext;
     }
 
-    public string GetApplicationId() => httpContext.User.GetApplicationId();
+    public string GetApplicationId()
+    {
+        return httpContext.User.GetApplicationId();
+    }
 
-    public Guid GetId() => httpContext.User.GetId();
+    public Guid GetId()
+    {
+        return httpContext.User.GetId();
+    }
 
-    public string GetUserName() => httpContext.User.GetUserName();
+    public string GetUserName()
+    {
+        return httpContext.User.GetUserName();
+    }
+
+    public Guid GetTenantId() => Guid.Empty;
+
+    public ClaimsIdentity GetIdentity()
+    {
+        var identity = httpContext.User.Identity;
+        return identity as ClaimsIdentity;
+    }
 }
