@@ -29,16 +29,6 @@ public class UsersController : ControllerBase
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
-    [HttpPost("Enable2FA")]
-    [AllowAnonymous]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> EnableTwoFactorAuthentication([FromBody] TwoFactorRequest request)
-    {
-        var result = await userService.EnableTwoFactorAuthenticationAsync(request);
-        return CreateResponse(result, StatusCodes.Status200OK);
-    }
-
     [HttpPost("Login")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -69,23 +59,11 @@ public class UsersController : ControllerBase
         return CreateResponse(response, StatusCodes.Status200OK);
     }
 
-    [HttpPost("ValidateEmail")]
-    [AllowAnonymous]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> ValidateEmail([FromBody] ValidateEmailRequest request)
+    [HttpPost("SignOut")]
+    public async Task<IActionResult> Signout()
     {
-        var result = await userService.ValidateEmailAsync(request);
-        return CreateResponse(result, StatusCodes.Status200OK);
-    }
-
-    [HttpPost("ValidatePhoneNumber")]
-    [AllowAnonymous]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> ValidatePhoneNumber([FromBody] ValidatePhoneNumberRequest request)
-    {
-        var result = await userService.ValidatePhoneNumberAsync(request);
+        var email = User.GetEmail();
+        var result = await userService.SignOutAsync(email);
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
@@ -97,8 +75,6 @@ public class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult GetMe()
     {
-        var applicationId = User.GetApplicationId();
-
         var user = new User
         {
             Id = User.GetId(),

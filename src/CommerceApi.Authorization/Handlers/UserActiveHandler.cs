@@ -22,10 +22,10 @@ public class UserActiveHandler : AuthorizationHandler<UserActiveRequirement>
         {
             var userId = context.User.GetId();
             var user = await userManager.FindByIdAsync(userId.ToString());
-            var lockoutEnd = user.LockoutEnd.GetValueOrDefault();
             var securityStamp = context.User.GetClaimValue(ClaimTypes.SerialNumber);
 
-            if (user is not null && lockoutEnd <= DateTimeOffset.UtcNow && securityStamp == user.SecurityStamp)
+            if (user is not null && user.LockoutEnd.GetValueOrDefault() <= DateTimeOffset.UtcNow
+                && securityStamp == user.SecurityStamp)
             {
                 context.Succeed(requirement);
             }

@@ -1,0 +1,281 @@
+﻿using System.Data;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using CommerceApi.Authentication;
+using CommerceApi.Authentication.Common;
+using CommerceApi.Authentication.Entities;
+using CommerceApi.Authentication.Enums;
+using CommerceApi.Authentication.Extensions;
+using CommerceApi.Authentication.Settings;
+using CommerceApi.BusinessLayer.Services.Interfaces;
+using CommerceApi.Shared.Responses;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+
+namespace CommerceApi.BusinessLayer.Services;
+
+public class IdentityService : IIdentityService
+{
+    private readonly JwtSettings jwtSettings;
+    private readonly AuthenticationDataContext authenticationDataContext;
+    private readonly UserManager<AuthenticationUser> userManager;
+    private readonly RoleManager<AuthenticationRole> roleManager;
+    private readonly SignInManager<AuthenticationUser> signInManager;
+
+    public IdentityService(IOptions<JwtSettings> jwtSettingsOptions,
+                           AuthenticationDataContext authenticationDataContext,
+                           UserManager<AuthenticationUser> userManager,
+                           RoleManager<AuthenticationRole> roleManager,
+                           SignInManager<AuthenticationUser> signInManager)
+    {
+        jwtSettings = jwtSettingsOptions.Value;
+        this.authenticationDataContext = authenticationDataContext;
+        this.userManager = userManager;
+        this.roleManager = roleManager;
+        this.signInManager = signInManager;
+    }
+
+    public async Task CreateRoleAsync(string roleName)
+    {
+        var roleExists = await roleManager.RoleExistsAsync(roleName);
+        if (!roleExists)
+        {
+            var role = new AuthenticationRole(roleName)
+            {
+                ConcurrencyStamp = Guid.NewGuid().ToString()
+            };
+
+            await roleManager.CreateAsync(role);
+        }
+    }
+
+    public async Task CreateRolesAsync(IEnumerable<string> roleNames)
+    {
+        foreach (var roleName in roleNames)
+        {
+            var roleExists = await roleManager.RoleExistsAsync(roleName);
+            if (!roleExists)
+            {
+                var role = new AuthenticationRole(roleName)
+                {
+                    ConcurrencyStamp = Guid.NewGuid().ToString()
+                };
+
+                await roleManager.CreateAsync(role);
+            }
+        }
+    }
+
+    public async Task<IdentityResult> DeleteAccountAsync(string userId)
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        var userRoles = await userManager.GetRolesAsync(user);
+        var userClaims = await userManager.GetClaimsAsync(user);
+
+        if (userRoles.Any(r => r.Equals(RoleNames.Administrator) || r.Equals(RoleNames.PowerUser)))
+        {
+            return IdentityResult.Failed(new IdentityError
+            {
+                Code = "400",
+                Description = "You can't delete an administrator or a power user"
+            });
+        }
+
+        await userManager.RemoveClaimsAsync(user, userClaims);
+        await userManager.RemoveFromRolesAsync(user, userRoles);
+
+        var identityResult = await userManager.DeleteAsync(user);
+        return identityResult;
+    }
+
+    public async Task<LoginResponse> LoginAsync(string email)
+    {
+        var user = await userManager.FindByEmailAsync(email);
+        await userManager.UpdateSecurityStampAsync(user);
+        user.ConcurrencyStamp = await userManager.GenerateConcurrencyStampAsync(user);
+
+        var claims = await GetClaimsAsync(user);
+        var loginResponse = CreateLoginResponse(claims);
+        await SaveRefreshTokenAsync(user, loginResponse.RefreshToken);
+
+        return loginResponse;
+    }
+
+    public async Task<LoginResponse> RefreshTokenAsync(ClaimsPrincipal principal, string refreshToken)
+    {
+        var userId = principal.GetId();
+        var user = await userManager.FindByIdAsync(userId.ToString());
+
+        if (user?.RefreshToken is null || user?.RefreshTokenExpirationDate < DateTime.UtcNow || user.RefreshToken != refreshToken)
+        {
+            return null;
+        }
+
+        var loginResponse = CreateLoginResponse(principal.Claims);
+        await SaveRefreshTokenAsync(user, loginResponse.RefreshToken);
+
+        return loginResponse;
+    }
+
+    public async Task<IdentityResult> RegisterAsync(AuthenticationUser user, string password, string role)
+    {
+        var identityResult = await RegisterAsync(user, password);
+        if (identityResult.Succeeded)
+        {
+            user.Status = UserStatus.Registrated;
+            await userManager.UpdateAsync(user);
+            identityResult = await userManager.AddToRoleAsync(user, role);
+        }
+
+        return identityResult;
+    }
+
+    public async Task<IdentityResult> RegisterAsync(AuthenticationUser user, string password, params string[] roles)
+    {
+        var identityResult = await RegisterAsync(user, password);
+        if (identityResult.Succeeded)
+        {
+            user.Status = UserStatus.Registrated;
+            await userManager.UpdateAsync(user);
+            identityResult = await userManager.AddToRolesAsync(user, roles);
+        }
+
+        return identityResult;
+    }
+
+    public async Task<SignInResult> SignInAsync(string email, string password)
+    {
+        var user = await userManager.FindByEmailAsync(email);
+        var canSignIn = await signInManager.CanSignInAsync(user);
+        if (canSignIn)
+        {
+            var signInResult = await signInManager.PasswordSignInAsync(user, password, false, false);
+            return signInResult;
+        }
+
+        return SignInResult.Failed;
+    }
+
+    public async Task SignOutAsync(string email)
+    {
+        var user = await userManager.FindByEmailAsync(email);
+        if (user != null)
+        {
+            user.Status = UserStatus.LoggedOut;
+            await signInManager.SignOutAsync();
+        }
+    }
+
+    public Task<ClaimsPrincipal> ValidateAccessTokenAsync(string accessToken)
+    {
+        var securityKeyBytes = Encoding.UTF8.GetBytes(jwtSettings.SecurityKey);
+        var parameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtSettings.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtSettings.Audience,
+            ValidateLifetime = false,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(securityKeyBytes),
+            RequireExpirationTime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+
+        try
+        {
+            var user = tokenHandler.ValidateToken(accessToken, parameters, out var securityToken);
+            if (securityToken is JwtSecurityToken jwtSecurityToken && jwtSecurityToken.Header.Alg == SecurityAlgorithms.HmacSha256)
+            {
+                return Task.FromResult(user);
+            }
+        }
+        catch
+        {
+        }
+
+        return Task.FromResult<ClaimsPrincipal>(null);
+    }
+
+    private LoginResponse CreateLoginResponse(IEnumerable<Claim> claims)
+    {
+        var securityKeyBytes = Encoding.UTF8.GetBytes(jwtSettings.SecurityKey);
+        var securityKey = new SymmetricSecurityKey(securityKeyBytes);
+
+        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+        var jwtSecurityToken = new JwtSecurityToken(jwtSettings.Issuer, jwtSettings.Audience, claims,
+            DateTime.UtcNow, DateTime.UtcNow.AddMinutes(jwtSettings.AccessTokenExpirationMinutes), credentials);
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+
+        var accessToken = tokenHandler.WriteToken(jwtSecurityToken);
+
+        using var generator = RandomNumberGenerator.Create();
+        var randomNumber = new byte[256];
+        generator.GetBytes(randomNumber);
+
+        var refreshToken = Convert.ToBase64String(randomNumber);
+
+        var loginResponse = new LoginResponse(accessToken, refreshToken);
+        return loginResponse;
+    }
+
+    private async Task<IEnumerable<Claim>> GetClaimsAsync(AuthenticationUser user)
+    {
+        var userRoles = await userManager.GetRolesAsync(user);
+        var userClaims = await userManager.GetClaimsAsync(user);
+
+        if (userClaims is not null && userClaims.Any())
+        {
+            await userManager.RemoveClaimsAsync(user, userClaims);
+        }
+
+        userClaims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.GivenName, user.FirstName),
+            new Claim(ClaimTypes.Surname, user.LastName ?? string.Empty),
+            new Claim(ClaimTypes.DateOfBirth, user.DateOfBirth?.ToString() ?? string.Empty),
+            new Claim(ClaimTypes.StreetAddress, user.Street ?? string.Empty),
+            new Claim(CustomClaimTypes.City, user.City ?? string.Empty),
+            new Claim(ClaimTypes.PostalCode, user.PostalCode ?? string.Empty),
+            new Claim(ClaimTypes.Country, user.Country ?? string.Empty),
+            new Claim(ClaimTypes.MobilePhone, user.PhoneNumber ?? string.Empty),
+            new Claim(ClaimTypes.SerialNumber, user.SecurityStamp),
+            new Claim(ClaimTypes.GroupSid, user.ConcurrencyStamp),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Name, user.UserName),
+        }.Union(userRoles.Select(role => new Claim(ClaimTypes.Role, role))).ToList();
+
+        await userManager.AddClaimsAsync(user, userClaims);
+
+        return userClaims;
+    }
+
+    private async Task UpdateClaimAsync(AuthenticationUser user, string type, string value)
+    {
+        var userClaims = await userManager.GetClaimsAsync(user);
+        var claim = userClaims.FirstOrDefault(c => c.Type == type);
+
+        await userManager.ReplaceClaimAsync(user, claim, new Claim(type, value));
+    }
+
+    private async Task<IdentityResult> RegisterAsync(AuthenticationUser user, string password)
+    {
+        var identityResult = await userManager.CreateAsync(user, password);
+        return identityResult;
+    }
+
+    private async Task SaveRefreshTokenAsync(AuthenticationUser user, string refreshToken)
+    {
+        user.RefreshToken = refreshToken;
+        user.RefreshTokenExpirationDate = DateTime.UtcNow.AddMinutes(jwtSettings.RefreshTokenExpirationMinutes);
+        await userManager.UpdateAsync(user);
+    }
+}

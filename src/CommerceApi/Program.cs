@@ -5,17 +5,16 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using CommerceApi.Authentication;
 using CommerceApi.Authentication.Entities;
-using CommerceApi.Authentication.Models;
 using CommerceApi.Authentication.Settings;
-using CommerceApi.Authentication.StartupTasks;
 using CommerceApi.Authorization.Handlers;
 using CommerceApi.Authorization.Requirements;
-using CommerceApi.BusinessLayer.Settings;
+using CommerceApi.BusinessLayer.Services;
+using CommerceApi.BusinessLayer.Services.Interfaces;
+using CommerceApi.BusinessLayer.StartupServices;
 using CommerceApi.Client;
 using CommerceApi.Client.Extensions;
 using CommerceApi.DataAccessLayer;
 using CommerceApi.Documentation;
-using CommerceApi.Security;
 using Hellang.Middleware.ProblemDetails;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -126,14 +125,13 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddEmailClientSettings(configuration);
     services.AddScoped<IEmailClient, EmailClient>();
 
-    var hashedConnectionString = configuration.GetConnectionString("SqlConnection");
-    var connectionString = StringHasher.GetString(hashedConnectionString);
+    var sqlConnectionString = configuration.GetConnectionString("SqlConnection");
 
-    services.AddSqlServer<ApplicationDataContext>(connectionString);
+    services.AddSqlServer<ApplicationDataContext>(sqlConnectionString);
     services.AddScoped<IDataContext>(provider => provider.GetRequiredService<ApplicationDataContext>());
     services.AddScoped<IDapperContext>(provider => provider.GetRequiredService<ApplicationDataContext>());
 
-    services.AddSqlServer<AuthenticationDataContext>(connectionString);
+    services.AddSqlServer<AuthenticationDataContext>(sqlConnectionString);
     services.AddIdentity<AuthenticationUser, AuthenticationRole>(options =>
     {
         options.User.RequireUniqueEmail = true;
@@ -149,9 +147,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     var jwtSettingsSection = configuration.GetSection(nameof(JwtSettings));
     var jwtSettings = jwtSettingsSection.Get<JwtSettings>();
     services.Configure<JwtSettings>(jwtSettingsSection);
-
-    var appSettingsSection = configuration.GetSection(nameof(AppSettings));
-    services.Configure<AppSettings>(appSettingsSection);
 
     services.AddAuthentication(options =>
     {
@@ -194,7 +189,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     {
         try
         {
-            using var connection = new SqlConnection(connectionString);
+            using var connection = new SqlConnection(sqlConnectionString);
             await connection.OpenAsync();
         }
         catch (Exception ex)
@@ -205,25 +200,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
         return HealthCheckResult.Healthy();
     });
 
-#if !DEBUG
-    services.AddAzureStorageProvider(options =>
-    {
-        options.ConnectionString = configuration.GetValue<string>("StorageSettings:StorageConnectionString");
-        options.ContainerName = configuration.GetValue<string>("StorageSettings:ContainerName");
-    });
-#endif
-
-    services.AddFileSystemStorageProvider(options =>
-    {
-        options.StorageFolder = configuration.GetValue<string>("StorageSettings:StorageFolder");
-    });
-
-    services.AddServices();
-
-    var adminUserSection = configuration.GetSection(nameof(AdministratorUser));
-    services.Configure<AdministratorUser>(adminUserSection);
-
-    services.AddHostedService<AuthenticationStartupTask>();
+    services.AddScoped<IIdentityService, IdentityService>();
+    services.AddScoped<IUserService, UserService>();
+    services.AddHostedService<AuthenticationStartupService>();
 }
 
 void Configure(IApplicationBuilder app, IApiVersionDescriptionProvider provider)

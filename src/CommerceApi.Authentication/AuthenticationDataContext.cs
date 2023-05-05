@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+﻿using CommerceApi.Authentication.Configurations;
 using CommerceApi.Authentication.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -31,35 +31,35 @@ public class AuthenticationDataContext
         try
         {
             var savedEntries = await base.SaveChangesAsync(cancellationToken);
-            logger.LogInformation($"saved {savedEntries} in the database");
+            logger.LogInformation("saved {0} rows in the database", savedEntries);
 
             return savedEntries;
         }
         catch (DbUpdateConcurrencyException ex)
         {
-            logger.LogError(ex, ex.Message);
+            logger.LogError(ex, "error while saving");
             throw ex;
         }
         catch (DbUpdateException ex)
         {
-            logger.LogError(ex, ex.Message);
+            logger.LogError(ex, "error while saving");
             throw ex;
         }
     }
 
-    protected override void OnModelCreating(ModelBuilder builder)
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(builder);
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.ApplyConfiguration(new AuthenticationUserConfiguration());
+        modelBuilder.ApplyConfiguration(new AuthenticationUserRoleConfiguration());
 
-        builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
-
-        foreach (var entity in builder.Model.GetEntityTypes())
+        foreach (var entity in modelBuilder.Model.GetEntityTypes())
         {
             foreach (var property in entity.GetProperties())
             {
                 if (property.ClrType == typeof(string))
                 {
-                    builder.Entity(entity.Name)
+                    modelBuilder.Entity(entity.Name)
                     .Property(property.Name)
                     .HasConversion(trimStringConverter);
                 }

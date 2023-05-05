@@ -4,11 +4,9 @@ using OperationResults;
 
 namespace CommerceApi.BusinessLayer.Services.Interfaces;
 
-public interface IUserService : IDisposable
+public interface IUserService
 {
-    Task<Result<RegisterResponse>> DeleteAccountAsync(Guid userId);
-
-    Task<Result<RegisterResponse>> EnableTwoFactorAuthenticationAsync(TwoFactorRequest request);
+    Task<Result> DeleteAccountAsync(Guid userId);
 
     Task<Result<LoginResponse>> LoginAsync(LoginRequest request);
 
@@ -16,7 +14,5 @@ public interface IUserService : IDisposable
 
     Task<Result<LoginResponse>> RefreshTokenAsync(RefreshTokenRequest request);
 
-    Task<Result<RegisterResponse>> ValidateEmailAsync(ValidateEmailRequest request);
-
-    Task<Result<RegisterResponse>> ValidatePhoneNumberAsync(ValidatePhoneNumberRequest request);
+    Task<Result> SignOutAsync(string email);
 }
