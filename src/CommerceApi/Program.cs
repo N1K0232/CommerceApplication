@@ -210,6 +210,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IIdentityService, IdentityService>();
     services.AddScoped<IUserService, UserService>();
     services.AddScoped<IImageService, ImageService>();
+    services.AddScoped<ICategoryService, CategoryService>();
+    services.AddScoped<IProductService, ProductService>();
 
     services.AddHostedService<AuthenticationStartupService>();
 
