@@ -1,5 +1,5 @@
 ﻿CREATE TABLE [dbo].[AspNetUsers] (
-    [Id]                         UNIQUEIDENTIFIER   NOT NULL DEFAULT newid(),
+    [Id]                         UNIQUEIDENTIFIER   DEFAULT (newid()) NOT NULL,
     [FirstName]                  NVARCHAR (256)     NOT NULL,
     [LastName]                   NVARCHAR (256)     NULL,
     [DateOfBirth]                DATE               NULL,
@@ -13,7 +13,7 @@
     [NormalizedUserName]         NVARCHAR (256)     NOT NULL,
     [EmailConfirmed]             BIT                NOT NULL,
     [PasswordHash]               NVARCHAR (MAX)     NOT NULL,
-    [RegistrationDate]           DATETIME           NOT NULL DEFAULT getutcdate(),
+    [RegistrationDate]           DATETIME           DEFAULT (getutcdate()) NOT NULL,
     [Status]                     NVARCHAR (50)      NOT NULL,
     [SecurityStamp]              NVARCHAR (MAX)     NOT NULL,
     [ConcurrencyStamp]           NVARCHAR (MAX)     NOT NULL,
@@ -25,7 +25,6 @@
     [AccessFailedCount]          INT                NOT NULL,
     [RefreshToken]               NVARCHAR (512)     NULL,
     [RefreshTokenExpirationDate] DATETIME           NULL,
-
     CONSTRAINT [PK_AspNetUsers] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 

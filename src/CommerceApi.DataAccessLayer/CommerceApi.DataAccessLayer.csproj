@@ -13,7 +13,6 @@
 
     <ItemGroup>
        <ProjectReference Include="..\CommerceApi.Authentication\CommerceApi.Authentication.csproj" />
-       <ProjectReference Include="..\CommerceApi.Database\CommerceApi.Database.sqlproj" />
        <ProjectReference Include="..\CommerceApi.SharedServices\CommerceApi.SharedServices.csproj" />
        <ProjectReference Include="..\CommerceApi.Shared\CommerceApi.Shared.csproj" />
   </ItemGroup>
