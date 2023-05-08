@@ -37,6 +37,10 @@ Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "CommerceApi.Application.Dat
 EndProject
 Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "CommerceApi.Authentication.Database", "src\CommerceApi.Authentication.Database\CommerceApi.Authentication.Database.sqlproj", "{23C7A08D-2BE1-497E-AC3C-668FB3809C62}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommerceApi.ClientContext", "src\CommerceApi.ClientContext\CommerceApi.ClientContext.csproj", "{8F257EDA-801B-4A74-AA29-3523E9D0B62E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommerceApi.TenantContext", "src\CommerceApi.TenantContext\CommerceApi.TenantContext.csproj", "{FC78172E-BA84-4826-BD45-05086833809C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,6 +103,14 @@ Global
 		{23C7A08D-2BE1-497E-AC3C-668FB3809C62}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{23C7A08D-2BE1-497E-AC3C-668FB3809C62}.Release|Any CPU.Build.0 = Release|Any CPU
 		{23C7A08D-2BE1-497E-AC3C-668FB3809C62}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{8F257EDA-801B-4A74-AA29-3523E9D0B62E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F257EDA-801B-4A74-AA29-3523E9D0B62E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F257EDA-801B-4A74-AA29-3523E9D0B62E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F257EDA-801B-4A74-AA29-3523E9D0B62E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC78172E-BA84-4826-BD45-05086833809C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC78172E-BA84-4826-BD45-05086833809C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC78172E-BA84-4826-BD45-05086833809C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC78172E-BA84-4826-BD45-05086833809C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
