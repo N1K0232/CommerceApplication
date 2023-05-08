@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using CommerceApi.Authentication.Common;
+using CommerceApi.Authentication.Entities;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.Shared.Requests;
 using CommerceApi.Shared.Responses;
@@ -62,7 +64,7 @@ public class UserService : IUserService
         var signInResult = await identityService.SignInAsync(request.Email, request.Password);
         if (!signInResult.Succeeded)
         {
-            return null;
+            return Result.Fail(FailureReasons.ClientError, "Invalid email or password");
         }
 
         var loginResponse = await identityService.LoginAsync(request.Email);
@@ -83,7 +85,10 @@ public class UserService : IUserService
             return Result.Fail(FailureReasons.ClientError, validationErrors);
         }
 
-        return new LoginResponse();
+        var principal = await identityService.ValidateAccessTokenAsync(request.AccessToken);
+
+        var loginResponse = await identityService.RefreshTokenAsync(principal, request.RefreshToken);
+        return loginResponse;
     }
 
     public async Task<Result<RegisterResponse>> RegisterAsync(RegisterRequest request)
@@ -100,7 +105,11 @@ public class UserService : IUserService
             return Result.Fail(FailureReasons.ClientError, validationErrors);
         }
 
-        return new RegisterResponse();
+        var user = mapper.Map<AuthenticationUser>(request);
+        var identityResult = await identityService.RegisterAsync(user, request.Password, RoleNames.User);
+
+        var registerResponse = new RegisterResponse(identityResult.Succeeded, identityResult.Errors.Select(e => e.Description));
+        return registerResponse;
     }
 
     public async Task<Result> SignOutAsync(string email)

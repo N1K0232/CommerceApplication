@@ -125,8 +125,6 @@ public class IdentityService : IIdentityService
         var identityResult = await RegisterAsync(user, password);
         if (identityResult.Succeeded)
         {
-            user.Status = UserStatus.Registrated;
-            await userManager.UpdateAsync(user);
             identityResult = await userManager.AddToRoleAsync(user, role);
         }
 
@@ -138,8 +136,6 @@ public class IdentityService : IIdentityService
         var identityResult = await RegisterAsync(user, password);
         if (identityResult.Succeeded)
         {
-            user.Status = UserStatus.Registrated;
-            await userManager.UpdateAsync(user);
             identityResult = await userManager.AddToRolesAsync(user, roles);
         }
 
@@ -268,6 +264,8 @@ public class IdentityService : IIdentityService
 
     private async Task<IdentityResult> RegisterAsync(AuthenticationUser user, string password)
     {
+        user.Status = UserStatus.Registrated;
+
         var identityResult = await userManager.CreateAsync(user, password);
         return identityResult;
     }

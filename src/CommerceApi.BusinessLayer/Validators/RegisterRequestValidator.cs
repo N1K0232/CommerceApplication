@@ -10,31 +10,69 @@ internal class RegisterRequestValidator : AbstractValidator<RegisterRequest>
         RuleFor(r => r.FirstName)
             .NotNull()
             .NotEmpty()
-            .WithMessage("the firstname is required");
+            .WithMessage("field required");
 
         RuleFor(r => r.LastName)
             .NotNull()
             .NotEmpty()
-            .WithMessage("the lastname is required");
+            .WithMessage("field required");
 
         RuleFor(r => r.DateOfBirth)
             .NotNull()
             .NotEmpty()
-            .WithMessage("the date of birth is required");
+            .WithMessage("field required");
+
+        RuleFor(r => r.Street)
+            .NotNull()
+            .NotEmpty()
+            .WithMessage("field required");
+
+        RuleFor(r => r.City)
+            .NotNull()
+            .NotEmpty()
+            .WithMessage("field required");
+
+        RuleFor(r => r.PostalCode)
+            .NotNull()
+            .NotEmpty()
+            .WithMessage("field required");
+
+        RuleFor(r => r.Country)
+            .NotNull()
+            .NotEmpty()
+            .WithMessage("field required");
 
         RuleFor(r => r.PhoneNumber)
             .NotNull()
             .NotEmpty()
-            .WithMessage("the phone number is required");
+            .WithMessage("field required");
+
+        RuleFor(r => r.ConfirmPhoneNumber)
+            .NotNull()
+            .NotEmpty()
+            .Equal(r => r.PhoneNumber)
+            .WithMessage("field required");
 
         RuleFor(r => r.Email)
             .NotNull()
             .NotEmpty()
-            .WithMessage("the email is required");
+            .WithMessage("field required");
+
+        RuleFor(r => r.ConfirmEmail)
+            .NotNull()
+            .NotEmpty()
+            .Equal(r => r.ConfirmEmail)
+            .WithMessage("field required");
 
         RuleFor(r => r.Password)
             .NotNull()
             .NotEmpty()
-            .WithMessage("the password is required");
+            .WithMessage("field required");
+
+        RuleFor(r => r.ConfirmPassword)
+            .NotNull()
+            .NotEmpty()
+            .Equal(r => r.Password)
+            .WithMessage("field required");
     }
 }
