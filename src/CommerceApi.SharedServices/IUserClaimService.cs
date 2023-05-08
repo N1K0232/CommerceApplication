@@ -1,4 +1,6 @@
-﻿namespace CommerceApi.SharedServices;
+﻿using System.Security.Claims;
+
+namespace CommerceApi.SharedServices;
 
 public interface IUserClaimService
 {
@@ -6,5 +8,9 @@ public interface IUserClaimService
 
     Guid GetId();
 
+    Guid GetTenantId();
+
     string GetUserName();
+
+    ClaimsIdentity GetIdentity();
 }
