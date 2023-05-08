@@ -1,34 +1,27 @@
-﻿using System.Data;
-using System.Reflection;
+﻿using System.Reflection;
 using CommerceApi.Authentication;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.DataAccessLayer.Entities.Common;
 using CommerceApi.SharedServices;
 using Dapper;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace CommerceApi.DataAccessLayer;
 
-public class ApplicationDataContext : AuthenticationDataContext, IDataContext
+public partial class ApplicationDataContext : AuthenticationDataContext, IDataContext
 {
-    private static readonly MethodInfo setQueryFilterOnDeletableEntity = typeof(ApplicationDataContext)
-        .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-        .Single(t => t.IsGenericMethod && t.Name == nameof(SetQueryFilterOnDeletableEntity));
-
-    private static readonly MethodInfo setQueryFilterOnTenantEntity = typeof(ApplicationDataContext)
-        .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-        .Single(t => t.IsGenericMethod && t.Name == nameof(SetQueryFilterOnTenantEntity));
-
-    private readonly IUserClaimService claimService;
+    private readonly IMemoryCache memoryCache;
     private CancellationTokenSource tokenSource = null;
 
     public ApplicationDataContext(DbContextOptions<ApplicationDataContext> options,
         ILogger<ApplicationDataContext> logger,
-        IUserClaimService claimService) : base(options, logger)
+        IUserClaimService claimService,
+        IMemoryCache memoryCache) : base(options, logger)
     {
         this.claimService = claimService;
+        this.memoryCache = memoryCache;
     }
 
 
@@ -56,15 +49,28 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext
         Set<TEntity>().RemoveRange(entities);
     }
 
-    public ValueTask<TEntity> GetAsync<TEntity>(Guid id) where TEntity : BaseEntity
+    public async ValueTask<TEntity> GetAsync<TEntity>(Guid id) where TEntity : BaseEntity
     {
+        tokenSource ??= new CancellationTokenSource();
+
         var set = Set<TEntity>();
-        return set.FindAsync(id);
+
+        var entity = await set.FindAsync(id, tokenSource.Token).ConfigureAwait(false);
+        return entity;
     }
 
     public IQueryable<TEntity> GetData<TEntity>(bool ignoreQueryFilters = false, bool trackingChanges = false) where TEntity : BaseEntity
     {
-        return GetDataInternal<TEntity>(ignoreQueryFilters, trackingChanges);
+        var set = Set<TEntity>().AsQueryable();
+
+        if (ignoreQueryFilters)
+        {
+            set = set.IgnoreQueryFilters();
+        }
+
+        return trackingChanges ?
+            set.AsTracking() :
+            set.AsNoTrackingWithIdentityResolution();
     }
 
     public Task ExecuteTransactionAsync(Func<Task> action)
@@ -81,14 +87,12 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext
     }
 
 #pragma warning disable IDE0007 //Use implicit type
-    public Task SaveAsync()
+    public async Task SaveAsync()
     {
-        var entries = GetEntries();
-
+        var entries = GetEntries(EntityState.Added | EntityState.Modified | EntityState.Modified);
         foreach (var entry in entries)
         {
             BaseEntity baseEntity = entry.Entity as BaseEntity;
-
             if (entry.State is EntityState.Added)
             {
                 if (baseEntity is DeletableEntity deletableEntity)
@@ -122,85 +126,33 @@ public class ApplicationDataContext : AuthenticationDataContext, IDataContext
                     deletableEntity.DeletedDate = DateTime.UtcNow;
                 }
             }
+
+            await ValidateAsync(baseEntity);
         }
 
         tokenSource ??= new CancellationTokenSource();
-        return SaveChangesAsync(tokenSource.Token);
+        await SaveChangesAsync(tokenSource.Token);
     }
 #pragma warning restore IDE0007
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        var interceptors = GetInterceptorsFromAssembly(Assembly.GetExecutingAssembly());
+        optionsBuilder.AddInterceptors(interceptors);
+
+        optionsBuilder.UseMemoryCache(memoryCache);
+        base.OnConfiguring(optionsBuilder);
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(modelBuilder);
-
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+        OnModelCreatingCore(modelBuilder);
 
-        var entries = modelBuilder.Model.GetEntityTypes()
-            .Where(t => typeof(DeletableEntity).IsAssignableFrom(t.ClrType))
-            .ToList();
-
-        foreach (var type in entries.Select(t => t.ClrType))
-        {
-            var methods = SetGlobalQueryFilter(type);
-
-            foreach (var method in methods)
-            {
-                var genericMethod = method.MakeGenericMethod(type);
-                genericMethod.Invoke(this, new object[] { modelBuilder });
-            }
-        }
+        base.OnModelCreating(modelBuilder);
     }
 
-    private IEnumerable<EntityEntry> GetEntries()
-    {
-        var entries = ChangeTracker.Entries()
-            .Where(e => e.Entity.GetType().IsSubclassOf(typeof(BaseEntity)))
-            .ToList();
-
-        return entries.Where(e => e.State is EntityState.Deleted);
-    }
-
-    private static IEnumerable<MethodInfo> SetGlobalQueryFilter(Type entityType)
-    {
-        var result = new List<MethodInfo>();
-
-        if (typeof(DeletableEntity).IsAssignableFrom(entityType))
-        {
-            result.Add(setQueryFilterOnDeletableEntity);
-        }
-
-        if (typeof(TenantEntity).IsAssignableFrom(entityType))
-        {
-            result.Add(setQueryFilterOnTenantEntity);
-        }
-
-        return result;
-    }
-
-    private void SetQueryFilterOnDeletableEntity<TEntity>(ModelBuilder modelBuilder) where TEntity : DeletableEntity
-    {
-        modelBuilder.Entity<TEntity>().HasQueryFilter(e => !e.IsDeleted && e.DeletedDate == null);
-    }
-
-    private void SetQueryFilterOnTenantEntity<TEntity>(ModelBuilder modelBuilder) where TEntity : TenantEntity
-    {
-        var tenantId = claimService.GetTenantId();
-        modelBuilder.Entity<TEntity>().HasQueryFilter(e => e.TenantId == tenantId);
-    }
-
-    private IQueryable<TEntity> GetDataInternal<TEntity>(bool ignoreQueryFilters = false, bool trackingChanges = false) where TEntity : BaseEntity
-    {
-        var set = Set<TEntity>().AsQueryable();
-
-        if (ignoreQueryFilters)
-        {
-            set = set.IgnoreQueryFilters();
-        }
-
-        return trackingChanges ?
-            set.AsTracking() :
-            set.AsNoTrackingWithIdentityResolution();
-    }
+    partial void OnModelCreatingCore(ModelBuilder modelBuilder);
 
     public override void Dispose()
     {
