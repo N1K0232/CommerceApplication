@@ -5,6 +5,7 @@ using CommerceApi.SharedServices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Configuration;
 
 namespace CommerceApi.DataAccessLayer;
 
@@ -45,8 +46,26 @@ public partial class ApplicationDataContext
         return entries.Where(e => e.State == entityState);
     }
 
+    partial void OnConfiguringCore(DbContextOptionsBuilder optionsBuilder)
+    {
+        if (!optionsBuilder.IsConfigured)
+        {
+            var sqlConnectionString = configuration.GetConnectionString("SqlConnection");
+            optionsBuilder.UseSqlServer(sqlConnectionString, sqlOptions =>
+            {
+                sqlOptions.EnableRetryOnFailure(10, TimeSpan.FromSeconds(2), null);
+            });
+        }
+
+        var interceptors = GetInterceptorsFromAssembly(Assembly.GetExecutingAssembly());
+        optionsBuilder.AddInterceptors(interceptors);
+        optionsBuilder.UseMemoryCache(memoryCache);
+    }
+
     partial void OnModelCreatingCore(ModelBuilder modelBuilder)
     {
+        modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
         var entries = modelBuilder.Model.GetEntityTypes()
             .Where(t => typeof(DeletableEntity).IsAssignableFrom(t.ClrType))
             .ToList();
@@ -83,7 +102,7 @@ public partial class ApplicationDataContext
     private static IEnumerable<IInterceptor> GetInterceptorsFromAssembly(Assembly assembly)
     {
         var interceptors = new List<IInterceptor>();
-        var interceptorTypes = assembly.GetTypes().Where(t => t.Name.EndsWith("Interceptor"));
+        var interceptorTypes = assembly.GetTypes().Where(t => t.GetTypeInfo().ImplementedInterfaces.Contains(typeof(IInterceptor)));
         foreach (var interceptorType in interceptorTypes)
         {
             var interceptor = (IInterceptor)Activator.CreateInstance(interceptorType);

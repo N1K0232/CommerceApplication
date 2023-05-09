@@ -1,26 +1,30 @@
-﻿using System.Reflection;
-using CommerceApi.Authentication;
+﻿using CommerceApi.Authentication;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.DataAccessLayer.Entities.Common;
 using CommerceApi.SharedServices;
 using Dapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace CommerceApi.DataAccessLayer;
 
 public partial class ApplicationDataContext : AuthenticationDataContext, IDataContext
 {
+    private readonly IConfiguration configuration;
     private readonly IMemoryCache memoryCache;
+
     private CancellationTokenSource tokenSource = null;
 
     public ApplicationDataContext(DbContextOptions<ApplicationDataContext> options,
         ILogger<ApplicationDataContext> logger,
         IUserClaimService claimService,
+        IConfiguration configuration,
         IMemoryCache memoryCache) : base(options, logger)
     {
         this.claimService = claimService;
+        this.configuration = configuration;
         this.memoryCache = memoryCache;
     }
 
@@ -137,18 +141,15 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        var interceptors = GetInterceptorsFromAssembly(Assembly.GetExecutingAssembly());
-        optionsBuilder.AddInterceptors(interceptors);
-
-        optionsBuilder.UseMemoryCache(memoryCache);
+        OnConfiguringCore(optionsBuilder);
         base.OnConfiguring(optionsBuilder);
     }
 
+    partial void OnConfiguringCore(DbContextOptionsBuilder optionsBuilder);
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         OnModelCreatingCore(modelBuilder);
-
         base.OnModelCreating(modelBuilder);
     }
 
