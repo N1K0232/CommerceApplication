@@ -7,7 +7,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectVersion>4.1</ProjectVersion>
     <ProjectGuid>{975cebc1-e0de-4bd5-8df8-81ea2e4aa2ac}</ProjectGuid>
-    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql160DatabaseSchemaProvider</DSP>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql150DatabaseSchemaProvider</DSP>
     <OutputType>Database</OutputType>
     <RootPath>
     </RootPath>
@@ -65,5 +65,8 @@
   <ItemGroup>
     <Build Include="dbo\Tables\Images.sql" />
     <Build Include="dbo\Tables\Categories.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CommerceApi.Application.Database.publish.xml" />
   </ItemGroup>
 </Project>
