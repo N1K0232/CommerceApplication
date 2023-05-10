@@ -40,7 +40,7 @@ public class ImagesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetList()
     {
-        var images = await imageService.GetAsync();
+        var images = await imageService.GetListAsync();
         return Ok(images);
     }
 
@@ -61,7 +61,7 @@ public class ImagesController : ControllerBase
 
     [HttpPost]
     [Consumes("multipart/form-data")]
-    [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser)]
+    [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser, RoleNames.User)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

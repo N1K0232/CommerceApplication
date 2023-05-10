@@ -1,28 +1,8 @@
 ﻿namespace CommerceApi.BusinessLayer.Models;
 
-public record StreamFileContent
+public record StreamFileContent(Stream Stream, string FileName, long Length, string ContentType)
 {
-    public StreamFileContent()
-    {
-    }
+    public string Title { get; set; }
 
-    public StreamFileContent(Stream stream, string fileName, long length, string contentType, string description = null)
-    {
-        Stream = stream;
-        FileName = fileName;
-        Length = length;
-        ContentType = contentType;
-        Description = description;
-    }
-
-
-    public Stream Stream { get; init; }
-
-    public string FileName { get; init; }
-
-    public long Length { get; init; }
-
-    public string ContentType { get; init; }
-
-    public string Description { get; init; }
+    public string Description { get; set; }
 }

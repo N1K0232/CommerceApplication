@@ -93,7 +93,7 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
 #pragma warning disable IDE0007 //Use implicit type
     public async Task SaveAsync()
     {
-        var entries = GetEntries(EntityState.Added | EntityState.Modified | EntityState.Modified);
+        var entries = GetEntries();
         foreach (var entry in entries)
         {
             BaseEntity baseEntity = entry.Entity as BaseEntity;
@@ -103,6 +103,11 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
                 {
                     deletableEntity.IsDeleted = false;
                     deletableEntity.DeletedDate = null;
+                }
+
+                if (baseEntity is FileEntity fileEntity)
+                {
+                    fileEntity.DownloadFileName = $"{Guid.NewGuid()}_{fileEntity.FileName}";
                 }
 
                 baseEntity.CreationDate = DateTime.UtcNow;

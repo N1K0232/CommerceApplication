@@ -7,14 +7,12 @@ public static class UploadFileRequestExtensions
 {
     public static StreamFileContent ToStreamFileContent(this UploadImageRequest request)
     {
-        var content = new StreamFileContent
-        (
-            request.File.OpenReadStream(),
-            request.File.FileName,
-            request.File.Length,
-            request.File.ContentType,
-            request.Description
-        );
+        var file = request.File;
+        var content = new StreamFileContent(file.OpenReadStream(), file.FileName, file.Length, file.ContentType)
+        {
+            Title = request.Title,
+            Description = request.Description
+        };
 
         return content;
     }

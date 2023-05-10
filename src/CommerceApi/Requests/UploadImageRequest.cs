@@ -9,5 +9,8 @@ public class UploadImageRequest
     [BindRequired]
     public IFormFile File { get; set; }
 
+    [BindRequired]
+    public string Title { get; set; }
+
     public string Description { get; set; }
 }

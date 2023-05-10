@@ -1,6 +1,4 @@
 ﻿using AutoMapper;
-using AutoMapper.QueryableExtensions;
-using CommerceApi.BusinessLayer.Models;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.Shared.Models;
@@ -57,12 +55,17 @@ public class ImageService : IImageService
         }
     }
 
-    public async Task<IEnumerable<Image>> GetAsync()
+    public async Task<IEnumerable<Image>> GetListAsync()
     {
-        var images = await dataContext.GetData<Entities.Image>()
+        var dbImages = await dataContext.GetData<Entities.Image>()
             .OrderBy(i => i.Path)
-            .ProjectTo<Image>(mapper.ConfigurationProvider)
             .ToListAsync();
+
+        var images = mapper.Map<IEnumerable<Image>>(dbImages);
+        foreach (var image in images)
+        {
+            image.ContentType ??= MimeUtility.GetMimeMapping(image.Path);
+        }
 
         return images;
     }
@@ -77,10 +80,10 @@ public class ImageService : IImageService
         var image = await dataContext.GetAsync<Entities.Image>(imageId);
         if (image is not null)
         {
-            var stream = await storageProvider.ReadAsync(image.Path);
+            var stream = await storageProvider.ReadAsync(image.DownloadFileName);
             var contentType = MimeUtility.GetMimeMapping(image.Path);
 
-            var imageStream = new ImageStream(stream, contentType);
+            var imageStream = new ImageStream { Stream = stream, ContentType = contentType };
             return imageStream;
         }
 
@@ -93,47 +96,37 @@ public class ImageService : IImageService
         {
             var path = CreatePath(content.FileName);
 
-            var image = await dataContext.GetData<Entities.Image>(trackingChanges: true)
-                .FirstOrDefaultAsync(i => i.Path.Contains(content.FileName));
-
-            if (image is null)
+            var dbImage = new Entities.Image
             {
-                image = new Entities.Image
-                {
-                    FileName = content.FileName,
-                    Path = path,
-                    ContentType = content.ContentType,
-                    Length = content.Length,
-                    Description = content.Description
-                };
+                FileName = content.FileName,
+                Path = path,
+                Title = content.Title,
+                Length = content.Length,
+                ContentType = content.ContentType,
+                Description = content.Description
+            };
 
-                dataContext.Create(image);
-            }
-            else
-            {
-                image.Description = content.Description;
-                dataContext.Edit(image);
-            }
+            dataContext.Create(dbImage);
 
             await dataContext.SaveAsync();
-            await storageProvider.UploadAsync(path, content.Stream);
+            await storageProvider.UploadAsync(dbImage.DownloadFileName, content.Stream);
 
-            var savedImage = mapper.Map<Image>(image);
+            var savedImage = mapper.Map<Image>(dbImage);
             return savedImage;
-        }
-        catch (ArgumentNullException ex)
-        {
-            return Result.Fail(FailureReasons.GenericError, ex);
         }
         catch (DbUpdateException ex)
         {
             return Result.Fail(FailureReasons.DatabaseError, ex);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Result.Fail(FailureReasons.GenericError, ex);
         }
     }
 
     private static string CreatePath(string fileName)
     {
         var now = DateTime.UtcNow;
-        return Path.Combine(now.Year.ToString(), now.Month.ToString("00"), fileName);
+        return Path.Combine(now.Year.ToString("0000"), now.Month.ToString("00"), fileName);
     }
 }

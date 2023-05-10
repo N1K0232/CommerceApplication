@@ -37,13 +37,13 @@ public partial class ApplicationDataContext
         }
     }
 
-    private IEnumerable<EntityEntry> GetEntries(EntityState entityState)
+    private IEnumerable<EntityEntry> GetEntries()
     {
         var entries = ChangeTracker.Entries()
             .Where(e => typeof(BaseEntity).IsAssignableFrom(e.Entity.GetType()))
             .ToList();
 
-        return entries.Where(e => e.State == entityState);
+        return entries.Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted);
     }
 
     partial void OnConfiguringCore(DbContextOptionsBuilder optionsBuilder)

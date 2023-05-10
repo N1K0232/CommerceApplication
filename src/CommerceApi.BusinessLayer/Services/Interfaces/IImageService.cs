@@ -9,7 +9,7 @@ public interface IImageService
 {
     Task<Result> DeleteAsync(Guid imageId);
 
-    Task<IEnumerable<Image>> GetAsync();
+    Task<IEnumerable<Image>> GetListAsync();
 
     Task<Result<ImageStream>> GetAsync(Guid imageId);
 

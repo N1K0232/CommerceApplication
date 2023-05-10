@@ -2,7 +2,7 @@
 
 namespace CommerceApi.Filters;
 
-[AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter, AllowMultiple = false)]
 public class AllowedExtensionsAttribute : ValidationAttribute
 {
     private readonly IEnumerable<string> extensions;
