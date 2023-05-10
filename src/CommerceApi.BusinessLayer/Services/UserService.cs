@@ -105,7 +105,7 @@ public class UserService : IUserService
             return Result.Fail(FailureReasons.ClientError, validationErrors);
         }
 
-        var user = mapper.Map<AuthenticationUser>(request);
+        var user = mapper.Map<ApplicationUser>(request);
         var identityResult = await identityService.RegisterAsync(user, request.Password, RoleNames.User);
 
         var registerResponse = new RegisterResponse(identityResult.Succeeded, identityResult.Errors.Select(e => e.Description));

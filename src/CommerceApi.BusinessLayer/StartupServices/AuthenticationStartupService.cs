@@ -29,14 +29,14 @@ public class AuthenticationStartupService : IHostedService
         var administratorUserSection = configuration.GetSection("AdministratorUser");
         var powerUserSection = configuration.GetSection("PowerUser");
 
-        var administratorUser = new AuthenticationUser
+        var administratorUser = new ApplicationUser
         {
             FirstName = administratorUserSection["FirstName"],
             UserName = administratorUserSection["Email"],
             Email = administratorUserSection["Email"]
         };
 
-        var powerUser = new AuthenticationUser
+        var powerUser = new ApplicationUser
         {
             FirstName = powerUserSection["FirstName"],
             UserName = powerUserSection["Email"],

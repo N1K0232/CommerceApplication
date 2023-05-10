@@ -141,7 +141,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
         options.ConnectionString = sqlConnectionString;
     });
 
-    services.AddIdentity<AuthenticationUser, AuthenticationRole>(options =>
+    services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
     {
         options.User.RequireUniqueEmail = true;
         options.Password.RequiredLength = 8;

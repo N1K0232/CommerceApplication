@@ -17,9 +17,9 @@ public interface IIdentityService
 
     Task<LoginResponse> RefreshTokenAsync(ClaimsPrincipal principal, string refreshToken);
 
-    Task<IdentityResult> RegisterAsync(AuthenticationUser user, string password, string role);
+    Task<IdentityResult> RegisterAsync(ApplicationUser user, string password, string role);
 
-    Task<IdentityResult> RegisterAsync(AuthenticationUser user, string password, params string[] roles);
+    Task<IdentityResult> RegisterAsync(ApplicationUser user, string password, params string[] roles);
 
     Task<SignInResult> SignInAsync(string email, string password);
 

@@ -21,15 +21,15 @@ public class IdentityService : IIdentityService
 {
     private readonly JwtSettings jwtSettings;
     private readonly AuthenticationDataContext authenticationDataContext;
-    private readonly UserManager<AuthenticationUser> userManager;
-    private readonly RoleManager<AuthenticationRole> roleManager;
-    private readonly SignInManager<AuthenticationUser> signInManager;
+    private readonly UserManager<ApplicationUser> userManager;
+    private readonly RoleManager<ApplicationRole> roleManager;
+    private readonly SignInManager<ApplicationUser> signInManager;
 
     public IdentityService(IOptions<JwtSettings> jwtSettingsOptions,
                            AuthenticationDataContext authenticationDataContext,
-                           UserManager<AuthenticationUser> userManager,
-                           RoleManager<AuthenticationRole> roleManager,
-                           SignInManager<AuthenticationUser> signInManager)
+                           UserManager<ApplicationUser> userManager,
+                           RoleManager<ApplicationRole> roleManager,
+                           SignInManager<ApplicationUser> signInManager)
     {
         jwtSettings = jwtSettingsOptions.Value;
         this.authenticationDataContext = authenticationDataContext;
@@ -43,7 +43,7 @@ public class IdentityService : IIdentityService
         var roleExists = await roleManager.RoleExistsAsync(roleName);
         if (!roleExists)
         {
-            var role = new AuthenticationRole(roleName)
+            var role = new ApplicationRole(roleName)
             {
                 ConcurrencyStamp = Guid.NewGuid().ToString()
             };
@@ -59,7 +59,7 @@ public class IdentityService : IIdentityService
             var roleExists = await roleManager.RoleExistsAsync(roleName);
             if (!roleExists)
             {
-                var role = new AuthenticationRole(roleName)
+                var role = new ApplicationRole(roleName)
                 {
                     ConcurrencyStamp = Guid.NewGuid().ToString()
                 };
@@ -120,7 +120,7 @@ public class IdentityService : IIdentityService
         return loginResponse;
     }
 
-    public async Task<IdentityResult> RegisterAsync(AuthenticationUser user, string password, string role)
+    public async Task<IdentityResult> RegisterAsync(ApplicationUser user, string password, string role)
     {
         var identityResult = await RegisterAsync(user, password);
         if (identityResult.Succeeded)
@@ -131,7 +131,7 @@ public class IdentityService : IIdentityService
         return identityResult;
     }
 
-    public async Task<IdentityResult> RegisterAsync(AuthenticationUser user, string password, params string[] roles)
+    public async Task<IdentityResult> RegisterAsync(ApplicationUser user, string password, params string[] roles)
     {
         var identityResult = await RegisterAsync(user, password);
         if (identityResult.Succeeded)
@@ -222,7 +222,7 @@ public class IdentityService : IIdentityService
         return loginResponse;
     }
 
-    private async Task<IEnumerable<Claim>> GetClaimsAsync(AuthenticationUser user)
+    private async Task<IEnumerable<Claim>> GetClaimsAsync(ApplicationUser user)
     {
         var userRoles = await userManager.GetRolesAsync(user);
         var userClaims = await userManager.GetClaimsAsync(user);
@@ -254,7 +254,7 @@ public class IdentityService : IIdentityService
         return userClaims;
     }
 
-    private async Task UpdateClaimAsync(AuthenticationUser user, string type, string value)
+    private async Task UpdateClaimAsync(ApplicationUser user, string type, string value)
     {
         var userClaims = await userManager.GetClaimsAsync(user);
         var claim = userClaims.FirstOrDefault(c => c.Type == type);
@@ -262,7 +262,7 @@ public class IdentityService : IIdentityService
         await userManager.ReplaceClaimAsync(user, claim, new Claim(type, value));
     }
 
-    private async Task<IdentityResult> RegisterAsync(AuthenticationUser user, string password)
+    private async Task<IdentityResult> RegisterAsync(ApplicationUser user, string password)
     {
         user.Status = UserStatus.Registrated;
 
@@ -270,7 +270,7 @@ public class IdentityService : IIdentityService
         return identityResult;
     }
 
-    private async Task SaveRefreshTokenAsync(AuthenticationUser user, string refreshToken)
+    private async Task SaveRefreshTokenAsync(ApplicationUser user, string refreshToken)
     {
         user.RefreshToken = refreshToken;
         user.RefreshTokenExpirationDate = DateTime.UtcNow.AddMinutes(jwtSettings.RefreshTokenExpirationMinutes);

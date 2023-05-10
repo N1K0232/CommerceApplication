@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace CommerceApi.Authentication.Configurations;
 
-public class AuthenticationUserRoleConfiguration : IEntityTypeConfiguration<AuthenticationUserRole>
+public class ApplicationUserRoleConfiguration : IEntityTypeConfiguration<ApplicationUserRole>
 {
-    public void Configure(EntityTypeBuilder<AuthenticationUserRole> builder)
+    public void Configure(EntityTypeBuilder<ApplicationUserRole> builder)
     {
         builder.HasKey(userRole => new { userRole.UserId, userRole.RoleId });
 

@@ -9,11 +9,11 @@ using Microsoft.Extensions.Logging;
 namespace CommerceApi.Authentication;
 
 public class AuthenticationDataContext
-    : IdentityDbContext<AuthenticationUser,
-      AuthenticationRole,
+    : IdentityDbContext<ApplicationUser,
+      ApplicationRole,
       Guid,
       IdentityUserClaim<Guid>,
-      AuthenticationUserRole,
+      ApplicationUserRole,
       IdentityUserLogin<Guid>,
       IdentityRoleClaim<Guid>,
       IdentityUserToken<Guid>>
@@ -50,8 +50,8 @@ public class AuthenticationDataContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.ApplyConfiguration(new AuthenticationUserConfiguration());
-        modelBuilder.ApplyConfiguration(new AuthenticationUserRoleConfiguration());
+        modelBuilder.ApplyConfiguration(new ApplicationUserConfiguration());
+        modelBuilder.ApplyConfiguration(new ApplicationUserRoleConfiguration());
 
         foreach (var entity in modelBuilder.Model.GetEntityTypes())
         {

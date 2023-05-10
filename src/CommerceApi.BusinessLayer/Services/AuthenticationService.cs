@@ -8,10 +8,10 @@ namespace CommerceApi.BusinessLayer.Services;
 
 public class AuthenticationService : IAuthenticationService
 {
-    private readonly UserManager<AuthenticationUser> userManager;
+    private readonly UserManager<ApplicationUser> userManager;
     private readonly IMapper mapper;
 
-    public AuthenticationService(UserManager<AuthenticationUser> userManager, IMapper mapper)
+    public AuthenticationService(UserManager<ApplicationUser> userManager, IMapper mapper)
     {
         this.userManager = userManager;
         this.mapper = mapper;

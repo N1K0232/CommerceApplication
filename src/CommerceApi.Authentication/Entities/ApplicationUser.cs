@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace CommerceApi.Authentication.Entities;
 
-public class AuthenticationUser : IdentityUser<Guid>
+public class ApplicationUser : IdentityUser<Guid>
 {
     public string FirstName { get; set; }
 
@@ -27,5 +27,5 @@ public class AuthenticationUser : IdentityUser<Guid>
 
     public DateTime? RefreshTokenExpirationDate { get; set; }
 
-    public virtual ICollection<AuthenticationUserRole> UserRoles { get; set; }
+    public virtual ICollection<ApplicationUserRole> UserRoles { get; set; }
 }

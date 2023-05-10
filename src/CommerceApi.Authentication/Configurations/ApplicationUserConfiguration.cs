@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace CommerceApi.Authentication.Configurations;
 
-public class AuthenticationUserConfiguration : IEntityTypeConfiguration<AuthenticationUser>
+public class ApplicationUserConfiguration : IEntityTypeConfiguration<ApplicationUser>
 {
-    public void Configure(EntityTypeBuilder<AuthenticationUser> builder)
+    public void Configure(EntityTypeBuilder<ApplicationUser> builder)
     {
         builder.HasKey(user => user.Id);
         builder.Property(user => user.Id).IsRequired().ValueGeneratedOnAdd().HasDefaultValueSql("newid()");

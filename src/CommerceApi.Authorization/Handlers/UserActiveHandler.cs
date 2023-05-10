@@ -9,9 +9,9 @@ namespace CommerceApi.Authorization.Handlers;
 
 public class UserActiveHandler : AuthorizationHandler<UserActiveRequirement>
 {
-    private readonly UserManager<AuthenticationUser> userManager;
+    private readonly UserManager<ApplicationUser> userManager;
 
-    public UserActiveHandler(UserManager<AuthenticationUser> userManager)
+    public UserActiveHandler(UserManager<ApplicationUser> userManager)
     {
         this.userManager = userManager;
     }
