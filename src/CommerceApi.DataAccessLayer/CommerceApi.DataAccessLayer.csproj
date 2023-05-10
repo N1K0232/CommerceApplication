@@ -7,9 +7,9 @@
 
     <ItemGroup>
        <PackageReference Include="Dapper" Version="2.0.123" />
-       <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.0" />
+       <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.5" />
        <PackageReference Include="Microsoft.Extensions.Caching.SqlServer" Version="7.0.5" />
-       <PackageReference Include="TinyHelpers" Version="1.5.41" />
+       <PackageReference Include="TinyHelpers" Version="2.0.30" />
     </ItemGroup>
 
     <ItemGroup>
