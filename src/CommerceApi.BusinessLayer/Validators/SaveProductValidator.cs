@@ -1,6 +1,6 @@
 ﻿using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.DataAccessLayer.Entities;
-using CommerceApi.Shared.Requests;
+using CommerceApi.Shared.Models.Requests;
 using FluentValidation;
 
 namespace CommerceApi.BusinessLayer.Validators;

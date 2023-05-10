@@ -10,7 +10,7 @@ using CommerceApi.Authentication.Enums;
 using CommerceApi.Authentication.Extensions;
 using CommerceApi.Authentication.Settings;
 using CommerceApi.BusinessLayer.Services.Interfaces;
-using CommerceApi.Shared.Responses;
+using CommerceApi.Shared.Models.Responses;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;

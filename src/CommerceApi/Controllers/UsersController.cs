@@ -3,7 +3,7 @@ using CommerceApi.Authentication.Extensions;
 using CommerceApi.Authorization.Filters;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.Shared.Models;
-using CommerceApi.Shared.Requests;
+using CommerceApi.Shared.Models.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

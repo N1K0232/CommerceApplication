@@ -2,9 +2,9 @@
 using AutoMapper;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.DataAccessLayer.Abstractions;
-using CommerceApi.Shared.Common;
 using CommerceApi.Shared.Models;
-using CommerceApi.Shared.Requests;
+using CommerceApi.Shared.Models.Common;
+using CommerceApi.Shared.Models.Requests;
 using CommerceApi.StorageProviders;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;

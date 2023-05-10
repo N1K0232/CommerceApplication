@@ -17,6 +17,7 @@ using CommerceApi.DataAccessLayer;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.DataAccessLayer.Extensions;
 using CommerceApi.Documentation;
+using CommerceApi.OperationFilters;
 using Hellang.Middleware.ProblemDetails;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -87,6 +88,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
     services.AddSwaggerGen(options =>
     {
+        options.OperationFilter<FormFileOperationFilter>();
         options.OperationFilter<SwaggerDefaultValues>();
 
         options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme

@@ -1,6 +1,6 @@
-﻿using CommerceApi.Shared.Common;
-using CommerceApi.Shared.Models;
-using CommerceApi.Shared.Requests;
+﻿using CommerceApi.Shared.Models;
+using CommerceApi.Shared.Models.Common;
+using CommerceApi.Shared.Models.Requests;
 using OperationResults;
 
 namespace CommerceApi.BusinessLayer.Services.Interfaces;

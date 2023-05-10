@@ -1,4 +1,4 @@
-﻿using CommerceApi.Shared.Requests;
+﻿using CommerceApi.Shared.Models.Requests;
 using FluentValidation;
 
 namespace CommerceApi.BusinessLayer.Validators;

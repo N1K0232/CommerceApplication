@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using CommerceApi.Authentication.Entities;
 using CommerceApi.Shared.Models;
-using CommerceApi.Shared.Requests;
+using CommerceApi.Shared.Models.Requests;
 
 namespace CommerceApi.BusinessLayer.MapperProfiles;
 

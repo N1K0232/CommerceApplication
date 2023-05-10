@@ -1,8 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace CommerceApi.Shared.Common;
+namespace CommerceApi.Shared.Models.Common;
 
-public class ListResult<T> where T : BaseModel
+public class ListResult<T> where T : BaseObject
 {
     [JsonConstructor]
     public ListResult()

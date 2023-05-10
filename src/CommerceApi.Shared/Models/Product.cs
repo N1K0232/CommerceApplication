@@ -1,8 +1,8 @@
-﻿using CommerceApi.Shared.Common;
+﻿using CommerceApi.Shared.Models.Common;
 
 namespace CommerceApi.Shared.Models;
 
-public class Product : BaseModel
+public class Product : BaseObject
 {
     public Category Category { get; set; } = null!;
 

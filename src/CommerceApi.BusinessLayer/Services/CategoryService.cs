@@ -3,7 +3,7 @@ using AutoMapper.QueryableExtensions;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.Shared.Models;
-using CommerceApi.Shared.Requests;
+using CommerceApi.Shared.Models.Requests;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using OperationResults;

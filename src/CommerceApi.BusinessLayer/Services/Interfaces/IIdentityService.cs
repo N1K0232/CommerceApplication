@@ -1,6 +1,6 @@
 ﻿using System.Security.Claims;
 using CommerceApi.Authentication.Entities;
-using CommerceApi.Shared.Responses;
+using CommerceApi.Shared.Models.Responses;
 using Microsoft.AspNetCore.Identity;
 
 namespace CommerceApi.BusinessLayer.Services.Interfaces;

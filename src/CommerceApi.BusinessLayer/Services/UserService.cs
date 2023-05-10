@@ -2,8 +2,8 @@
 using CommerceApi.Authentication.Common;
 using CommerceApi.Authentication.Entities;
 using CommerceApi.BusinessLayer.Services.Interfaces;
-using CommerceApi.Shared.Requests;
-using CommerceApi.Shared.Responses;
+using CommerceApi.Shared.Models.Requests;
+using CommerceApi.Shared.Models.Responses;
 using FluentValidation;
 using OperationResults;
 

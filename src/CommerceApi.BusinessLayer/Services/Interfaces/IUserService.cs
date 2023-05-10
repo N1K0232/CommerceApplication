@@ -1,5 +1,5 @@
-﻿using CommerceApi.Shared.Requests;
-using CommerceApi.Shared.Responses;
+﻿using CommerceApi.Shared.Models.Requests;
+using CommerceApi.Shared.Models.Responses;
 using OperationResults;
 
 namespace CommerceApi.BusinessLayer.Services.Interfaces;

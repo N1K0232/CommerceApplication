@@ -1,8 +1,8 @@
-﻿using CommerceApi.Shared.Common;
+﻿using CommerceApi.Shared.Models.Common;
 
 namespace CommerceApi.Shared.Models;
 
-public class User : BaseModel
+public class User : BaseObject
 {
     public string FirstName { get; init; } = null!;
 

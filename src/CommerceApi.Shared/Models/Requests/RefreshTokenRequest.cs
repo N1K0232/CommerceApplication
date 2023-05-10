@@ -1,4 +1,4 @@
-﻿namespace CommerceApi.Shared.Requests;
+﻿namespace CommerceApi.Shared.Models.Requests;
 
 public class RefreshTokenRequest
 {

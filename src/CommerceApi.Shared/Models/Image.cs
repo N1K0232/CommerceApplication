@@ -1,16 +1,18 @@
-﻿using CommerceApi.Shared.Common;
+﻿using CommerceApi.Shared.Models.Common;
 
 namespace CommerceApi.Shared.Models;
 
-public class Image : BaseModel
+public class Image : BaseObject
 {
-    public string? FileName { get; init; }
+    public string FileName { get; set; } = null!;
 
-    public string? Path { get; init; }
+    public string Path { get; set; } = null!;
 
-    public long? Length { get; init; }
+    public string Title { get; set; } = null!;
 
-    public string? ContentType { get; init; }
+    public long Length { get; set; }
 
-    public string? Description { get; init; }
+    public string ContentType { get; set; } = null!;
+
+    public string? Description { get; set; }
 }

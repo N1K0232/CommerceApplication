@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace CommerceApi.Shared.Responses;
+namespace CommerceApi.Shared.Models.Responses;
 
 public class RegisterResponse
 {

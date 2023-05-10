@@ -1,9 +1,9 @@
 ﻿using CommerceApi.Authentication.Common;
 using CommerceApi.Authorization.Filters;
 using CommerceApi.BusinessLayer.Services.Interfaces;
-using CommerceApi.Shared.Common;
 using CommerceApi.Shared.Models;
-using CommerceApi.Shared.Requests;
+using CommerceApi.Shared.Models.Common;
+using CommerceApi.Shared.Models.Requests;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CommerceApi.Controllers;
