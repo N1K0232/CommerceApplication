@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Net.Mime;
 using System.Reflection;
 using System.Text;
@@ -13,6 +14,8 @@ using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.BusinessLayer.StartupServices;
 using CommerceApi.Client;
 using CommerceApi.Client.Extensions;
+using CommerceApi.ClientContext;
+using CommerceApi.ClientContext.TypeConverters;
 using CommerceApi.DataAccessLayer;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.DataAccessLayer.Extensions;
@@ -34,6 +37,8 @@ using OperationResults.AspNetCore;
 using Serilog;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using TinyHelpers.Json.Serialization;
+using DateOnlyConverter = CommerceApi.ClientContext.Converters.DateOnlyConverter;
+using TimeOnlyConverter = CommerceApi.ClientContext.Converters.TimeOnlyConverter;
 
 var builder = WebApplication.CreateBuilder(args);
 ConfigureServices(builder.Services, builder.Configuration, builder.Host);
@@ -46,6 +51,9 @@ await app.RunAsync();
 
 void ConfigureServices(IServiceCollection services, IConfiguration configuration, IHostBuilder host)
 {
+    TypeDescriptor.AddAttributes(typeof(DateOnly), new TypeConverterAttribute(typeof(DateOnlyTypeConverter)));
+    TypeDescriptor.AddAttributes(typeof(TimeOnly), new TypeConverterAttribute(typeof(TimeOnlyTypeConverter)));
+
     host.UseSerilog((hostingContext, loggerConfiguration) =>
     {
         loggerConfiguration.ReadFrom.Configuration(hostingContext.Configuration);
@@ -57,6 +65,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     });
 
     services.AddHttpContextAccessor();
+    services.AddClientContextAccessor();
     services.AddMemoryCache();
     services.AddOperationResult();
     services.AddUserClaimService();
@@ -68,8 +77,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     {
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
         options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
-        options.JsonSerializerOptions.Converters.Add(new TimeSpanTicksConverter());
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.Converters.Add(new DateOnlyConverter());
+        options.JsonSerializerOptions.Converters.Add(new TimeOnlyConverter());
     });
 
     services.AddApiVersioning(options =>
@@ -90,6 +100,11 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     {
         options.OperationFilter<FormFileOperationFilter>();
         options.OperationFilter<SwaggerDefaultValues>();
+
+        options.AddClientContextOperationFilter();
+
+        options.MapType<DateOnly>("string", "date");
+        options.MapType<TimeOnly>("string", "date", TimeOnly.FromDateTime(DateTime.Now).ToString("HH:mm:ss"));
 
         options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
         {
