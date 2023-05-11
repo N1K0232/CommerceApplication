@@ -144,6 +144,14 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
     }
 #pragma warning restore IDE0007
 
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        ConfigureConventionsCore(configurationBuilder);
+        base.ConfigureConventions(configurationBuilder);
+    }
+
+    partial void ConfigureConventionsCore(ModelConfigurationBuilder configurationBuilder);
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         OnConfiguringCore(optionsBuilder);
