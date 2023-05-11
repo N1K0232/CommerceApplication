@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using CommerceApi.Authentication;
+using CommerceApi.Authentication.Common;
 using CommerceApi.Authentication.Entities;
 using CommerceApi.Authentication.Settings;
 using CommerceApi.Authorization.Handlers;
@@ -199,10 +200,22 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
         policyBuilder.Requirements.Add(new UserActiveRequirement());
 
         var policy = policyBuilder.Build();
-        options.FallbackPolicy = options.DefaultPolicy = policy;
+        options.FallbackPolicy = policy;
 
         options.AddPolicy("UserActive", policy =>
         {
+            policy.Requirements.Add(new UserActiveRequirement());
+        });
+
+        options.AddPolicy("Administrator", policy =>
+        {
+            policy.RequireRole(RoleNames.Administrator);
+            policy.Requirements.Add(new UserActiveRequirement());
+        });
+
+        options.AddPolicy("PowerUser", policy =>
+        {
+            policy.RequireRole(RoleNames.PowerUser);
             policy.Requirements.Add(new UserActiveRequirement());
         });
     });

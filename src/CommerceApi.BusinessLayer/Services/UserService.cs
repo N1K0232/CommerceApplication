@@ -4,6 +4,7 @@ using CommerceApi.Authentication.Entities;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.Shared.Models.Requests;
 using CommerceApi.Shared.Models.Responses;
+using CommerceApi.StorageProviders;
 using FluentValidation;
 using OperationResults;
 
@@ -12,18 +13,21 @@ namespace CommerceApi.BusinessLayer.Services;
 public class UserService : IUserService
 {
     private readonly IIdentityService identityService;
+    private readonly IStorageProvider storageProvider;
     private readonly IMapper mapper;
     private readonly IValidator<LoginRequest> loginValidator;
     private readonly IValidator<RegisterRequest> registerValidator;
     private readonly IValidator<RefreshTokenRequest> refreshTokenValidator;
 
     public UserService(IIdentityService identityService,
+                       IStorageProvider storageProvider,
                        IMapper mapper,
                        IValidator<LoginRequest> loginValidator,
                        IValidator<RegisterRequest> registerValidator,
                        IValidator<RefreshTokenRequest> refreshTokenValidator)
     {
         this.identityService = identityService;
+        this.storageProvider = storageProvider;
         this.mapper = mapper;
         this.loginValidator = loginValidator;
         this.registerValidator = registerValidator;
@@ -116,5 +120,26 @@ public class UserService : IUserService
     {
         await identityService.SignOutAsync(email);
         return Result.Ok();
+    }
+
+    public async Task<Result> UploadPhotoAsync(Guid userId, string imagePath, Stream imageStream)
+    {
+        try
+        {
+            var userExists = await identityService.UserExistsAsync(userId.ToString());
+            if (userExists)
+            {
+                var fullPath = $@"\users\attachments\{userId}_{imagePath}";
+                await storageProvider.UploadAsync(fullPath, imageStream);
+
+                return Result.Ok();
+            }
+
+            return Result.Fail(FailureReasons.ItemNotFound, "No user exists");
+        }
+        catch (SystemException ex)
+        {
+            return Result.Fail(FailureReasons.GenericError, ex);
+        }
     }
 }

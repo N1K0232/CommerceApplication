@@ -63,7 +63,19 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> Signout()
     {
         var email = User.GetEmail();
+
         var result = await userService.SignOutAsync(email);
+        return CreateResponse(result, StatusCodes.Status200OK);
+    }
+
+    [HttpPost("uploadimage")]
+    public async Task<IActionResult> UploadPhoto(IFormFile file)
+    {
+        var userId = User.GetId();
+        var fileName = file.FileName;
+        var stream = file.OpenReadStream();
+
+        var result = await userService.UploadPhotoAsync(userId, fileName, stream);
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 

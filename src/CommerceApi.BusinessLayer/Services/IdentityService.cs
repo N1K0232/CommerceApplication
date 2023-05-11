@@ -3,7 +3,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using CommerceApi.Authentication;
 using CommerceApi.Authentication.Common;
 using CommerceApi.Authentication.Entities;
 using CommerceApi.Authentication.Enums;
@@ -12,6 +11,7 @@ using CommerceApi.Authentication.Settings;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.Shared.Models.Responses;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -20,19 +20,16 @@ namespace CommerceApi.BusinessLayer.Services;
 public class IdentityService : IIdentityService
 {
     private readonly JwtSettings jwtSettings;
-    private readonly AuthenticationDataContext authenticationDataContext;
     private readonly UserManager<ApplicationUser> userManager;
     private readonly RoleManager<ApplicationRole> roleManager;
     private readonly SignInManager<ApplicationUser> signInManager;
 
     public IdentityService(IOptions<JwtSettings> jwtSettingsOptions,
-                           AuthenticationDataContext authenticationDataContext,
                            UserManager<ApplicationUser> userManager,
                            RoleManager<ApplicationRole> roleManager,
                            SignInManager<ApplicationUser> signInManager)
     {
         jwtSettings = jwtSettingsOptions.Value;
-        this.authenticationDataContext = authenticationDataContext;
         this.userManager = userManager;
         this.roleManager = roleManager;
         this.signInManager = signInManager;
@@ -89,6 +86,12 @@ public class IdentityService : IIdentityService
 
         var identityResult = await userManager.DeleteAsync(user);
         return identityResult;
+    }
+
+    public async Task<ApplicationUser> GetUserAsync(string userId)
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        return user;
     }
 
     public async Task<LoginResponse> LoginAsync(string email)
@@ -163,6 +166,12 @@ public class IdentityService : IIdentityService
             user.Status = UserStatus.LoggedOut;
             await signInManager.SignOutAsync();
         }
+    }
+
+    public async Task<bool> UserExistsAsync(string userId)
+    {
+        var userExists = await userManager.Users.AnyAsync(user => user.Id == Guid.Parse(userId));
+        return userExists;
     }
 
     public Task<ClaimsPrincipal> ValidateAccessTokenAsync(string accessToken)

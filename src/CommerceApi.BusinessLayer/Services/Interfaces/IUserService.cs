@@ -15,4 +15,6 @@ public interface IUserService
     Task<Result<LoginResponse>> RefreshTokenAsync(RefreshTokenRequest request);
 
     Task<Result> SignOutAsync(string email);
+
+    Task<Result> UploadPhotoAsync(Guid userId, string imagePath, Stream imageStream);
 }

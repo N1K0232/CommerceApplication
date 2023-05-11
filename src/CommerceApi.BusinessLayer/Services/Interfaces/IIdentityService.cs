@@ -13,6 +13,8 @@ public interface IIdentityService
 
     Task<IdentityResult> DeleteAccountAsync(string userId);
 
+    Task<ApplicationUser> GetUserAsync(string userId);
+
     Task<LoginResponse> LoginAsync(string email);
 
     Task<LoginResponse> RefreshTokenAsync(ClaimsPrincipal principal, string refreshToken);
@@ -24,6 +26,8 @@ public interface IIdentityService
     Task<SignInResult> SignInAsync(string email, string password);
 
     Task SignOutAsync(string email);
+
+    Task<bool> UserExistsAsync(string userId);
 
     Task<ClaimsPrincipal> ValidateAccessTokenAsync(string accessToken);
 }
