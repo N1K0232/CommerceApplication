@@ -271,6 +271,8 @@ void Configure(IApplicationBuilder app, IApiVersionDescriptionProvider provider)
 
     app.UseCors();
 
+    app.UseClientContext();
+
     app.UseAuthentication();
     app.UseAuthorization();
 
