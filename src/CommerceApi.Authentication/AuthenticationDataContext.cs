@@ -1,5 +1,4 @@
-﻿using CommerceApi.Authentication.Configurations;
-using CommerceApi.Authentication.Entities;
+﻿using CommerceApi.Authentication.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace CommerceApi.Authentication;
 
-public class AuthenticationDataContext
+public partial class AuthenticationDataContext
     : IdentityDbContext<ApplicationUser,
       ApplicationRole,
       Guid,
@@ -19,51 +18,48 @@ public class AuthenticationDataContext
       IdentityUserToken<Guid>>
 {
     private readonly ValueConverter<string, string> trimStringConverter = new(v => v.Trim(), v => v.Trim());
-    private readonly ILogger<AuthenticationDataContext> logger;
 
-    public AuthenticationDataContext(DbContextOptions options, ILogger<AuthenticationDataContext> logger) : base(options)
+    public AuthenticationDataContext(DbContextOptions options, ILogger logger) : base(options)
     {
-        this.logger = logger;
+        Logger = logger;
     }
+
+    public ILogger Logger { get; }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             var savedEntries = await base.SaveChangesAsync(cancellationToken);
-            logger.LogInformation("saved {0} rows in the database", savedEntries);
+            Logger.LogInformation("saved {savedEntries} rows in the database", savedEntries);
 
             return savedEntries;
         }
         catch (DbUpdateConcurrencyException ex)
         {
-            logger.LogError(ex, "error while saving");
+            Logger.LogError(ex, "error while saving");
             throw ex;
         }
         catch (DbUpdateException ex)
         {
-            logger.LogError(ex, "error while saving");
+            Logger.LogError(ex, "error while saving");
             throw ex;
         }
     }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        OnConfiguringCore(optionsBuilder);
+        base.OnConfiguring(optionsBuilder);
+    }
+
+    partial void OnConfiguringCore(DbContextOptionsBuilder optionsBuilder);
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.ApplyConfiguration(new ApplicationUserConfiguration());
-        modelBuilder.ApplyConfiguration(new ApplicationUserRoleConfiguration());
-
-        foreach (var entity in modelBuilder.Model.GetEntityTypes())
-        {
-            foreach (var property in entity.GetProperties())
-            {
-                if (property.ClrType == typeof(string))
-                {
-                    modelBuilder.Entity(entity.Name)
-                    .Property(property.Name)
-                    .HasConversion(trimStringConverter);
-                }
-            }
-        }
+        OnModelCreatingCore(modelBuilder);
     }
+
+    partial void OnModelCreatingCore(ModelBuilder modelBuilder);
 }
