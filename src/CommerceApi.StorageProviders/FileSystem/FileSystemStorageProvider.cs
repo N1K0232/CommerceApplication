@@ -11,7 +11,6 @@ internal class FileSystemStorageProvider : IStorageProvider
         this.settings = settings;
     }
 
-
     public Task DeleteAsync(string path)
     {
         try
@@ -30,47 +29,45 @@ internal class FileSystemStorageProvider : IStorageProvider
         }
     }
 
-    public Task<Stream> ReadAsync(string path)
+    public Task<Stream?> ReadAsync(string path)
     {
         var fullPath = GetFullPath(path);
         if (!File.Exists(fullPath))
         {
-            return Task.FromResult<Stream>(null);
+            return Task.FromResult<Stream?>(null);
         }
 
         var stream = File.OpenRead(fullPath);
-        return Task.FromResult<Stream>(stream);
+        return Task.FromResult<Stream?>(stream);
     }
 
-    public async Task UploadAsync(string path, Stream stream)
+    public async Task SaveAsync(string? path, Stream stream, bool overwrite = false)
     {
-        try
+        ThrowIfDisposed();
+
+        var fullPath = GetFullPath(path);
+        if (!File.Exists(fullPath))
         {
-            var fullPath = GetFullPath(path);
-            if (!File.Exists(fullPath))
+            var directoryName = Path.GetDirectoryName(fullPath);
+
+            if (!string.IsNullOrWhiteSpace(directoryName) && !Directory.Exists(directoryName))
             {
-                var directoryName = Path.GetDirectoryName(fullPath);
-
-                if (!Directory.Exists(directoryName))
-                {
-                    Directory.CreateDirectory(directoryName);
-                }
-
-                using var outputStream = new FileStream(fullPath, FileMode.Create, FileAccess.Write);
-
-                stream.Position = 0;
-                await stream.CopyToAsync(outputStream);
-
-                outputStream.Close();
+                Directory.CreateDirectory(directoryName);
             }
-        }
-        catch (Exception ex)
-        {
-            await Task.FromException(ex);
+
+            var outputStream = !overwrite ?
+                new FileStream(fullPath, FileMode.CreateNew, FileAccess.Write) :
+                new FileStream(fullPath, FileMode.Append, FileAccess.Write);
+
+            stream.Position = 0;
+            await stream.CopyToAsync(outputStream);
+
+            outputStream.Close();
+            outputStream.Dispose();
         }
     }
 
-    private string GetFullPath(string path)
+    private string GetFullPath(string? path)
     {
         if (string.IsNullOrEmpty(path))
         {
@@ -91,7 +88,7 @@ internal class FileSystemStorageProvider : IStorageProvider
     {
         if (disposing && !disposed)
         {
-            settings = null;
+            settings = null!;
             disposed = true;
         }
     }

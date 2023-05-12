@@ -2,7 +2,7 @@
 
 public static class StorageProviderExtensions
 {
-    public static async Task<byte[]> ReadAsByteAsync(this IStorageProvider storageProvider, string path)
+    public static async Task<byte[]?> ReadAsByteAsync(this IStorageProvider storageProvider, string path)
     {
         using var input = await storageProvider.ReadAsync(path).ConfigureAwait(false);
         if (input is null)
@@ -17,7 +17,7 @@ public static class StorageProviderExtensions
         return output;
     }
 
-    public static async Task<string> ReadAsStringAsync(this IStorageProvider storageProvider, string path)
+    public static async Task<string?> ReadAsStringAsync(this IStorageProvider storageProvider, string path)
     {
         using var input = await storageProvider.ReadAsync(path).ConfigureAwait(false);
         if (input is null)
@@ -31,9 +31,9 @@ public static class StorageProviderExtensions
         return content;
     }
 
-    public static Task UploadAsync(this IStorageProvider storageProvider, string path, byte[] content)
+    public static async Task UploadAsync(this IStorageProvider storageProvider, string path, byte[] content, bool overwrite = false)
     {
         var stream = new MemoryStream(content);
-        return storageProvider.UploadAsync(path, stream);
+        await storageProvider.SaveAsync(path, stream, overwrite).ConfigureAwait(false);
     }
 }

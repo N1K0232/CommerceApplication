@@ -148,7 +148,7 @@ public class ProductService : IProductService
             }
 
             var filePath = $@"\products\attachments\{productId}_{fileName}";
-            await storageProvider.UploadAsync(filePath, fileStream);
+            await storageProvider.SaveAsync(filePath, fileStream);
 
             var dbProduct = await query.FirstOrDefaultAsync(p => p.Id == productId);
 

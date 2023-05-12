@@ -109,7 +109,7 @@ public class ImageService : IImageService
             dataContext.Create(dbImage);
 
             await dataContext.SaveAsync();
-            await storageProvider.UploadAsync(dbImage.DownloadFileName, content.Stream);
+            await storageProvider.SaveAsync(dbImage.DownloadFileName, content.Stream);
 
             var savedImage = mapper.Map<Image>(dbImage);
             return savedImage;

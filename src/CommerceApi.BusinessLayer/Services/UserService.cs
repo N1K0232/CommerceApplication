@@ -130,7 +130,7 @@ public class UserService : IUserService
             if (userExists)
             {
                 var fullPath = $@"\users\attachments\{userId}_{imagePath}";
-                await storageProvider.UploadAsync(fullPath, imageStream);
+                await storageProvider.SaveAsync(fullPath, imageStream);
 
                 return Result.Ok();
             }
