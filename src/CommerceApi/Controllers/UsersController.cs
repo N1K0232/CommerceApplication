@@ -2,6 +2,7 @@
 using CommerceApi.Authentication.Extensions;
 using CommerceApi.Authorization.Filters;
 using CommerceApi.BusinessLayer.Services.Interfaces;
+using CommerceApi.Models;
 using CommerceApi.Shared.Models;
 using CommerceApi.Shared.Models.Requests;
 using Microsoft.AspNetCore.Authorization;
@@ -69,11 +70,11 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost("uploadimage")]
-    public async Task<IActionResult> UploadPhoto(IFormFile file)
+    public async Task<IActionResult> UploadPhoto(FormFileContent content)
     {
         var userId = User.GetId();
-        var fileName = file.FileName;
-        var stream = file.OpenReadStream();
+        var fileName = content.File.FileName;
+        var stream = content.File.OpenReadStream();
 
         var result = await userService.UploadPhotoAsync(userId, fileName, stream);
         return CreateResponse(result, StatusCodes.Status200OK);
