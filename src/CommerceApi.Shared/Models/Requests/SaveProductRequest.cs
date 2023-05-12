@@ -4,6 +4,8 @@ public class SaveProductRequest
 {
     public Guid CategoryId { get; set; }
 
+    public Guid SupplierId { get; set; }
+
     public string Name { get; set; } = null!;
 
     public int Quantity { get; set; }

@@ -1,7 +1,8 @@
 ﻿CREATE TABLE [dbo].[Products]
 (
 	[Id] UNIQUEIDENTIFIER NOT NULL DEFAULT newid(),
-    [CategoryId] UNIQUEIDENTIFIER NOT NULL DEFAULT newid(),
+    [CategoryId] UNIQUEIDENTIFIER NOT NULL,
+    [SupplierId] UNIQUEIDENTIFIER NOT NULL,
     [Name] NVARCHAR(100) NOT NULL,
     [Quantity] INTEGER NOT NULL,
     [Price] DECIMAL(8,2) NOT NULL,
@@ -13,5 +14,6 @@
     [DeletedDate] DATETIME NULL,
 
     PRIMARY KEY(Id),
-    FOREIGN KEY(CategoryId) REFERENCES Categories(Id)
+    FOREIGN KEY(CategoryId) REFERENCES Categories(Id),
+    FOREIGN KEY(SupplierId) REFERENCES Suppliers(Id)
 )
