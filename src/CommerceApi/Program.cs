@@ -10,6 +10,7 @@ using CommerceApi.Authentication.Entities;
 using CommerceApi.Authentication.Settings;
 using CommerceApi.Authorization.Handlers;
 using CommerceApi.Authorization.Requirements;
+using CommerceApi.BusinessLayer.BackgroundServices;
 using CommerceApi.BusinessLayer.Services;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.BusinessLayer.StartupServices;
@@ -245,6 +246,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IProductService, ProductService>();
 
     services.AddHostedService<AuthenticationStartupService>();
+    services.AddHostedService<SqlConnectionControlService>();
 
     var storageConnectionString = configuration.GetConnectionString("StorageConnection");
     if (!string.IsNullOrWhiteSpace(storageConnectionString))
