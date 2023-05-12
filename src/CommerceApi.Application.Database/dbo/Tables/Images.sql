@@ -9,7 +9,7 @@
     [Length] BIGINT NOT NULL,
     [Description] NVARCHAR(512) NULL,
     [CreationDate] DATETIME NOT NULL DEFAULT getutcdate(),
-    [UpdatedDate] DATETIME NULL,
+    [LastModificationDate] DATETIME NULL,
     
     PRIMARY KEY(Id)
 );

@@ -69,4 +69,7 @@
   <ItemGroup>
     <None Include="CommerceApi.Application.Database.publish.xml" />
   </ItemGroup>
+  <ItemGroup>
+    <RefactorLog Include="CommerceApi.Application.Database.refactorlog" />
+  </ItemGroup>
 </Project>

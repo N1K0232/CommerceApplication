@@ -111,7 +111,7 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
                 }
 
                 baseEntity.CreationDate = DateTime.UtcNow;
-                baseEntity.UpdatedDate = null;
+                baseEntity.LastModificationDate = null;
             }
 
             if (entry.State is EntityState.Modified)
@@ -122,7 +122,7 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
                     deletableEntity.DeletedDate = null;
                 }
 
-                baseEntity.UpdatedDate = DateTime.UtcNow;
+                baseEntity.LastModificationDate = DateTime.UtcNow;
             }
 
             if (entry.State is EntityState.Deleted)
