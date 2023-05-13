@@ -15,7 +15,7 @@ public class PdfService : IPdfService
         this.storageProvider = storageProvider;
     }
 
-    public async Task UploadPdfInvoiceAsync(Invoice invoice)
+    public Task UploadPdfInvoiceAsync(Invoice invoice)
     {
         var pdfStream = new MemoryStream();
         var document = new Document(PageSize.A4);
@@ -44,6 +44,6 @@ public class PdfService : IPdfService
         writer.Close();
 
         pdfStream.Position = 0;
-        await storageProvider.SaveAsync(invoice.DownloadFileName, pdfStream);
+        return Task.CompletedTask;
     }
 }
