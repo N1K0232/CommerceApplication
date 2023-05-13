@@ -21,4 +21,6 @@ public class Product : DeletableEntity
     public virtual Category Category { get; set; }
 
     public virtual Supplier Supplier { get; set; }
+
+    public virtual ICollection<Invoice> Invoices { get; set; }
 }

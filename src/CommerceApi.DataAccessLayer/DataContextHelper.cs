@@ -24,6 +24,13 @@ public partial class ApplicationDataContext
     private readonly IUserClaimService claimService;
     private ValidationContext validationContext = null;
 
+
+    protected override void OnSavedChanges(object sender, SaveChangesEventArgs e) => base.OnSavedChanges(sender, e);
+
+    protected override void OnSavingChanges(object sender, SavingChangesEventArgs e) => base.OnSavingChanges(sender, e);
+
+    protected override void OnSaveChangesFailed(object sender, SaveChangesFailedEventArgs e) => base.OnSaveChangesFailed(sender, e);
+
     private Task ValidateAsync(object entity)
     {
         try

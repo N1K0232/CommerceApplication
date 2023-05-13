@@ -18,4 +18,7 @@ GO
 CREATE UNIQUE INDEX [IX_FileName] ON [dbo].[Images]([FileName])
 
 GO
+CREATE UNIQUE INDEX [IX_Path] ON [dbo].[Images]([Path])
+
+GO
 CREATE UNIQUE INDEX [IX_DownloadFileName] ON [dbo].[Images]([DownloadFileName])

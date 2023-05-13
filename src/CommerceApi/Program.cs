@@ -11,6 +11,8 @@ using CommerceApi.Authentication.Settings;
 using CommerceApi.Authorization.Handlers;
 using CommerceApi.Authorization.Requirements;
 using CommerceApi.BusinessLayer.BackgroundServices;
+using CommerceApi.BusinessLayer.RemoteServices;
+using CommerceApi.BusinessLayer.RemoteServices.Interfaces;
 using CommerceApi.BusinessLayer.Services;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.BusinessLayer.StartupServices;
@@ -243,7 +245,10 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IImageService, ImageService>();
     services.AddScoped<ICategoryService, CategoryService>();
     services.AddScoped<ISupplierService, SupplierService>();
+    services.AddScoped<IInvoiceService, InvoiceService>();
     services.AddScoped<IProductService, ProductService>();
+
+    services.AddScoped<IPdfService, PdfService>();
 
     services.AddHostedService<AuthenticationStartupService>();
     services.AddHostedService<SqlConnectionControlService>();
