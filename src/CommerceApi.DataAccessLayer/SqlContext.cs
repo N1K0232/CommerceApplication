@@ -10,7 +10,7 @@ namespace CommerceApi.DataAccessLayer;
 
 public class SqlContext : ISqlContext
 {
-    private IDbConnection connection = null;
+    private SqlConnection activeConnection = null;
     private bool disposed = false;
 
     private readonly SqlContextOptions options;
@@ -27,40 +27,31 @@ public class SqlContext : ISqlContext
         this.logger = logger;
     }
 
-    private IDbConnection Connection
-    {
-        get
-        {
-            connection ??= new SqlConnection(options.ConnectionString);
-
-            if (connection.State is ConnectionState.Closed)
-            {
-                connection.Open();
-            }
-
-            return connection;
-        }
-    }
-
-    public Task<IEnumerable<T>> GetDataAsync<T>(string sql, object param = null, IDbTransaction transaction = null, CommandType? commandType = null)
+    public async Task<IEnumerable<T>> GetDataAsync<T>(string sql, object param = null, IDbTransaction transaction = null, CommandType? commandType = null)
         where T : class
     {
         ThrowIfDisposed();
 
-        return Connection.QueryAsync<T>(sql, param, transaction, commandType: commandType);
+        var connection = await GetConnectionAsync().ConfigureAwait(false);
+
+        var result = await connection.QueryAsync<T>(sql, param, transaction, commandType: commandType).ConfigureAwait(false);
+        return result;
     }
 
-    public Task<IEnumerable<TReturn>> GetDataAsync<TFirst, TSecond, TReturn>(string sql, Func<TFirst, TSecond, TReturn> map, object param = null, IDbTransaction transaction = null, CommandType? commandType = null, string splitOn = "Id")
+    public async Task<IEnumerable<TReturn>> GetDataAsync<TFirst, TSecond, TReturn>(string sql, Func<TFirst, TSecond, TReturn> map, object param = null, IDbTransaction transaction = null, CommandType? commandType = null, string splitOn = "Id")
         where TFirst : class
         where TSecond : class
         where TReturn : class
     {
         ThrowIfDisposed();
 
-        return Connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType);
+        var connection = await GetConnectionAsync().ConfigureAwait(false);
+
+        var result = await connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType).ConfigureAwait(false);
+        return result;
     }
 
-    public Task<IEnumerable<TReturn>> GetDataAsync<TFirst, TSecond, TThrid, TReturn>(string sql, Func<TFirst, TSecond, TThrid, TReturn> map, object param = null, IDbTransaction transaction = null, CommandType? commandType = null, string splitOn = "Id")
+    public async Task<IEnumerable<TReturn>> GetDataAsync<TFirst, TSecond, TThrid, TReturn>(string sql, Func<TFirst, TSecond, TThrid, TReturn> map, object param = null, IDbTransaction transaction = null, CommandType? commandType = null, string splitOn = "Id")
         where TFirst : class
         where TSecond : class
         where TThrid : class
@@ -68,10 +59,13 @@ public class SqlContext : ISqlContext
     {
         ThrowIfDisposed();
 
-        return Connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType);
+        var connection = await GetConnectionAsync().ConfigureAwait(false);
+
+        var result = await connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType).ConfigureAwait(false);
+        return result;
     }
 
-    public Task<IEnumerable<TReturn>> GetDataAsync<TFirst, TSecond, TThrid, TFourth, TReturn>(string sql, Func<TFirst, TSecond, TThrid, TFourth, TReturn> map, object param = null, IDbTransaction transaction = null, CommandType? commandType = null, string splitOn = "Id")
+    public async Task<IEnumerable<TReturn>> GetDataAsync<TFirst, TSecond, TThrid, TFourth, TReturn>(string sql, Func<TFirst, TSecond, TThrid, TFourth, TReturn> map, object param = null, IDbTransaction transaction = null, CommandType? commandType = null, string splitOn = "Id")
         where TFirst : class
         where TSecond : class
         where TThrid : class
@@ -80,15 +74,21 @@ public class SqlContext : ISqlContext
     {
         ThrowIfDisposed();
 
-        return Connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType);
+        var connection = await GetConnectionAsync().ConfigureAwait(false);
+
+        var result = await connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType).ConfigureAwait(false);
+        return result;
     }
 
-    public Task<T> GetObjectAsync<T>(string sql, object param = null, IDbTransaction transaction = null, CommandType? commandType = null)
+    public async Task<T> GetObjectAsync<T>(string sql, object param = null, IDbTransaction transaction = null, CommandType? commandType = null)
         where T : class
     {
         ThrowIfDisposed();
 
-        return Connection.QueryFirstOrDefaultAsync<T>(sql, param, transaction, commandType: commandType);
+        var connection = await GetConnectionAsync().ConfigureAwait(false);
+
+        var result = await connection.QueryFirstOrDefaultAsync<T>(sql, param, transaction, commandType: commandType).ConfigureAwait(false);
+        return result;
     }
 
     public async Task<TReturn> GetObjectAsync<TFirst, TSecond, TReturn>(string sql, Func<TFirst, TSecond, TReturn> map, object param = null, IDbTransaction transaction = null, CommandType? commandType = null, string splitOn = "Id")
@@ -98,7 +98,9 @@ public class SqlContext : ISqlContext
     {
         ThrowIfDisposed();
 
-        var result = await Connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType).ConfigureAwait(false);
+        var connection = await GetConnectionAsync().ConfigureAwait(false);
+
+        var result = await connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType).ConfigureAwait(false);
         return result.FirstOrDefault();
     }
 
@@ -110,7 +112,9 @@ public class SqlContext : ISqlContext
     {
         ThrowIfDisposed();
 
-        var result = await Connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType).ConfigureAwait(false);
+        var connection = await GetConnectionAsync().ConfigureAwait(false);
+
+        var result = await connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType).ConfigureAwait(false);
         return result.FirstOrDefault();
     }
 
@@ -123,29 +127,51 @@ public class SqlContext : ISqlContext
     {
         ThrowIfDisposed();
 
-        var result = await Connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType).ConfigureAwait(false);
+        var connection = await GetConnectionAsync().ConfigureAwait(false);
+
+        var result = await connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType).ConfigureAwait(false);
         return result.FirstOrDefault();
     }
 
-    public Task<T> GetSingleValueAsync<T>(string sql, object param = null, IDbTransaction transaction = null, CommandType? commandType = null)
+    public async Task<T> GetSingleValueAsync<T>(string sql, object param = null, IDbTransaction transaction = null, CommandType? commandType = null)
     {
         ThrowIfDisposed();
 
-        return Connection.ExecuteScalarAsync<T>(sql, param, transaction, commandType: commandType);
+        var connection = await GetConnectionAsync().ConfigureAwait(false);
+
+        var value = await connection.ExecuteScalarAsync<T>(sql, param, transaction, commandType: commandType).ConfigureAwait(false);
+        return value;
     }
 
-    public Task<int> ExecuteAsync(string sql, object param = null, IDbTransaction transaction = null, CommandType? commandType = null)
+    public async Task<int> ExecuteAsync(string sql, object param = null, IDbTransaction transaction = null, CommandType? commandType = null)
     {
         ThrowIfDisposed();
 
-        return Connection.ExecuteAsync(sql, param, transaction, commandType: commandType);
+        var connection = await GetConnectionAsync().ConfigureAwait(false);
+
+        var result = await connection.ExecuteAsync(sql, param, transaction, commandType: commandType).ConfigureAwait(false);
+        return result;
     }
 
-    public IDbTransaction BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified)
+    public async Task<IDbTransaction> BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified)
     {
         ThrowIfDisposed();
 
-        return Connection.BeginTransaction(isolationLevel);
+        var connection = await GetConnectionAsync().ConfigureAwait(false);
+        var transaction = connection.BeginTransaction(isolationLevel);
+        return transaction;
+    }
+
+    private async Task<IDbConnection> GetConnectionAsync()
+    {
+        activeConnection ??= new SqlConnection(options.ConnectionString);
+
+        if (activeConnection.State is ConnectionState.Closed)
+        {
+            await activeConnection.OpenAsync().ConfigureAwait(false);
+        }
+
+        return activeConnection;
     }
 
     public void Dispose()
@@ -158,13 +184,13 @@ public class SqlContext : ISqlContext
     {
         if (!disposed && disposing)
         {
-            if (connection.State is ConnectionState.Open)
+            if (activeConnection.State is ConnectionState.Open)
             {
-                connection.Close();
+                activeConnection.Close();
             }
 
-            connection.Dispose();
-            connection = null;
+            activeConnection.Dispose();
+            activeConnection = null;
 
             disposed = true;
         }
