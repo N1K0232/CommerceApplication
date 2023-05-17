@@ -31,6 +31,15 @@ public partial class ApplicationDataContext
 
     protected override void OnSaveChangesFailed(object sender, SaveChangesFailedEventArgs e) => base.OnSaveChangesFailed(sender, e);
 
+    private async Task ExecuteTransactionCoreAsync(Func<Task> action)
+    {
+        tokenSource ??= new CancellationTokenSource();
+
+        using var transaction = await Database.BeginTransactionAsync(tokenSource.Token).ConfigureAwait(false);
+        await action.Invoke().ConfigureAwait(false);
+        await transaction.CommitAsync(tokenSource.Token).ConfigureAwait(false);
+    }
+
     private Task ValidateAsync(object entity)
     {
         try

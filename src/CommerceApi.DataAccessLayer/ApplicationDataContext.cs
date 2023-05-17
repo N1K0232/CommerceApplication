@@ -77,19 +77,6 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
             set.AsNoTrackingWithIdentityResolution();
     }
 
-    public Task ExecuteTransactionAsync(Func<Task> action)
-    {
-        var strategy = Database.CreateExecutionStrategy();
-        tokenSource ??= new CancellationTokenSource();
-
-        return strategy.ExecuteAsync(async () =>
-        {
-            using var transaction = await Database.BeginTransactionAsync(tokenSource.Token).ConfigureAwait(false);
-            await action.Invoke().ConfigureAwait(false);
-            await transaction.CommitAsync(tokenSource.Token).ConfigureAwait(false);
-        });
-    }
-
 #pragma warning disable IDE0007 //Use implicit type
     public async Task SaveAsync()
     {
@@ -143,6 +130,12 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
         await SaveChangesAsync(tokenSource.Token);
     }
 #pragma warning restore IDE0007
+
+    public async Task ExecuteTransactionAsync(Func<Task> action)
+    {
+        var strategy = Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(() => ExecuteTransactionCoreAsync(action));
+    }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
