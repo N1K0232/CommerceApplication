@@ -33,13 +33,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommerceApi.Security", "src
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommerceApi.Client", "src\CommerceApi.Client\CommerceApi.Client.csproj", "{425947CE-58C8-4A85-97AD-5BA3AC14222E}"
 EndProject
-Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "CommerceApi.Application.Database", "src\CommerceApi.Application.Database\CommerceApi.Application.Database.sqlproj", "{975CEBC1-E0DE-4BD5-8DF8-81EA2E4AA2AC}"
-EndProject
-Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "CommerceApi.Authentication.Database", "src\CommerceApi.Authentication.Database\CommerceApi.Authentication.Database.sqlproj", "{23C7A08D-2BE1-497E-AC3C-668FB3809C62}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommerceApi.ClientContext", "src\CommerceApi.ClientContext\CommerceApi.ClientContext.csproj", "{8F257EDA-801B-4A74-AA29-3523E9D0B62E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommerceApi.TenantContext", "src\CommerceApi.TenantContext\CommerceApi.TenantContext.csproj", "{FC78172E-BA84-4826-BD45-05086833809C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommerceApi.TenantContext", "src\CommerceApi.TenantContext\CommerceApi.TenantContext.csproj", "{FC78172E-BA84-4826-BD45-05086833809C}"
+EndProject
+Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "CommerceApi.Database", "src\CommerceApi.Database\CommerceApi.Database.sqlproj", "{00D99841-521A-4D23-9172-D18537E24046}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -91,18 +89,6 @@ Global
 		{425947CE-58C8-4A85-97AD-5BA3AC14222E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{425947CE-58C8-4A85-97AD-5BA3AC14222E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{425947CE-58C8-4A85-97AD-5BA3AC14222E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{975CEBC1-E0DE-4BD5-8DF8-81EA2E4AA2AC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{975CEBC1-E0DE-4BD5-8DF8-81EA2E4AA2AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{975CEBC1-E0DE-4BD5-8DF8-81EA2E4AA2AC}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
-		{975CEBC1-E0DE-4BD5-8DF8-81EA2E4AA2AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{975CEBC1-E0DE-4BD5-8DF8-81EA2E4AA2AC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{975CEBC1-E0DE-4BD5-8DF8-81EA2E4AA2AC}.Release|Any CPU.Deploy.0 = Release|Any CPU
-		{23C7A08D-2BE1-497E-AC3C-668FB3809C62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{23C7A08D-2BE1-497E-AC3C-668FB3809C62}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{23C7A08D-2BE1-497E-AC3C-668FB3809C62}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
-		{23C7A08D-2BE1-497E-AC3C-668FB3809C62}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{23C7A08D-2BE1-497E-AC3C-668FB3809C62}.Release|Any CPU.Build.0 = Release|Any CPU
-		{23C7A08D-2BE1-497E-AC3C-668FB3809C62}.Release|Any CPU.Deploy.0 = Release|Any CPU
 		{8F257EDA-801B-4A74-AA29-3523E9D0B62E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8F257EDA-801B-4A74-AA29-3523E9D0B62E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8F257EDA-801B-4A74-AA29-3523E9D0B62E}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -111,6 +97,12 @@ Global
 		{FC78172E-BA84-4826-BD45-05086833809C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FC78172E-BA84-4826-BD45-05086833809C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FC78172E-BA84-4826-BD45-05086833809C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{00D99841-521A-4D23-9172-D18537E24046}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00D99841-521A-4D23-9172-D18537E24046}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00D99841-521A-4D23-9172-D18537E24046}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{00D99841-521A-4D23-9172-D18537E24046}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00D99841-521A-4D23-9172-D18537E24046}.Release|Any CPU.Build.0 = Release|Any CPU
+		{00D99841-521A-4D23-9172-D18537E24046}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
