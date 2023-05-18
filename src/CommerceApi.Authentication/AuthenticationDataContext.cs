@@ -18,31 +18,40 @@ public partial class AuthenticationDataContext
       IdentityUserToken<Guid>>
 {
     private readonly ValueConverter<string, string> trimStringConverter = new(v => v.Trim(), v => v.Trim());
+    private readonly ILogger<AuthenticationDataContext> logger;
 
-    public AuthenticationDataContext(DbContextOptions options, ILogger logger) : base(options)
+    public AuthenticationDataContext(DbContextOptions options, ILogger<AuthenticationDataContext> logger) : base(options)
     {
-        Logger = logger;
+        this.logger = logger;
     }
-
-    public ILogger Logger { get; }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             var savedEntries = await base.SaveChangesAsync(cancellationToken);
-            Logger.LogInformation("saved {savedEntries} rows in the database", savedEntries);
+            logger.LogInformation("saved {savedEntries} rows in the database", savedEntries);
 
             return savedEntries;
         }
         catch (DbUpdateConcurrencyException ex)
         {
-            Logger.LogError(ex, "error while saving");
+            logger.LogError(ex, "error while updating database");
             throw ex;
         }
         catch (DbUpdateException ex)
         {
-            Logger.LogError(ex, "error while saving");
+            logger.LogError(ex, "error while updating");
+            throw ex;
+        }
+        catch (TaskCanceledException ex)
+        {
+            logger.LogError(ex, "Request timeout");
+            throw ex;
+        }
+        catch (OperationCanceledException ex)
+        {
+            logger.LogError(ex, "Request timeout");
             throw ex;
         }
     }
