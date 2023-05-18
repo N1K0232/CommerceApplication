@@ -18,7 +18,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost("AddProduct")]
-    [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser)]
+    [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser, RoleNames.User)]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Product))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
