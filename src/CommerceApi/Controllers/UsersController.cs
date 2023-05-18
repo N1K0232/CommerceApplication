@@ -70,13 +70,11 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost("uploadimage")]
-    public async Task<IActionResult> UploadPhoto(FormFileContent content)
+    [Consumes("multipart/form-data")]
+    [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser, RoleNames.User)]
+    public async Task<IActionResult> UploadPhoto([FromForm] FormFileContent content)
     {
-        var userId = User.GetId();
-        var fileName = content.File.FileName;
-        var stream = content.File.OpenReadStream();
-
-        var result = await userService.UploadPhotoAsync(userId, fileName, stream);
+        var result = await userService.UploadPhotoAsync(User.GetId(), content.FileName, content.GetFileStream());
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
