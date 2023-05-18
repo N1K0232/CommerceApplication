@@ -4,7 +4,7 @@ using CommerceApi.Authentication.Entities;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.Shared.Models.Requests;
 using CommerceApi.Shared.Models.Responses;
-using CommerceApi.StorageProviders;
+using CommerceApi.StorageProviders.Abstractions;
 using FluentValidation;
 using OperationResults;
 

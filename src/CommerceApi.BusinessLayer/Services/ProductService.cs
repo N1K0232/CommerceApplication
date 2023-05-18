@@ -5,7 +5,7 @@ using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.Shared.Models;
 using CommerceApi.Shared.Models.Common;
 using CommerceApi.Shared.Models.Requests;
-using CommerceApi.StorageProviders;
+using CommerceApi.StorageProviders.Abstractions;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using OperationResults;

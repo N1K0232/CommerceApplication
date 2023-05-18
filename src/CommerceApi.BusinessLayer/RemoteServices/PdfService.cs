@@ -1,6 +1,6 @@
 ﻿using CommerceApi.BusinessLayer.RemoteServices.Interfaces;
 using CommerceApi.DataAccessLayer.Entities;
-using CommerceApi.StorageProviders;
+using CommerceApi.StorageProviders.Abstractions;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
 

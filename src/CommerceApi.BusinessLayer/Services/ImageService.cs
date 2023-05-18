@@ -2,7 +2,7 @@
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.Shared.Models;
-using CommerceApi.StorageProviders;
+using CommerceApi.StorageProviders.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using MimeMapping;
 using OperationResults;
@@ -14,8 +14,8 @@ namespace CommerceApi.BusinessLayer.Services;
 
 public class ImageService : IImageService
 {
-    private IDataContext dataContext;
-    private IStorageProvider storageProvider;
+    private readonly IDataContext dataContext;
+    private readonly IStorageProvider storageProvider;
 
     private readonly IMapper mapper;
 
