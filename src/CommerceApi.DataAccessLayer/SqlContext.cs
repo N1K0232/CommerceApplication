@@ -182,7 +182,8 @@ public class SqlContext : ISqlContext
 
     private void Dispose(bool disposing)
     {
-        if (!disposed && disposing)
+        var canDispose = disposing && !disposed;
+        if (canDispose)
         {
             if (activeConnection.State is ConnectionState.Open)
             {
