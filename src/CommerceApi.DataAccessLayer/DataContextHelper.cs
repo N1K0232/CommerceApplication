@@ -44,7 +44,7 @@ public partial class ApplicationDataContext
     {
         try
         {
-            validationContext ??= new ValidationContext(entity);
+            validationContext = new ValidationContext(entity);
             Validator.ValidateObject(entity, validationContext, true);
 
             return Task.CompletedTask;
