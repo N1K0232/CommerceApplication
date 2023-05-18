@@ -7,7 +7,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectVersion>4.1</ProjectVersion>
     <ProjectGuid>{00d99841-521a-4d23-9172-d18537e24046}</ProjectGuid>
-    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql160DatabaseSchemaProvider</DSP>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql150DatabaseSchemaProvider</DSP>
     <OutputType>Database</OutputType>
     <RootPath>
     </RootPath>
@@ -74,5 +74,10 @@
     <Build Include="dbo\Tables\Products.sql" />
     <Build Include="dbo\Tables\Suppliers.sql" />
     <Build Include="dbo\Tables\Invoices.sql" />
+    <Build Include="dbo\Tables\Orders.sql" />
+    <Build Include="dbo\Tables\OrderDetails.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CommerceApi.Database.publish.xml" />
   </ItemGroup>
 </Project>

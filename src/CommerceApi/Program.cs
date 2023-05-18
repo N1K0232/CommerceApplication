@@ -247,6 +247,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<ISupplierService, SupplierService>();
     services.AddScoped<IInvoiceService, InvoiceService>();
     services.AddScoped<IProductService, ProductService>();
+    services.AddScoped<IOrderService, OrderService>();
 
     services.AddScoped<IPdfService, PdfService>();
 

@@ -7,7 +7,7 @@
     [Price]                DECIMAL (8, 2)   NOT NULL,
     [DiscountPercentage]   FLOAT (53)       NULL,
     [HasDiscount]          BIT              NOT NULL,
-    [CreationDate]         DATETIME         DEFAULT (getutcdate()) NOT NULL,
+    [CreationDate]         DATETIME         DEFAULT getutcdate() NOT NULL,
     [LastModificationDate] DATETIME         NULL,
     [IsDeleted]            BIT              NOT NULL,
     [DeletedDate]          DATETIME         NULL,
