@@ -1,3 +1,8 @@
 ﻿namespace CommerceApi.StorageProviders.Azure;
 
-internal record AzureStorageProperties(string ContainerName, string BlobName);
+internal class AzureStorageProperties
+{
+    public string ContainerName { get; set; } = null!;
+
+    public string BlobName { get; set; } = null!;
+}

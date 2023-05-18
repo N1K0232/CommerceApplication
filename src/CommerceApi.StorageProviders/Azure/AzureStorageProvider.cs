@@ -1,30 +1,24 @@
 ﻿using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using CommerceApi.StorageProviders.Abstractions;
 using MimeMapping;
 
 namespace CommerceApi.StorageProviders.Azure;
 
-internal class AzureStorageProvider : IStorageProvider
+public class AzureStorageProvider : StorageProvider, IStorageProvider
 {
-    private const string DefaultContainerName = "attachments";
-
-    private AzureStorageSettings settings;
+    private AzureStorageSettings azureStorageSettings;
     private BlobServiceClient blobServiceClient;
 
-    private bool disposed = false;
-
-
-    public AzureStorageProvider(AzureStorageSettings settings)
+    public AzureStorageProvider(AzureStorageSettings azureStorageSettings)
     {
-        this.settings = settings;
-        blobServiceClient = new BlobServiceClient(settings.ConnectionString);
+        this.azureStorageSettings = azureStorageSettings;
+        blobServiceClient = new BlobServiceClient(azureStorageSettings.ConnectionString);
     }
 
-    public async Task SaveAsync(string? path, Stream stream, bool overwrite = false)
+    public override async Task SaveAsync(string path, Stream stream, bool overwrite = false)
     {
-        ThrowIfDisposed();
-
-        var blobClient = await GetBlobClientAsync(path, true).ConfigureAwait(false);
+        var blobClient = await GetBlobClientAsync(path).ConfigureAwait(false);
         if (!overwrite)
         {
             var blobExists = await blobClient.ExistsAsync().ConfigureAwait(false);
@@ -38,95 +32,80 @@ internal class AzureStorageProvider : IStorageProvider
 
         var contentType = MimeUtility.GetMimeMapping(path);
         var headers = new BlobHttpHeaders { ContentType = contentType };
+
         await blobClient.UploadAsync(stream, headers).ConfigureAwait(false);
     }
 
-    public async Task<Stream?> ReadAsync(string path)
+    public override async Task<Stream?> ReadAsync(string path)
     {
-        ThrowIfDisposed();
-
         var blobClient = await GetBlobClientAsync(path).ConfigureAwait(false);
+
         var blobExists = await blobClient.ExistsAsync().ConfigureAwait(false);
         if (!blobExists)
         {
             return null;
         }
 
-        var stream = await blobClient.OpenReadAsync().ConfigureAwait(false);
-        stream.Position = 0;
-
+        var stream = await blobClient.OpenReadAsync();
         return stream;
     }
 
-    public async Task DeleteAsync(string path)
+    public override async Task DeleteAsync(string path)
     {
-        ThrowIfDisposed();
+        var properties = await ExtractContainerBlobClientAsync(path).ConfigureAwait(false);
+        var blobContainerClient = blobServiceClient.GetBlobContainerClient(properties.ContainerName);
 
-        var properties = ExtractBlobContainerName(path);
-        if (properties != null)
-        {
-            var blobContainerClient = blobServiceClient.GetBlobContainerClient(properties.ContainerName);
-            await blobContainerClient.DeleteBlobIfExistsAsync(properties.BlobName).ConfigureAwait(false);
-        }
+        await blobContainerClient.DeleteBlobIfExistsAsync(properties.BlobName).ConfigureAwait(false);
     }
 
     private async Task<BlobClient> GetBlobClientAsync(string? path, bool createIfNotExists = false)
     {
-        var properties = ExtractBlobContainerName(path);
-        var containerName = properties?.ContainerName ?? settings.ContainerName?.ToLowerInvariant() ?? DefaultContainerName;
+        var properties = await ExtractContainerBlobClientAsync(path);
+        var blobContainerClient = blobServiceClient.GetBlobContainerClient(properties.ContainerName);
 
-        var blobContainerClient = blobServiceClient.GetBlobContainerClient(containerName);
         if (createIfNotExists)
         {
-            await blobContainerClient.CreateIfNotExistsAsync(PublicAccessType.None).ConfigureAwait(false);
+            await blobContainerClient.CreateIfNotExistsAsync().ConfigureAwait(false);
         }
 
-        var blobClient = blobContainerClient.GetBlobClient(properties?.BlobName ?? string.Empty);
+        var blobClient = blobContainerClient.GetBlobClient(properties.BlobName);
         return blobClient;
     }
 
-    private AzureStorageProperties? ExtractBlobContainerName(string? path)
+    private async Task<AzureStorageProperties> ExtractContainerBlobClientAsync(string? path)
     {
-        if (string.IsNullOrWhiteSpace(path))
+        var normalizedPath = await NormalizePathAsync(path).ConfigureAwait(false);
+        if (!string.IsNullOrWhiteSpace(azureStorageSettings.ContainerName))
         {
-            return null;
+            return new AzureStorageProperties { ContainerName = azureStorageSettings.ContainerName, BlobName = normalizedPath };
         }
 
-        var fixedPath = path.Replace(@"\", "/");
-        var root = Path.GetPathRoot(fixedPath);
+        var root = Path.GetPathRoot(normalizedPath);
 
-        var fileName = fixedPath[(root ?? string.Empty).Length..];
+        var fileName = normalizedPath[(root ?? string.Empty).Length..];
         var parts = fileName.Split('/');
 
         var containerName = parts.First().ToLowerInvariant();
         var blobName = string.Join('/', parts.Skip(1));
 
-        var properties = new AzureStorageProperties(containerName, blobName);
-        return properties;
+        var azureStorageProperties = new AzureStorageProperties { ContainerName = containerName, BlobName = blobName };
+        return azureStorageProperties;
     }
 
-    public void Dispose()
+    protected override Task<string> NormalizePathAsync(string? path)
     {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        var normalizedPath = path?.Replace(@"\", "/") ?? string.Empty;
+        return base.NormalizePathAsync(normalizedPath);
     }
 
-    private void Dispose(bool disposing)
+    protected override void Dispose(bool disposing)
     {
-        if (disposing && !disposed)
+        if (disposing)
         {
-            settings = null!;
+            azureStorageSettings = null!;
             blobServiceClient = null!;
-
-            disposed = true;
         }
-    }
 
-    private void ThrowIfDisposed()
-    {
-        if (disposed)
-        {
-            throw new ObjectDisposedException(GetType().FullName);
-        }
+        base.Dispose(disposing);
     }
 }

@@ -1,39 +1,36 @@
-﻿namespace CommerceApi.StorageProviders.Extensions;
+﻿using CommerceApi.StorageProviders.Abstractions;
+
+namespace CommerceApi.StorageProviders.Extensions;
 
 public static class StorageProviderExtensions
 {
-    public static async Task<byte[]?> ReadAsByteAsync(this IStorageProvider storageProvider, string path)
+    public static async Task SaveAsync(this IStorageProvider storageProvider, string path, byte[] content, bool overwrite = false)
     {
-        using var input = await storageProvider.ReadAsync(path).ConfigureAwait(false);
-        if (input is null)
+        if (content is null || content.Length == 0)
         {
-            return null;
+            throw new ArgumentNullException(nameof(content), "the content is required");
         }
 
-        var content = new Memory<byte>();
-        await input.ReadAsync(content).ConfigureAwait(false);
-
-        var output = content.ToArray();
-        return output;
+        var memoryStream = new MemoryStream(content);
+        await storageProvider.SaveAsync(path, memoryStream, overwrite).ConfigureAwait(false);
+        await memoryStream.DisposeAsync().ConfigureAwait(false);
     }
 
-    public static async Task<string?> ReadAsStringAsync(this IStorageProvider storageProvider, string path)
+    public static async Task<byte[]?> ReadAsync(this IStorageProvider storageProvider, string path)
     {
-        using var input = await storageProvider.ReadAsync(path).ConfigureAwait(false);
-        if (input is null)
+        var stream = await storageProvider.ReadAsync(path).ConfigureAwait(false);
+        if (stream is null)
         {
             return null;
         }
 
-        using var reader = new StreamReader(input);
+        var memoryStream = new MemoryStream();
+        await stream.CopyToAsync(memoryStream).ConfigureAwait(false);
 
-        var content = await reader.ReadToEndAsync().ConfigureAwait(false);
+        var content = memoryStream.ToArray();
+        await memoryStream.DisposeAsync().ConfigureAwait(false);
+        await stream.DisposeAsync().ConfigureAwait(false);
+
         return content;
-    }
-
-    public static async Task UploadAsync(this IStorageProvider storageProvider, string path, byte[] content, bool overwrite = false)
-    {
-        var stream = new MemoryStream(content);
-        await storageProvider.SaveAsync(path, stream, overwrite).ConfigureAwait(false);
     }
 }

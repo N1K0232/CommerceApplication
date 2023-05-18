@@ -1,55 +1,24 @@
-﻿namespace CommerceApi.StorageProviders.FileSystem;
+﻿using CommerceApi.StorageProviders.Abstractions;
 
-internal class FileSystemStorageProvider : IStorageProvider
+namespace CommerceApi.StorageProviders.FileSystem;
+
+public class FileSystemStorageProvider : StorageProvider, IStorageProvider
 {
-    private FileSystemStorageSettings settings;
-    private bool disposed = false;
+    private FileSystemSettings settings;
 
-
-    public FileSystemStorageProvider(FileSystemStorageSettings settings)
+    public FileSystemStorageProvider(FileSystemSettings settings)
     {
         this.settings = settings;
     }
 
-    public Task DeleteAsync(string path)
-    {
-        try
-        {
-            var fullPath = GetFullPath(path);
-            if (File.Exists(fullPath))
-            {
-                File.Delete(fullPath);
-            }
-
-            return Task.CompletedTask;
-        }
-        catch (Exception ex)
-        {
-            return Task.FromException(ex);
-        }
-    }
-
-    public Task<Stream?> ReadAsync(string path)
-    {
-        var fullPath = GetFullPath(path);
-        if (!File.Exists(fullPath))
-        {
-            return Task.FromResult<Stream?>(null);
-        }
-
-        var stream = File.OpenRead(fullPath);
-        return Task.FromResult<Stream?>(stream);
-    }
-
-    public async Task SaveAsync(string? path, Stream stream, bool overwrite = false)
+    public override async Task SaveAsync(string path, Stream stream, bool overwrite = false)
     {
         ThrowIfDisposed();
 
-        var fullPath = GetFullPath(path);
+        var fullPath = await GetFullPathAsync(path).ConfigureAwait(false);
         if (!File.Exists(fullPath))
         {
             var directoryName = Path.GetDirectoryName(fullPath);
-
             if (!string.IsNullOrWhiteSpace(directoryName) && !Directory.Exists(directoryName))
             {
                 Directory.CreateDirectory(directoryName);
@@ -60,44 +29,54 @@ internal class FileSystemStorageProvider : IStorageProvider
                 new FileStream(fullPath, FileMode.Append, FileAccess.Write);
 
             stream.Position = 0;
-            await stream.CopyToAsync(outputStream);
+            await stream.CopyToAsync(outputStream).ConfigureAwait(false);
 
             outputStream.Close();
-            outputStream.Dispose();
+            await outputStream.DisposeAsync().ConfigureAwait(false);
         }
     }
 
-    private string GetFullPath(string? path)
+    public override async Task<Stream?> ReadAsync(string path)
     {
-        if (string.IsNullOrEmpty(path))
+        var fullPath = await GetFullPathAsync(path).ConfigureAwait(false);
+        if (!File.Exists(fullPath))
+        {
+            return null;
+        }
+
+        var stream = File.OpenRead(fullPath);
+        return stream;
+    }
+
+    public override async Task DeleteAsync(string path)
+    {
+        var fullPath = await GetFullPathAsync(path).ConfigureAwait(false);
+        if (File.Exists(fullPath))
+        {
+            File.Delete(fullPath);
+        }
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            settings = null!;
+        }
+
+        base.Dispose(disposing);
+    }
+
+    private async Task<string> GetFullPathAsync(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
         {
             throw new ArgumentNullException(nameof(path), "the path is required");
         }
 
-        return Path.Combine(settings.StorageFolder, path);
-    }
+        var normalizedPath = await NormalizePathAsync(path).ConfigureAwait(false);
 
-
-    public void Dispose()
-    {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
-    }
-
-    private void Dispose(bool disposing)
-    {
-        if (disposing && !disposed)
-        {
-            settings = null!;
-            disposed = true;
-        }
-    }
-
-    private void ThrowIfDisposed()
-    {
-        if (disposed)
-        {
-            throw new ObjectDisposedException(GetType().FullName);
-        }
+        var fullPath = Path.Combine(settings.StorageFolder, normalizedPath);
+        return fullPath;
     }
 }
