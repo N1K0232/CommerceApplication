@@ -109,15 +109,21 @@ public class OrderService : IOrderService
 
         try
         {
-            var dbOrder = await dataContext.GetData<Entities.Order>().Include(o => o.OrderDetails).FirstOrDefaultAsync(o => o.Id == orderId);
+            var dbOrder = await dataContext.GetData<Entities.Order>().FirstOrDefaultAsync(o => o.Id == orderId);
             if (dbOrder == null)
             {
                 return Result.Fail(FailureReasons.ItemNotFound, $"No order found with id {orderId}");
             }
 
+            var dbOrderDetails = await dataContext.GetData<Entities.OrderDetail>().Where(o => o.OrderId == orderId).ToListAsync();
+
             dbOrder.Status = OrderStatus.Canceled;
 
-            dataContext.Delete(dbOrder.OrderDetails);
+            if (dbOrderDetails.Any())
+            {
+                dataContext.Delete(dbOrderDetails);
+            }
+
             dataContext.Delete(dbOrder);
             await dataContext.SaveAsync();
 
