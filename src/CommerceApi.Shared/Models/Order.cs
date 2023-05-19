@@ -12,4 +12,6 @@ public class Order : BaseObject
     public TimeSpan Time { get; set; }
 
     public OrderStatus Status { get; set; }
+
+    public IEnumerable<Product>? Products { get; set; }
 }

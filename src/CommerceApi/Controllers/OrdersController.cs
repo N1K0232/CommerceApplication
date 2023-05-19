@@ -39,11 +39,35 @@ public class OrdersController : ControllerBase
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
+    [HttpGet("GetOrder/{orderId}")]
+    [RoleAuthorize(RoleNames.User)]
+    public async Task<IActionResult> GetOrder(Guid orderId)
+    {
+        var order = await orderService.GetAsync(orderId);
+        return CreateResponse(order, StatusCodes.Status200OK);
+    }
+
+    [HttpGet("GetList")]
+    [RoleAuthorize(RoleNames.User)]
+    public async Task<IActionResult> GetList(string orderBy = "Date DESC", int pageIndex = 0, int itemsPerPage = 50)
+    {
+        var orders = await orderService.GetListAsync(orderBy, pageIndex, itemsPerPage);
+        return Ok(orders);
+    }
+
     [HttpGet("GetTotal")]
     [RoleAuthorize(RoleNames.User)]
     public async Task<IActionResult> GetTotalPrice(Guid orderId)
     {
         var result = await orderService.GetTotalPriceAsync(orderId);
+        return CreateResponse(result, StatusCodes.Status200OK);
+    }
+
+    [HttpPut("UpdateStatus")]
+    [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser, RoleNames.User)]
+    public async Task<IActionResult> UpdateStatus(UpdateOrderStatusRequest request)
+    {
+        var result = await orderService.UpdateStatusAsync(request);
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 }
