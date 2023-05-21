@@ -17,16 +17,19 @@ namespace CommerceApi.BusinessLayer.Services;
 
 public class OrderService : IOrderService
 {
+    private readonly IAuthenticationService authenticationService;
     private readonly IDataContext dataContext;
     private readonly IMapper mapper;
     private readonly IUserClaimService claimService;
     private readonly IValidator<SaveOrderDetail> orderValidator;
 
-    public OrderService(IDataContext dataContext,
+    public OrderService(IAuthenticationService authenticationService,
+        IDataContext dataContext,
         IMapper mapper,
         IUserClaimService claimService,
         IValidator<SaveOrderDetail> orderValidator)
     {
+        this.authenticationService = authenticationService;
         this.dataContext = dataContext;
         this.mapper = mapper;
         this.claimService = claimService;
@@ -92,6 +95,9 @@ public class OrderService : IOrderService
             await dataContext.SaveAsync();
 
             var savedOrder = mapper.Map<Order>(dbOrder);
+            var user = await authenticationService.GetAsync();
+
+            savedOrder.User = $"{user.FirstName} {user.LastName}";
             return savedOrder;
         }
         catch (DbUpdateException ex)

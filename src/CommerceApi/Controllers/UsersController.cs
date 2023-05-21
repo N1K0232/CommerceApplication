@@ -1,4 +1,5 @@
-﻿using CommerceApi.Authentication.Common;
+﻿using System.Security.Claims;
+using CommerceApi.Authentication.Common;
 using CommerceApi.Authentication.Extensions;
 using CommerceApi.Authorization.Filters;
 using CommerceApi.BusinessLayer.Services.Interfaces;
@@ -93,6 +94,10 @@ public class UsersController : ControllerBase
             LastName = User.GetLastName(),
             DateOfBirth = User.GetDateOfBirth(),
             Age = User.GetAge(),
+            Street = User.GetClaimValue(ClaimTypes.StreetAddress),
+            City = User.GetClaimValue(CustomClaimTypes.City),
+            PostalCode = User.GetClaimValue(ClaimTypes.PostalCode),
+            Country = User.GetClaimValue(ClaimTypes.Country),
             PhoneNumber = User.GetPhoneNumber(),
             Email = User.GetEmail(),
             UserName = User.GetUserName(),

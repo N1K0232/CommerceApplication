@@ -1,20 +1,19 @@
 ﻿using System.Security.Claims;
 using AutoMapper;
-using CommerceApi.Authentication.Entities;
+using CommerceApi.Authentication.Managers;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.Shared.Models;
 using CommerceApi.SharedServices;
-using Microsoft.AspNetCore.Identity;
 
 namespace CommerceApi.BusinessLayer.Services;
 
 public class AuthenticationService : IAuthenticationService
 {
-    private readonly UserManager<ApplicationUser> userManager;
+    private readonly ApplicationUserManager userManager;
     private readonly IUserClaimService claimService;
     private readonly IMapper mapper;
 
-    public AuthenticationService(UserManager<ApplicationUser> userManager, IUserClaimService claimService, IMapper mapper)
+    public AuthenticationService(ApplicationUserManager userManager, IUserClaimService claimService, IMapper mapper)
     {
         this.userManager = userManager;
         this.claimService = claimService;

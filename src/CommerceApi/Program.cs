@@ -246,6 +246,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
         return HealthCheckResult.Healthy();
     });
 
+    services.AddScoped<IAuthenticationService, AuthenticationService>();
     services.AddScoped<IIdentityService, IdentityService>();
     services.AddScoped<IUserService, UserService>();
     services.AddScoped<IImageService, ImageService>();
