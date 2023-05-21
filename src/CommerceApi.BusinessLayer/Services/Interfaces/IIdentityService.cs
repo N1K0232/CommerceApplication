@@ -27,7 +27,5 @@ public interface IIdentityService
 
     Task SignOutAsync(string email);
 
-    Task<bool> UserExistsAsync(string userId);
-
     Task<ClaimsPrincipal> ValidateAccessTokenAsync(string accessToken);
 }

@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using CommerceApi.Authentication;
 using CommerceApi.Authentication.Common;
 using CommerceApi.Authentication.Entities;
+using CommerceApi.Authentication.Managers;
 using CommerceApi.Authentication.Settings;
 using CommerceApi.Authorization.Handlers;
 using CommerceApi.Authorization.Requirements;
@@ -160,6 +161,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
         options.ConnectionString = sqlConnectionString;
     });
 
+    services.AddScoped<ApplicationUserManager>();
+    services.AddScoped<ApplicationSignInManager>();
+
     services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
     {
         options.User.RequireUniqueEmail = true;
@@ -170,7 +174,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
         options.Password.RequireDigit = true;
     })
     .AddEntityFrameworkStores<AuthenticationDataContext>()
-    .AddDefaultTokenProviders();
+    .AddDefaultTokenProviders()
+    .AddUserManager<ApplicationUserManager>()
+    .AddSignInManager<ApplicationSignInManager>();
 
     var jwtSettingsSection = configuration.GetSection(nameof(JwtSettings));
     var jwtSettings = jwtSettingsSection.Get<JwtSettings>();

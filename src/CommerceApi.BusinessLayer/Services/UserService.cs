@@ -126,8 +126,8 @@ public class UserService : IUserService
     {
         try
         {
-            var userExists = await identityService.UserExistsAsync(userId.ToString());
-            if (userExists)
+            var user = await identityService.GetUserAsync(userId.ToString());
+            if (user != null)
             {
                 var fullPath = $@"\users\attachments\{userId}_{imagePath}";
                 await storageProvider.SaveAsync(fullPath, imageStream);

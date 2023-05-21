@@ -1,5 +1,4 @@
-﻿using System.Data;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -7,11 +6,11 @@ using CommerceApi.Authentication.Common;
 using CommerceApi.Authentication.Entities;
 using CommerceApi.Authentication.Enums;
 using CommerceApi.Authentication.Extensions;
+using CommerceApi.Authentication.Managers;
 using CommerceApi.Authentication.Settings;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.Shared.Models.Responses;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -20,16 +19,17 @@ namespace CommerceApi.BusinessLayer.Services;
 public class IdentityService : IIdentityService
 {
     private readonly JwtSettings jwtSettings;
-    private readonly UserManager<ApplicationUser> userManager;
+    private readonly ApplicationUserManager userManager;
     private readonly RoleManager<ApplicationRole> roleManager;
-    private readonly SignInManager<ApplicationUser> signInManager;
+    private readonly ApplicationSignInManager signInManager;
 
     public IdentityService(IOptions<JwtSettings> jwtSettingsOptions,
-                           UserManager<ApplicationUser> userManager,
+                           ApplicationUserManager userManager,
                            RoleManager<ApplicationRole> roleManager,
-                           SignInManager<ApplicationUser> signInManager)
+                           ApplicationSignInManager signInManager)
     {
         jwtSettings = jwtSettingsOptions.Value;
+
         this.userManager = userManager;
         this.roleManager = roleManager;
         this.signInManager = signInManager;
@@ -37,32 +37,14 @@ public class IdentityService : IIdentityService
 
     public async Task CreateRoleAsync(string roleName)
     {
-        var roleExists = await roleManager.RoleExistsAsync(roleName);
-        if (!roleExists)
-        {
-            var role = new ApplicationRole(roleName)
-            {
-                ConcurrencyStamp = Guid.NewGuid().ToString()
-            };
-
-            await roleManager.CreateAsync(role);
-        }
+        await CreateRoleCoreAsync(roleName);
     }
 
     public async Task CreateRolesAsync(IEnumerable<string> roleNames)
     {
         foreach (var roleName in roleNames)
         {
-            var roleExists = await roleManager.RoleExistsAsync(roleName);
-            if (!roleExists)
-            {
-                var role = new ApplicationRole(roleName)
-                {
-                    ConcurrencyStamp = Guid.NewGuid().ToString()
-                };
-
-                await roleManager.CreateAsync(role);
-            }
+            await CreateRoleCoreAsync(roleName);
         }
     }
 
@@ -98,7 +80,7 @@ public class IdentityService : IIdentityService
     {
         var user = await userManager.FindByEmailAsync(email);
         await userManager.UpdateSecurityStampAsync(user);
-        user.ConcurrencyStamp = await userManager.GenerateConcurrencyStampAsync(user);
+        await userManager.GenerateConcurrencyStampAsync(user);
 
         var claims = await GetClaimsAsync(user);
         var loginResponse = CreateLoginResponse(claims);
@@ -148,14 +130,9 @@ public class IdentityService : IIdentityService
     public async Task<SignInResult> SignInAsync(string email, string password)
     {
         var user = await userManager.FindByEmailAsync(email);
-        var canSignIn = await signInManager.CanSignInAsync(user);
-        if (canSignIn)
-        {
-            var signInResult = await signInManager.PasswordSignInAsync(user, password, false, false);
-            return signInResult;
-        }
 
-        return SignInResult.Failed;
+        var signInResult = await signInManager.PasswordSignInAsync(user, password, false, false);
+        return signInResult;
     }
 
     public async Task SignOutAsync(string email)
@@ -166,12 +143,6 @@ public class IdentityService : IIdentityService
             user.Status = UserStatus.LoggedOut;
             await signInManager.SignOutAsync();
         }
-    }
-
-    public async Task<bool> UserExistsAsync(string userId)
-    {
-        var userExists = await userManager.Users.AnyAsync(user => user.Id == Guid.Parse(userId));
-        return userExists;
     }
 
     public Task<ClaimsPrincipal> ValidateAccessTokenAsync(string accessToken)
@@ -236,14 +207,19 @@ public class IdentityService : IIdentityService
         var userRoles = await userManager.GetRolesAsync(user);
         var userClaims = await userManager.GetClaimsAsync(user);
 
-        if (userClaims is not null && userClaims.Any())
+        if (userClaims is null || !userClaims.Any())
         {
-            await userManager.RemoveClaimsAsync(user, userClaims);
+            userClaims = new List<Claim> { new(ClaimTypes.NameIdentifier, user.Id.ToString()) };
+            foreach (var role in userRoles)
+            {
+                userClaims.Add(new(ClaimTypes.Role, role));
+            }
+
+            await userManager.AddClaimsAsync(user, userClaims);
         }
 
-        userClaims = new List<Claim>
+        var claims = new List<Claim>(userClaims)
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.GivenName, user.FirstName),
             new Claim(ClaimTypes.Surname, user.LastName ?? string.Empty),
             new Claim(ClaimTypes.DateOfBirth, user.DateOfBirth?.ToString() ?? string.Empty),
@@ -256,11 +232,23 @@ public class IdentityService : IIdentityService
             new Claim(ClaimTypes.GroupSid, user.ConcurrencyStamp),
             new Claim(ClaimTypes.Email, user.Email),
             new Claim(ClaimTypes.Name, user.UserName),
-        }.Union(userRoles.Select(role => new Claim(ClaimTypes.Role, role))).ToList();
+        };
 
-        await userManager.AddClaimsAsync(user, userClaims);
+        return claims;
+    }
 
-        return userClaims;
+    private async Task CreateRoleCoreAsync(string roleName)
+    {
+        var roleExists = await roleManager.RoleExistsAsync(roleName);
+        if (!roleExists)
+        {
+            var role = new ApplicationRole(roleName)
+            {
+                ConcurrencyStamp = Guid.NewGuid().ToString()
+            };
+
+            await roleManager.CreateAsync(role);
+        }
     }
 
     private async Task UpdateClaimAsync(ApplicationUser user, string type, string value)
