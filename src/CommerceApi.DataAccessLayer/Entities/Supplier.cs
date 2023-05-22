@@ -10,5 +10,5 @@ public class Supplier : BaseEntity
 
     public string City { get; set; }
 
-    public virtual ICollection<Product> Products { get; set; }
+    public virtual IList<Product> Products { get; set; }
 }

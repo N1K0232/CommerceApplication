@@ -22,7 +22,7 @@ public class Product : DeletableEntity
 
     public virtual Supplier Supplier { get; set; }
 
-    public virtual ICollection<Invoice> Invoices { get; set; }
+    public virtual IList<Invoice> Invoices { get; set; }
 
     public virtual IList<OrderDetail> OrderDetails { get; set; }
 }
