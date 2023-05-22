@@ -133,7 +133,7 @@ public class SupplierService : ISupplierService
             }
 
             mapper.Map(supplier, dbSupplier);
-            dataContext.Edit(dbSupplier);
+            dataContext.Update(dbSupplier);
 
             await dataContext.SaveAsync();
 

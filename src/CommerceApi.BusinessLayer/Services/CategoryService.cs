@@ -135,7 +135,7 @@ public class CategoryService : ICategoryService
             }
 
             mapper.Map(category, dbCategory);
-            dataContext.Edit(dbCategory);
+            dataContext.Update(dbCategory);
             await dataContext.SaveAsync();
 
             var savedCategory = mapper.Map<Category>(dbCategory);

@@ -192,7 +192,7 @@ public class ProductService : IProductService
             mapper.Map(product, dbProduct);
             dbProduct.HasDiscount = dbProduct.DiscountPercentage.GetValueOrDefault() > 0;
 
-            dataContext.Edit(dbProduct);
+            dataContext.Update(dbProduct);
             await dataContext.SaveAsync();
 
             var savedProduct = mapper.Map<Product>(dbProduct);

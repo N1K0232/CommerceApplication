@@ -35,7 +35,7 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
         Set<TEntity>().Add(entity);
     }
 
-    public void Edit<TEntity>(TEntity entity) where TEntity : BaseEntity
+    void IDataContext.Update<TEntity>(TEntity entity)
     {
         ArgumentNullException.ThrowIfNull(entity, nameof(entity));
         Set<TEntity>().Update(entity);

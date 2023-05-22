@@ -135,7 +135,7 @@ public class InvoiceService : IInvoiceService
 
             mapper.Map(invoice, dbInvoice);
 
-            dataContext.Edit(dbInvoice);
+            dataContext.Update(dbInvoice);
             await dataContext.SaveAsync();
 
             var savedInvoice = mapper.Map<Invoice>(dbInvoice);

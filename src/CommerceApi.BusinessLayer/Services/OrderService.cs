@@ -66,7 +66,7 @@ public class OrderService : IOrderService
 
             dbProduct.Quantity -= order.Quantity;
 
-            dataContext.Edit(dbProduct);
+            dataContext.Update(dbProduct);
             dataContext.Create(orderDetail);
             await dataContext.SaveAsync();
 
@@ -234,7 +234,7 @@ public class OrderService : IOrderService
             }
 
             dbOrder.Status = request.Status;
-            dataContext.Edit(dbOrder);
+            dataContext.Update(dbOrder);
             await dataContext.SaveAsync();
 
             var savedOrder = mapper.Map<Order>(dbOrder);
