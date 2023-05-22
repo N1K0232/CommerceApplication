@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using TinyHelpers.Extensions;
 
 namespace CommerceApi.DataAccessLayer;
 
@@ -97,8 +98,11 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
                     fileEntity.DownloadFileName = $"{Guid.NewGuid()}_{fileEntity.FileName}";
                 }
 
-                baseEntity.CreationDate = DateTime.UtcNow;
+                baseEntity.CreationDate = DateTime.UtcNow.ToDateOnly();
+                baseEntity.CreationTime = DateTime.UtcNow.ToTimeOnly();
+
                 baseEntity.LastModificationDate = null;
+                baseEntity.LastModificationTime = null;
             }
 
             if (entry.State is EntityState.Modified)
@@ -107,9 +111,11 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
                 {
                     deletableEntity.IsDeleted = false;
                     deletableEntity.DeletedDate = null;
+                    deletableEntity.DeletedTime = null;
                 }
 
-                baseEntity.LastModificationDate = DateTime.UtcNow;
+                baseEntity.LastModificationDate = DateTime.UtcNow.ToDateOnly();
+                baseEntity.LastModificationTime = DateTime.UtcNow.ToTimeOnly();
             }
 
             if (entry.State is EntityState.Deleted)
@@ -119,7 +125,8 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
                     entry.State = EntityState.Modified;
 
                     deletableEntity.IsDeleted = true;
-                    deletableEntity.DeletedDate = DateTime.UtcNow;
+                    deletableEntity.DeletedDate = DateTime.UtcNow.ToDateOnly();
+                    deletableEntity.DeletedTime = DateTime.UtcNow.ToTimeOnly();
                 }
             }
 

@@ -138,12 +138,14 @@ public partial class ApplicationDataContext
 
     private void SetQueryFilterOnDeletableEntity<TEntity>(ModelBuilder modelBuilder) where TEntity : DeletableEntity
     {
-        modelBuilder.Entity<TEntity>().HasQueryFilter(e => !e.IsDeleted && e.DeletedDate == null);
+        var builder = modelBuilder.Entity<TEntity>();
+        builder.HasQueryFilter(e => !e.IsDeleted && e.DeletedDate == null && e.DeletedTime == null);
     }
 
     private void SetQueryFilterOnTenantEntity<TEntity>(ModelBuilder modelBuilder) where TEntity : TenantEntity
     {
         var tenantId = claimService.GetTenantId();
-        modelBuilder.Entity<TEntity>().HasQueryFilter(e => e.TenantId == tenantId);
+        var builder = modelBuilder.Entity<TEntity>();
+        builder.HasQueryFilter(e => e.TenantId == tenantId);
     }
 }

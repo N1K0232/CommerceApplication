@@ -4,5 +4,7 @@ public abstract class DeletableEntity : BaseEntity
 {
     public bool IsDeleted { get; set; }
 
-    public DateTime? DeletedDate { get; set; }
+    public DateOnly? DeletedDate { get; set; }
+
+    public TimeOnly? DeletedTime { get; set; }
 }

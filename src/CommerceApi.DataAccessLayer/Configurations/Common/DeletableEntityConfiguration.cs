@@ -7,8 +7,9 @@ public abstract class DeletableEntityConfiguration<T> : BaseEntityConfiguration<
 {
     public override void Configure(EntityTypeBuilder<T> builder)
     {
-        builder.Property(x => x.IsDeleted).IsRequired();
-        builder.Property(x => x.DeletedDate).IsRequired(false);
+        builder.Property(e => e.IsDeleted).IsRequired();
+        builder.Property(e => e.DeletedDate).IsRequired(false);
+        builder.Property(e => e.DeletedTime).IsRequired(false);
 
         base.Configure(builder);
     }

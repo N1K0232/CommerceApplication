@@ -7,8 +7,11 @@
     [ContentType]          NVARCHAR (100)   NULL,
     [Length]               BIGINT           NOT NULL,
     [Description]          NVARCHAR (512)   NULL,
-    [CreationDate]         DATETIME         DEFAULT (getutcdate()) NOT NULL,
-    [LastModificationDate] DATETIME         NULL,
+    [CreationDate]         DATE             NOT NULL DEFAULT getutcdate(),
+    [CreationTime]         TIME(7)          NOT NULL, 
+    [LastModificationDate] DATE             NULL,
+    [LastModificationTime] TIME(7)          NULL,
+
     PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 

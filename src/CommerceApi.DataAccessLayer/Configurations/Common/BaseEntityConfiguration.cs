@@ -8,10 +8,13 @@ public abstract class BaseEntityConfiguration<T> : IEntityTypeConfiguration<T> w
 {
     public virtual void Configure(EntityTypeBuilder<T> builder)
     {
-        builder.HasKey(x => x.Id);
-        builder.Property(x => x.Id).IsRequired().ValueGeneratedOnAdd().HasDefaultValueSql("newid()");
+        builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).IsRequired().ValueGeneratedOnAdd().HasDefaultValueSql("newid()");
 
-        builder.Property(x => x.CreationDate).IsRequired().ValueGeneratedOnAdd().HasDefaultValueSql("getutcdate()");
-        builder.Property(x => x.LastModificationDate).IsRequired(false).ValueGeneratedOnUpdate();
+        builder.Property(e => e.CreationDate).IsRequired().ValueGeneratedOnAdd().HasDefaultValueSql("getutcdate()");
+        builder.Property(e => e.CreationTime).IsRequired().ValueGeneratedOnAdd();
+
+        builder.Property(e => e.LastModificationDate).IsRequired(false).ValueGeneratedOnUpdate();
+        builder.Property(e => e.LastModificationTime).IsRequired(false).ValueGeneratedOnUpdate();
     }
 }

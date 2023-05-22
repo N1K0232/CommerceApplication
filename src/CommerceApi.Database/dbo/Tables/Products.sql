@@ -7,10 +7,15 @@
     [Price]                DECIMAL (8, 2)   NOT NULL,
     [DiscountPercentage]   FLOAT (53)       NULL,
     [HasDiscount]          BIT              NOT NULL,
-    [CreationDate]         DATETIME         DEFAULT getutcdate() NOT NULL,
-    [LastModificationDate] DATETIME         NULL,
-    [IsDeleted]            BIT              NOT NULL,
-    [DeletedDate]          DATETIME         NULL,
+    [CreationDate]         DATE         NOT NULL DEFAULT getutcdate(),
+    [CreationTime]         TIME(7)      NOT NULL,
+    [LastModificationDate] DATE         NULL,
+    [LastModificationTime] TIME(7)      NULL,
+    [IsDeleted]            BIT          NOT NULL,
+    [DeletedDate]          DATE         NULL,
+    [DeletedTime]          TIME(7)      NULL,
+
+
     PRIMARY KEY CLUSTERED ([Id] ASC),
     FOREIGN KEY ([CategoryId]) REFERENCES [dbo].[Categories] ([Id]),
     FOREIGN KEY ([SupplierId]) REFERENCES [dbo].[Suppliers] ([Id])

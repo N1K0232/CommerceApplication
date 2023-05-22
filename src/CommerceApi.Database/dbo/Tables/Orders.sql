@@ -5,10 +5,13 @@
     [Status] NVARCHAR(20) NOT NULL,
     [Date] DATE NOT NULL DEFAULT getutcdate(),
     [Time] TIME(7) NOT NULL,
-    [CreationDate] DATETIME NOT NULL DEFAULT getutcdate(),
-    [LastModificationDate] DATETIME NULL,
+    [CreationDate] DATE NOT NULL DEFAULT getutcdate(),
+    [CreationTime] TIME(7) NOT NULL,
+    [LastModificationDate] DATE NULL,
+    [LastModificationTime] TIME(7) NULL,
     [IsDeleted] BIT NOT NULL,
-    [DeletedDate] DATETIME NULL,
+    [DeletedDate] DATE NULL,
+    [DeletedTime] TIME(7) NULL,
 
     PRIMARY KEY([Id]),
     FOREIGN KEY([UserId]) REFERENCES [dbo].[AspNetUsers]([Id])
