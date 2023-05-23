@@ -115,15 +115,15 @@ public class OrderService : IOrderService
 
         try
         {
-            var dbOrder = await dataContext.GetData<Entities.Order>().FirstOrDefaultAsync(o => o.Id == orderId);
+            var query = dataContext.GetData<Entities.Order>();
+            var dbOrder = await query.Include(o => o.OrderDetails).FirstOrDefaultAsync(o => o.Id == orderId);
             if (dbOrder == null)
             {
                 return Result.Fail(FailureReasons.ItemNotFound, $"No order found with id {orderId}");
             }
 
-            var dbOrderDetails = await dataContext.GetData<Entities.OrderDetail>().Where(o => o.OrderId == orderId).ToListAsync();
-
             dbOrder.Status = OrderStatus.Canceled;
+            var dbOrderDetails = dbOrder.OrderDetails;
 
             if (dbOrderDetails.Any())
             {
@@ -148,16 +148,15 @@ public class OrderService : IOrderService
             return Result.Fail(FailureReasons.ClientError, "Invalid id");
         }
 
-        var dbOrder = await dataContext.GetData<Entities.Order>().FirstOrDefaultAsync(o => o.Id == orderId);
+        var query = dataContext.GetData<Entities.Order>();
+        var dbOrder = await query.FirstOrDefaultAsync(o => o.Id == orderId);
         if (dbOrder == null)
         {
             return Result.Fail(FailureReasons.ItemNotFound, $"No order found with id {orderId}");
         }
 
-        var products = await GetProductsAsync(orderId);
-
         var order = mapper.Map<Order>(dbOrder);
-        order.Products = products;
+        order.Products = await GetProductsAsync(orderId);
 
         return order;
     }
@@ -222,7 +221,8 @@ public class OrderService : IOrderService
 
         try
         {
-            var dbOrder = await dataContext.GetData<Entities.Order>(trackingChanges: true).FirstOrDefaultAsync(o => o.Id == request.OrderId);
+            var query = dataContext.GetData<Entities.Order>(trackingChanges: true);
+            var dbOrder = await query.FirstOrDefaultAsync(o => o.Id == request.OrderId);
             if (dbOrder is null)
             {
                 return Result.Fail(FailureReasons.ItemNotFound, "No order found");
@@ -234,6 +234,7 @@ public class OrderService : IOrderService
             }
 
             dbOrder.Status = request.Status;
+
             dataContext.Update(dbOrder);
             await dataContext.SaveAsync();
 
@@ -248,13 +249,14 @@ public class OrderService : IOrderService
 
     private async Task<IEnumerable<Product>> GetProductsAsync(Guid orderId)
     {
-        var hasDetails = await dataContext.GetData<Entities.OrderDetail>().AnyAsync(o => o.OrderId == orderId);
+        var query = dataContext.GetData<Entities.OrderDetail>();
+        var hasDetails = await query.AnyAsync(o => o.OrderId == orderId);
         if (!hasDetails)
         {
             return null;
         }
 
-        var orderDetails = await dataContext.GetData<Entities.OrderDetail>().Include(o => o.Product).Where(o => o.OrderId == orderId).ToListAsync();
+        var orderDetails = await query.Include(o => o.Product).Where(o => o.OrderId == orderId).ToListAsync();
         var products = new List<Product>(orderDetails.Count);
         foreach (var orderDetail in orderDetails)
         {
