@@ -76,6 +76,8 @@
     <Build Include="dbo\Tables\Invoices.sql" />
     <Build Include="dbo\Tables\Orders.sql" />
     <Build Include="dbo\Tables\OrderDetails.sql" />
+    <Build Include="dbo\Tables\Carts.sql" />
+    <Build Include="dbo\Tables\CartItems.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="CommerceApi.Database.publish.xml" />
