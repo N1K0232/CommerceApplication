@@ -246,19 +246,25 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
         return HealthCheckResult.Healthy();
     });
 
+    //add services
     services.AddScoped<IAuthenticationService, AuthenticationService>();
-    services.AddScoped<IIdentityService, IdentityService>();
-    services.AddScoped<IUserService, UserService>();
-    services.AddScoped<IImageService, ImageService>();
+    services.AddScoped<ICartService, CartService>();
     services.AddScoped<ICategoryService, CategoryService>();
-    services.AddScoped<ISupplierService, SupplierService>();
+    services.AddScoped<IIdentityService, IdentityService>();
+    services.AddScoped<IImageService, ImageService>();
     services.AddScoped<IInvoiceService, InvoiceService>();
-    services.AddScoped<IProductService, ProductService>();
     services.AddScoped<IOrderService, OrderService>();
+    services.AddScoped<IProductService, ProductService>();
+    services.AddScoped<ISupplierService, SupplierService>();
+    services.AddScoped<IUserService, UserService>();
 
+    //add remote services
     services.AddScoped<IPdfService, PdfService>();
 
+    //add startup services
     services.AddHostedService<AuthenticationStartupService>();
+
+    //add background services
     services.AddHostedService<SqlConnectionControlService>();
 
     var storageConnectionString = configuration.GetConnectionString("StorageConnection");

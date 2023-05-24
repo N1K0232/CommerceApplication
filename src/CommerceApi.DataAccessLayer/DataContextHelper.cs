@@ -94,10 +94,10 @@ public partial class ApplicationDataContext
             .Where(t => typeof(DeletableEntity).IsAssignableFrom(t.ClrType))
             .ToList();
 
-        foreach (var type in entries.Select(t => t.ClrType))
+        var types = entries.Select(t => t.ClrType);
+        foreach (var type in types)
         {
             var methods = SetGlobalQueryFilter(type);
-
             foreach (var method in methods)
             {
                 var genericMethod = method.MakeGenericMethod(type);
