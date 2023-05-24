@@ -14,5 +14,7 @@ public interface ICartService
 
     Task<Result<IEnumerable<CartItem>>> GetItemsAsync(Guid cartId);
 
+    Task<Result<decimal>> GetSubTotalAsync(Guid cartId);
+
     Task<Result> RemoveItemAsync(Guid cartId, Guid itemId);
 }

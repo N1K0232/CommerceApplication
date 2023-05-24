@@ -118,6 +118,49 @@ public class CartService : ICartService
         }
     }
 
+    public async Task<Result<IEnumerable<CartItem>>> GetItemsAsync(Guid cartId)
+    {
+        if (cartId == Guid.Empty)
+        {
+            return Result.Fail(FailureReasons.ClientError, "Invalid id");
+        }
+
+        var userId = claimService.GetId();
+        var query = dataContext.GetData<Entities.Cart>().Where(c => c.Id == cartId && c.UserId == userId);
+
+        var cart = await query.Include(c => c.CartItems).FirstOrDefaultAsync();
+        var cartItems = mapper.Map<IEnumerable<CartItem>>(cart.CartItems);
+
+        var result = Result<IEnumerable<CartItem>>.Ok(cartItems);
+        return result;
+    }
+
+    public async Task<Result<decimal>> GetSubTotalAsync(Guid cartId)
+    {
+        if (cartId == Guid.Empty)
+        {
+            return Result.Fail(FailureReasons.ClientError, "Invalid id");
+        }
+
+        var userId = claimService.GetId();
+        var query = dataContext.GetData<Entities.Cart>();
+
+        var cart = await query.Include(c => c.CartItems).ThenInclude(c => c.Product).FirstOrDefaultAsync(c => c.Id == cartId && c.UserId == userId);
+        var hasItems = cart?.CartItems?.Any() ?? false;
+        if (!hasItems)
+        {
+            return Result.Fail(FailureReasons.ItemNotFound, "No item in your cart");
+        }
+
+        var subTotal = 0M;
+        foreach (var item in cart.CartItems)
+        {
+            subTotal += item.Product.Price * item.Quantity;
+        }
+
+        return subTotal;
+    }
+
     public async Task<Result> RemoveItemAsync(Guid cartId, Guid itemId)
     {
         if (cartId == Guid.Empty)
@@ -148,22 +191,5 @@ public class CartService : ICartService
         {
             return Result.Fail(FailureReasons.DatabaseError, ex);
         }
-    }
-
-    public async Task<Result<IEnumerable<CartItem>>> GetItemsAsync(Guid cartId)
-    {
-        if (cartId == Guid.Empty)
-        {
-            return Result.Fail(FailureReasons.ClientError, "Invalid id");
-        }
-
-        var userId = claimService.GetId();
-        var query = dataContext.GetData<Entities.Cart>().Where(c => c.Id == cartId && c.UserId == userId);
-
-        var cart = await query.Include(c => c.CartItems).FirstOrDefaultAsync();
-        var cartItems = mapper.Map<IEnumerable<CartItem>>(cart.CartItems);
-
-        var result = Result<IEnumerable<CartItem>>.Ok(cartItems);
-        return result;
     }
 }

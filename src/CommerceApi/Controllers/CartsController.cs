@@ -41,6 +41,13 @@ public class CartsController : ControllerBase
         return CreateResponse(items, StatusCodes.Status200OK);
     }
 
+    [HttpGet("SubTotal")]
+    public async Task<IActionResult> GetSubTotal(Guid cartId)
+    {
+        var result = await cartService.GetSubTotalAsync(cartId);
+        return CreateResponse(result, StatusCodes.Status200OK);
+    }
+
     [HttpDelete("RemoveItem")]
     public async Task<IActionResult> RemoveItem(Guid cartId, Guid itemId)
     {
