@@ -53,13 +53,14 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
         Set<TEntity>().RemoveRange(entities);
     }
 
-    public async ValueTask<TEntity> GetAsync<TEntity>(Guid id) where TEntity : BaseEntity
+    public async ValueTask<TEntity> GetAsync<TEntity>(params object[] keyValues) where TEntity : BaseEntity
     {
         tokenSource ??= new CancellationTokenSource();
 
+        var token = tokenSource.Token;
         var set = Set<TEntity>();
 
-        var entity = await set.FindAsync(id, tokenSource.Token).ConfigureAwait(false);
+        var entity = await set.FindAsync(keyValues, token).ConfigureAwait(false);
         return entity;
     }
 
@@ -80,7 +81,12 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
 #pragma warning disable IDE0007 //Use implicit type
     public async Task SaveAsync()
     {
+        tokenSource ??= new CancellationTokenSource();
+
+        var token = tokenSource.Token;
+        var concurrencyStamp = Guid.NewGuid().ToString();
         var entries = GetEntries();
+
         foreach (var entry in entries)
         {
             BaseEntity baseEntity = entry.Entity as BaseEntity;
@@ -90,12 +96,15 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
                 {
                     deletableEntity.IsDeleted = false;
                     deletableEntity.DeletedDate = null;
+                    deletableEntity.DeletedTime = null;
                 }
 
                 if (baseEntity is FileEntity fileEntity)
                 {
                     fileEntity.DownloadFileName = $"{Guid.NewGuid()}_{fileEntity.FileName}";
                 }
+
+                baseEntity.ConcurrencyStamp = concurrencyStamp;
 
                 baseEntity.CreationDate = DateTime.UtcNow.ToDateOnly();
                 baseEntity.CreationTime = DateTime.UtcNow.ToTimeOnly();
@@ -113,6 +122,8 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
                     deletableEntity.DeletedTime = null;
                 }
 
+                baseEntity.ConcurrencyStamp = concurrencyStamp;
+
                 baseEntity.LastModificationDate = DateTime.UtcNow.ToDateOnly();
                 baseEntity.LastModificationTime = DateTime.UtcNow.ToTimeOnly();
             }
@@ -129,18 +140,17 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
                 }
             }
 
-            await ValidateAsync(baseEntity);
+            await ValidateAsync(baseEntity).ConfigureAwait(false);
         }
 
-        tokenSource ??= new CancellationTokenSource();
-        await SaveChangesAsync(tokenSource.Token);
+        await SaveChangesAsync(token).ConfigureAwait(false);
     }
 #pragma warning restore IDE0007
 
-    public async Task ExecuteTransactionAsync(Func<Task> action)
+    public Task ExecuteTransactionAsync(Func<Task> action)
     {
         var strategy = Database.CreateExecutionStrategy();
-        await strategy.ExecuteAsync(() => ExecuteTransactionCoreAsync(action));
+        return strategy.ExecuteAsync(() => ExecuteTransactionCoreAsync(action));
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
@@ -170,6 +180,10 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
     public override void Dispose()
     {
         tokenSource.Dispose();
+        tokenSource = null;
+
+        transaction.Dispose();
+        transaction = null;
 
         base.Dispose();
         GC.SuppressFinalize(this);

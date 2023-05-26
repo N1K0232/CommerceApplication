@@ -5,6 +5,7 @@
     [ProductId] UNIQUEIDENTIFIER NOT NULL,
     [UnitPrice] DECIMAL(8,2) NOT NULL,
     [Quantity] INTEGER NOT NULL,
+    [ConcurrencyStamp] NVARCHAR(50) NOT NULL,
     [CreationDate] DATE NOT NULL DEFAULT getutcdate(),
     [CreationTime] TIME(7) NOT NULL,
     [LastModificationDate] DATE NULL,

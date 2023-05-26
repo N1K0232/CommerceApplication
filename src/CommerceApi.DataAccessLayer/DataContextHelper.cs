@@ -7,6 +7,7 @@ using CommerceApi.SharedServices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 
 namespace CommerceApi.DataAccessLayer;
@@ -22,7 +23,9 @@ public partial class ApplicationDataContext
         .Single(t => t.IsGenericMethod && t.Name == nameof(SetQueryFilterOnTenantEntity));
 
     private readonly IUserClaimService claimService;
+
     private ValidationContext validationContext = null;
+    private IDbContextTransaction transaction = null;
 
 
     protected override void OnSavedChanges(object sender, SaveChangesEventArgs e) => base.OnSavedChanges(sender, e);
@@ -34,13 +37,14 @@ public partial class ApplicationDataContext
     private async Task ExecuteTransactionCoreAsync(Func<Task> action)
     {
         tokenSource ??= new CancellationTokenSource();
+        var token = tokenSource.Token;
 
-        using var transaction = await Database.BeginTransactionAsync(tokenSource.Token).ConfigureAwait(false);
+        transaction = await Database.BeginTransactionAsync(token).ConfigureAwait(false);
         await action.Invoke().ConfigureAwait(false);
-        await transaction.CommitAsync(tokenSource.Token).ConfigureAwait(false);
+        await transaction.CommitAsync(token).ConfigureAwait(false);
     }
 
-    private Task ValidateAsync(object entity)
+    private Task ValidateAsync(BaseEntity entity)
     {
         try
         {
