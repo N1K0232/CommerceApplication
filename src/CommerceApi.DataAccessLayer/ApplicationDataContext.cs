@@ -84,7 +84,6 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
         tokenSource ??= new CancellationTokenSource();
 
         var token = tokenSource.Token;
-        var concurrencyStamp = Guid.NewGuid().ToString();
         var entries = GetEntries();
 
         foreach (var entry in entries)
@@ -104,7 +103,8 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
                     fileEntity.DownloadFileName = $"{Guid.NewGuid()}_{fileEntity.FileName}";
                 }
 
-                baseEntity.ConcurrencyStamp = concurrencyStamp;
+                baseEntity.SecurityStamp = GenerateSecurityStamp();
+                baseEntity.ConcurrencyStamp = Guid.NewGuid().ToString();
 
                 baseEntity.CreationDate = DateTime.UtcNow.ToDateOnly();
                 baseEntity.CreationTime = DateTime.UtcNow.ToTimeOnly();
@@ -122,7 +122,8 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
                     deletableEntity.DeletedTime = null;
                 }
 
-                baseEntity.ConcurrencyStamp = concurrencyStamp;
+                baseEntity.SecurityStamp = GenerateSecurityStamp();
+                baseEntity.ConcurrencyStamp = Guid.NewGuid().ToString();
 
                 baseEntity.LastModificationDate = DateTime.UtcNow.ToDateOnly();
                 baseEntity.LastModificationTime = DateTime.UtcNow.ToTimeOnly();
@@ -184,6 +185,9 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
 
         transaction.Dispose();
         transaction = null;
+
+        generator.Dispose();
+        generator = null;
 
         base.Dispose();
         GC.SuppressFinalize(this);

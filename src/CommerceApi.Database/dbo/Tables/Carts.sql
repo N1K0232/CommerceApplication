@@ -2,7 +2,8 @@
 (
 	[Id] UNIQUEIDENTIFIER NOT NULL DEFAULT newid(),
     [UserId] UNIQUEIDENTIFIER NOT NULL,
-    [ConcurrencyStamp] NVARCHAR(50) NOT NULL,
+    [SecurityStamp] NVARCHAR(MAX) NOT NULL,
+    [ConcurrencyStamp] NVARCHAR(MAX) NOT NULL,
     [CreationDate] DATE NOT NULL DEFAULT getutcdate(),
     [CreationTime] TIME(7) NOT NULL,
     [LastModificationDate] DATE NULL,

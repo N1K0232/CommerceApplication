@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Reflection;
+using System.Security.Cryptography;
 using CommerceApi.DataAccessLayer.Comparers;
 using CommerceApi.DataAccessLayer.Converters;
 using CommerceApi.DataAccessLayer.Entities.Common;
@@ -27,6 +28,7 @@ public partial class ApplicationDataContext
     private ValidationContext validationContext = null;
     private IDbContextTransaction transaction = null;
 
+    private RandomNumberGenerator generator = null;
 
     protected override void OnSavedChanges(object sender, SaveChangesEventArgs e) => base.OnSavedChanges(sender, e);
 
@@ -57,6 +59,17 @@ public partial class ApplicationDataContext
         {
             return Task.FromException(ex);
         }
+    }
+
+    private string GenerateSecurityStamp()
+    {
+        generator = RandomNumberGenerator.Create();
+        var bytes = new byte[50];
+
+        generator.GetBytes(bytes);
+
+        var securityStamp = Convert.ToBase64String(bytes).ToUpperInvariant();
+        return securityStamp;
     }
 
     private IEnumerable<EntityEntry> GetEntries()
