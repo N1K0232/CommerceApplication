@@ -30,9 +30,7 @@ public class AzureStorageProvider : StorageProvider, IStorageProvider
 
         stream.Position = 0;
 
-        var contentType = MimeUtility.GetMimeMapping(path);
-        var headers = new BlobHttpHeaders { ContentType = contentType };
-
+        var headers = new BlobHttpHeaders { ContentType = MimeUtility.GetMimeMapping(path) };
         await blobClient.UploadAsync(stream, headers).ConfigureAwait(false);
     }
 
