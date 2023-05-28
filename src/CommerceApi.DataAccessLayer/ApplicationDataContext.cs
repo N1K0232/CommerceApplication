@@ -247,14 +247,23 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
 
     public override void Dispose()
     {
-        tokenSource.Dispose();
-        tokenSource = null;
+        if (tokenSource != null)
+        {
+            tokenSource.Dispose();
+            tokenSource = null;
+        }
 
-        transaction.Dispose();
-        transaction = null;
+        if (transaction != null)
+        {
+            transaction.Dispose();
+            transaction = null;
+        }
 
-        generator.Dispose();
-        generator = null;
+        if (generator != null)
+        {
+            generator.Dispose();
+            generator = null;
+        }
 
         base.Dispose();
         GC.SuppressFinalize(this);

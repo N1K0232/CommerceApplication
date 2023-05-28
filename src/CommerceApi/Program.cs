@@ -262,6 +262,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IPdfService, PdfService>();
 
     //add startup services
+    services.AddHostedService<ApplicationStartupService>();
     services.AddHostedService<AuthenticationStartupService>();
 
     //add background services
