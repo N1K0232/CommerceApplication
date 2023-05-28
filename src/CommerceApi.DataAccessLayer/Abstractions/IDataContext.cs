@@ -10,7 +10,11 @@ public interface IDataContext : IReadOnlyDataContext
 
     void Create<TEntity>(TEntity entity) where TEntity : BaseEntity;
 
+    void Create<TEntity>(IEnumerable<TEntity> entities) where TEntity : BaseEntity;
+
     void Update<TEntity>(TEntity entity) where TEntity : BaseEntity;
+
+    void Update<TEntity>(IEnumerable<TEntity> entities) where TEntity : BaseEntity;
 
     Task SaveAsync();
 

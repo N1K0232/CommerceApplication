@@ -1,8 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Security.Cryptography;
-using CommerceApi.DataAccessLayer.Comparers;
-using CommerceApi.DataAccessLayer.Converters;
 using CommerceApi.DataAccessLayer.Entities.Common;
 using CommerceApi.SharedServices;
 using Microsoft.EntityFrameworkCore;
@@ -79,12 +77,6 @@ public partial class ApplicationDataContext
             .ToList();
 
         return entries.Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted);
-    }
-
-    partial void ConfigureConventionsCore(ModelConfigurationBuilder configurationBuilder)
-    {
-        configurationBuilder.Properties<DateOnly>().HaveConversion<DateOnlyConverter, DateOnlyComparer>().HaveColumnType("date");
-        configurationBuilder.Properties<TimeOnly>().HaveConversion<TimeOnlyConverter, TimeOnlyComparer>().HaveColumnType("time(7)");
     }
 
     partial void OnConfiguringCore(DbContextOptionsBuilder optionsBuilder)

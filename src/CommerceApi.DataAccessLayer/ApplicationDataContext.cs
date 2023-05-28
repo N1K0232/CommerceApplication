@@ -1,5 +1,7 @@
 ﻿using CommerceApi.Authentication;
 using CommerceApi.DataAccessLayer.Abstractions;
+using CommerceApi.DataAccessLayer.Comparers;
+using CommerceApi.DataAccessLayer.Converters;
 using CommerceApi.DataAccessLayer.Entities.Common;
 using CommerceApi.SharedServices;
 using Microsoft.EntityFrameworkCore;
@@ -32,25 +34,59 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
     public void Create<TEntity>(TEntity entity) where TEntity : BaseEntity
     {
         ArgumentNullException.ThrowIfNull(entity, nameof(entity));
-        Set<TEntity>().Add(entity);
+
+        var set = Set<TEntity>();
+        set.Add(entity);
     }
 
-    void IDataContext.Update<TEntity>(TEntity entity)
+    public void Create<TEntity>(IEnumerable<TEntity> entities) where TEntity : BaseEntity
     {
-        ArgumentNullException.ThrowIfNull(entity, nameof(entity));
-        Set<TEntity>().Update(entity);
+        var hasItems = entities?.Any() ?? false;
+        if (!hasItems)
+        {
+            throw new ArgumentNullException(nameof(entities), "you must provide at least one entity");
+        }
+
+        var set = Set<TEntity>();
+        set.AddRange(entities);
     }
 
     public void Delete<TEntity>(TEntity entity) where TEntity : BaseEntity
     {
         ArgumentNullException.ThrowIfNull(entity, nameof(entity));
-        Set<TEntity>().Remove(entity);
+
+        var set = Set<TEntity>();
+        set.Remove(entity);
     }
 
     public void Delete<TEntity>(IEnumerable<TEntity> entities) where TEntity : BaseEntity
     {
         ArgumentNullException.ThrowIfNull(entities, nameof(entities));
-        Set<TEntity>().RemoveRange(entities);
+
+        var set = Set<TEntity>();
+        set.RemoveRange(entities);
+    }
+
+    void IDataContext.Update<TEntity>(TEntity entity)
+    {
+        ArgumentNullException.ThrowIfNull(entity, nameof(entity));
+
+        var set = Set<TEntity>();
+        set.Attach(entity);
+        set.Update(entity);
+    }
+
+    void IDataContext.Update<TEntity>(IEnumerable<TEntity> entities)
+    {
+        var hasItems = entities?.Any() ?? false;
+        if (!hasItems)
+        {
+            throw new ArgumentNullException(nameof(entities), "you must provide at least one entity");
+        }
+
+        var set = Set<TEntity>();
+        set.AttachRange(entities);
+        set.UpdateRange(entities);
     }
 
     public async ValueTask<TEntity> GetAsync<TEntity>(params object[] keyValues) where TEntity : BaseEntity
@@ -73,9 +109,8 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
             set = set.IgnoreQueryFilters();
         }
 
-        return trackingChanges ?
-            set.AsTracking() :
-            set.AsNoTrackingWithIdentityResolution();
+        var result = trackingChanges ? set.AsTracking() : set.AsNoTrackingWithIdentityResolution();
+        return result;
     }
 
 #pragma warning disable IDE0007 //Use implicit type
@@ -164,7 +199,7 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
             Logger.LogInformation("the database was successfully created");
         }
 
-        Logger.LogError("error occurred while creating database");
+        Logger.LogError("the database already exists or an error occurred while creating database");
     }
 
     public async Task EnsureDeletedAsync()
@@ -188,11 +223,11 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
-        ConfigureConventionsCore(configurationBuilder);
+        configurationBuilder.Properties<DateOnly>().HaveConversion<DateOnlyConverter, DateOnlyComparer>().HaveColumnType("date");
+        configurationBuilder.Properties<TimeOnly>().HaveConversion<TimeOnlyConverter, TimeOnlyComparer>().HaveColumnType("time(7)");
+
         base.ConfigureConventions(configurationBuilder);
     }
-
-    partial void ConfigureConventionsCore(ModelConfigurationBuilder configurationBuilder);
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
