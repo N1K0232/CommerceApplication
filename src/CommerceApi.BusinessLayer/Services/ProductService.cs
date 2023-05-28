@@ -55,7 +55,8 @@ public class ProductService : IProductService
             }
 
             var dbProduct = mapper.Map<Entities.Product>(product);
-            dbProduct.HasDiscount = dbProduct.DiscountPercentage.GetValueOrDefault() > 0;
+            dbProduct.HasDiscount = product.DiscountPercentage.GetValueOrDefault() > 0;
+            dbProduct.HasShipping = product.ShippingCost.GetValueOrDefault() > 0;
 
             dataContext.Create(dbProduct);
             await dataContext.SaveAsync();
@@ -190,7 +191,8 @@ public class ProductService : IProductService
             }
 
             mapper.Map(product, dbProduct);
-            dbProduct.HasDiscount = dbProduct.DiscountPercentage.GetValueOrDefault() > 0;
+            dbProduct.HasDiscount = product.DiscountPercentage.GetValueOrDefault() > 0;
+            dbProduct.HasShipping = product.ShippingCost.GetValueOrDefault() > 0;
 
             dataContext.Update(dbProduct);
             await dataContext.SaveAsync();

@@ -7,6 +7,8 @@
     [Price]                DECIMAL (8, 2)   NOT NULL,
     [DiscountPercentage]   FLOAT (53)       NULL,
     [HasDiscount]          BIT              NOT NULL,
+    [ShippingCost]         DECIMAL(5, 2)    NULL,
+    [HasShipping]          BIT              NOT NULL,
     [SecurityStamp]        NVARCHAR (MAX)   NOT NULL,
     [ConcurrencyStamp]     NVARCHAR (MAX)   NOT NULL,
     [CreationDate]         DATE         NOT NULL DEFAULT getutcdate(),

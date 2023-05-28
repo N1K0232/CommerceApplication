@@ -13,4 +13,6 @@ public class SaveProductRequest
     public decimal Price { get; set; }
 
     public double? DiscountPercentage { get; set; }
+
+    public decimal? ShippingCost { get; set; }
 }

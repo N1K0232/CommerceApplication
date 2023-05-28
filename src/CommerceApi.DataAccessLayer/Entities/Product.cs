@@ -18,6 +18,10 @@ public class Product : DeletableEntity
 
     public bool HasDiscount { get; set; }
 
+    public decimal? ShippingCost { get; set; }
+
+    public bool HasShipping { get; set; }
+
     public virtual Category Category { get; set; }
 
     public virtual Supplier Supplier { get; set; }

@@ -14,5 +14,9 @@ public class Product : BaseObject
 
     public double? DiscountPercentage { get; set; }
 
-    public bool? HasDiscount { get; set; }
+    public bool HasDiscount { get; set; }
+
+    public decimal? ShippingCost { get; set; }
+
+    public bool HasShipping { get; set; }
 }
