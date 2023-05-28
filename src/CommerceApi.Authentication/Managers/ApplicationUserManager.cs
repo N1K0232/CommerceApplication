@@ -8,7 +8,10 @@ namespace CommerceApi.Authentication.Managers;
 
 public class ApplicationUserManager : UserManager<ApplicationUser>
 {
-    public ApplicationUserManager(IUserStore<ApplicationUser> store,
+    private readonly AuthenticationDataContext authenticationDataContext;
+
+    public ApplicationUserManager(AuthenticationDataContext authenticationDataContext,
+        IUserStore<ApplicationUser> store,
         IOptions<IdentityOptions> optionsAccessor,
         IPasswordHasher<ApplicationUser> passwordHasher,
         IEnumerable<IUserValidator<ApplicationUser>> userValidators,
@@ -27,6 +30,7 @@ public class ApplicationUserManager : UserManager<ApplicationUser>
             services,
             logger)
     {
+        this.authenticationDataContext = authenticationDataContext;
     }
 
     public override async Task<IdentityResult> CreateAsync(ApplicationUser user, string password)
@@ -42,6 +46,49 @@ public class ApplicationUserManager : UserManager<ApplicationUser>
             Code = "409",
             Description = "a user with the same email or username already exists"
         });
+    }
+
+    public async Task<IdentityResult> AddAddressAsync(ApplicationUser user, Address address)
+    {
+        ArgumentNullException.ThrowIfNull(user, nameof(user));
+        ArgumentNullException.ThrowIfNull(address, nameof(address));
+
+        address.UserId = user.Id;
+
+        await authenticationDataContext.Addresses.AddAsync(address);
+        await authenticationDataContext.SaveChangesAsync();
+
+        return IdentityResult.Success;
+    }
+
+    public async Task<IdentityResult> AddAddressesAsync(ApplicationUser user, IEnumerable<Address> addresses)
+    {
+        ArgumentNullException.ThrowIfNull(user, nameof(user));
+
+        var hasItems = addresses?.Any() ?? false;
+        if (!hasItems)
+        {
+            throw new ArgumentNullException(nameof(addresses), "you must provide at least one member");
+        }
+
+        foreach (var address in addresses)
+        {
+            address.UserId = user.Id;
+        }
+
+        await authenticationDataContext.AddRangeAsync(addresses);
+        await authenticationDataContext.SaveChangesAsync();
+
+        return IdentityResult.Success;
+    }
+
+    public async Task<IEnumerable<Address>> GetAddressesAsync(ApplicationUser user)
+    {
+        ArgumentNullException.ThrowIfNull(user, nameof(ApplicationUser));
+
+        var query = authenticationDataContext.Addresses.AsQueryable();
+        var addresses = await query.Where(a => a.UserId == user.Id).ToListAsync();
+        return addresses;
     }
 
     public override async Task<IdentityResult> DeleteAsync(ApplicationUser user)

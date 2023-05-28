@@ -28,6 +28,7 @@ public partial class AuthenticationDataContext
     {
         modelBuilder.ApplyConfiguration(new ApplicationUserConfiguration());
         modelBuilder.ApplyConfiguration(new ApplicationUserRoleConfiguration());
+        modelBuilder.ApplyConfiguration(new AddressConfiguration());
 
         foreach (var entity in modelBuilder.Model.GetEntityTypes())
         {

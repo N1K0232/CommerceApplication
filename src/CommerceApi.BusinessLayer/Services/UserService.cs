@@ -110,7 +110,9 @@ public class UserService : IUserService
         }
 
         var user = mapper.Map<ApplicationUser>(request);
-        var identityResult = await identityService.RegisterAsync(user, request.Password, RoleNames.User);
+        var address = mapper.Map<Address>(request);
+
+        var identityResult = await identityService.RegisterUserAsync(user, address, request.Password, RoleNames.User);
 
         var registerResponse = new RegisterResponse(identityResult.Succeeded, identityResult.Errors.Select(e => e.Description));
         return registerResponse;

@@ -27,6 +27,8 @@ public partial class AuthenticationDataContext
 
     public ILogger Logger => logger;
 
+    public virtual DbSet<Address> Addresses { get; set; }
+
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         try

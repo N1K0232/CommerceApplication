@@ -1,5 +1,4 @@
-﻿using CommerceApi.Authentication.Enums;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 
 namespace CommerceApi.Authentication.Entities;
 
@@ -11,21 +10,13 @@ public class ApplicationUser : IdentityUser<Guid>
 
     public DateTime? DateOfBirth { get; set; }
 
-    public string Street { get; set; }
-
-    public string City { get; set; }
-
-    public string PostalCode { get; set; }
-
-    public string Country { get; set; }
-
     public DateTime RegistrationDate { get; set; }
-
-    public UserStatus Status { get; set; }
 
     public string RefreshToken { get; set; }
 
     public DateTime? RefreshTokenExpirationDate { get; set; }
 
-    public virtual ICollection<ApplicationUserRole> UserRoles { get; set; }
+    public virtual IList<ApplicationUserRole> UserRoles { get; set; }
+
+    public virtual IList<Address> Addresses { get; set; }
 }

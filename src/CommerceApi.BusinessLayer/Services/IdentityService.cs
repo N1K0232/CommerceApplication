@@ -4,7 +4,6 @@ using System.Security.Cryptography;
 using System.Text;
 using CommerceApi.Authentication.Common;
 using CommerceApi.Authentication.Entities;
-using CommerceApi.Authentication.Enums;
 using CommerceApi.Authentication.Extensions;
 using CommerceApi.Authentication.Managers;
 using CommerceApi.Authentication.Settings;
@@ -83,6 +82,7 @@ public class IdentityService : IIdentityService
         await userManager.GenerateConcurrencyStampAsync(user);
 
         var claims = await GetClaimsAsync(user);
+
         var loginResponse = CreateLoginResponse(claims);
         await SaveRefreshTokenAsync(user, loginResponse.RefreshToken);
 
@@ -105,11 +105,12 @@ public class IdentityService : IIdentityService
         return loginResponse;
     }
 
-    public async Task<IdentityResult> RegisterAsync(ApplicationUser user, string password, string role)
+    public async Task<IdentityResult> RegisterUserAsync(ApplicationUser user, Address address, string password, string role)
     {
         var identityResult = await RegisterAsync(user, password);
         if (identityResult.Succeeded)
         {
+            await userManager.AddAddressAsync(user, address);
             identityResult = await userManager.AddToRoleAsync(user, role);
         }
 
@@ -140,7 +141,6 @@ public class IdentityService : IIdentityService
         var user = await userManager.FindByEmailAsync(email);
         if (user != null)
         {
-            user.Status = UserStatus.LoggedOut;
             await signInManager.SignOutAsync();
         }
     }
@@ -205,6 +205,7 @@ public class IdentityService : IIdentityService
     private async Task<IEnumerable<Claim>> GetClaimsAsync(ApplicationUser user)
     {
         var userRoles = await userManager.GetRolesAsync(user);
+        var userAddresses = await userManager.GetAddressesAsync(user);
         var userClaims = await userManager.GetClaimsAsync(user);
 
         if (userClaims is null || !userClaims.Any())
@@ -223,16 +224,23 @@ public class IdentityService : IIdentityService
             new Claim(ClaimTypes.GivenName, user.FirstName),
             new Claim(ClaimTypes.Surname, user.LastName ?? string.Empty),
             new Claim(ClaimTypes.DateOfBirth, user.DateOfBirth?.ToString() ?? string.Empty),
-            new Claim(ClaimTypes.StreetAddress, user.Street ?? string.Empty),
-            new Claim(CustomClaimTypes.City, user.City ?? string.Empty),
-            new Claim(ClaimTypes.PostalCode, user.PostalCode ?? string.Empty),
-            new Claim(ClaimTypes.Country, user.Country ?? string.Empty),
             new Claim(ClaimTypes.MobilePhone, user.PhoneNumber ?? string.Empty),
             new Claim(ClaimTypes.SerialNumber, user.SecurityStamp),
             new Claim(ClaimTypes.GroupSid, user.ConcurrencyStamp),
             new Claim(ClaimTypes.Email, user.Email),
             new Claim(ClaimTypes.Name, user.UserName),
         };
+
+        if (userAddresses != null && userAddresses.Any())
+        {
+            foreach (var address in userAddresses)
+            {
+                claims.Add(new(ClaimTypes.StreetAddress, address.Street));
+                claims.Add(new(CustomClaimTypes.City, address.City));
+                claims.Add(new(ClaimTypes.PostalCode, address.PostalCode));
+                claims.Add(new(ClaimTypes.Country, address.Country));
+            }
+        }
 
         return claims;
     }
@@ -261,8 +269,6 @@ public class IdentityService : IIdentityService
 
     private async Task<IdentityResult> RegisterAsync(ApplicationUser user, string password)
     {
-        user.Status = UserStatus.Registrated;
-
         var identityResult = await userManager.CreateAsync(user, password);
         return identityResult;
     }

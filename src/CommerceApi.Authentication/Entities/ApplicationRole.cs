@@ -12,5 +12,5 @@ public class ApplicationRole : IdentityRole<Guid>
     {
     }
 
-    public virtual ICollection<ApplicationUserRole> UserRoles { get; set; }
+    public virtual IList<ApplicationUserRole> UserRoles { get; set; }
 }

@@ -8,16 +8,16 @@ public class ApplicationUserRoleConfiguration : IEntityTypeConfiguration<Applica
 {
     public void Configure(EntityTypeBuilder<ApplicationUserRole> builder)
     {
-        builder.HasKey(userRole => new { userRole.UserId, userRole.RoleId });
+        builder.HasKey(ur => new { ur.UserId, ur.RoleId });
 
-        builder.HasOne(userRole => userRole.User)
-            .WithMany(user => user.UserRoles)
-            .HasForeignKey(userRole => userRole.UserId)
+        builder.HasOne(ur => ur.User)
+            .WithMany(u => u.UserRoles)
+            .HasForeignKey(ur => ur.UserId)
             .IsRequired();
 
-        builder.HasOne(userRole => userRole.Role)
-            .WithMany(role => role.UserRoles)
-            .HasForeignKey(userRole => userRole.RoleId)
+        builder.HasOne(ur => ur.Role)
+            .WithMany(r => r.UserRoles)
+            .HasForeignKey(ur => ur.RoleId)
             .IsRequired();
     }
 }

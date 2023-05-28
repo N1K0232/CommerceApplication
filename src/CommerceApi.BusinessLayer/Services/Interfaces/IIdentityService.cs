@@ -19,7 +19,7 @@ public interface IIdentityService
 
     Task<LoginResponse> RefreshTokenAsync(ClaimsPrincipal principal, string refreshToken);
 
-    Task<IdentityResult> RegisterAsync(ApplicationUser user, string password, string role);
+    Task<IdentityResult> RegisterUserAsync(ApplicationUser user, Address address, string password, string role);
 
     Task<IdentityResult> RegisterAsync(ApplicationUser user, string password, params string[] roles);
 
