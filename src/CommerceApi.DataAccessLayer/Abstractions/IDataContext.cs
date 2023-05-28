@@ -15,4 +15,10 @@ public interface IDataContext : IReadOnlyDataContext
     Task SaveAsync();
 
     Task ExecuteTransactionAsync(Func<Task> action);
+
+    Task EnsureCreatedAsync();
+
+    Task EnsureDeletedAsync();
+
+    Task MigrateAsync();
 }

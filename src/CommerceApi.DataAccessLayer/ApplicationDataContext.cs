@@ -154,6 +154,38 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
         return strategy.ExecuteAsync(() => ExecuteTransactionCoreAsync(action));
     }
 
+    public async Task EnsureCreatedAsync()
+    {
+        tokenSource ??= new CancellationTokenSource();
+
+        var result = await Database.EnsureCreatedAsync(tokenSource.Token).ConfigureAwait(false);
+        if (result)
+        {
+            Logger.LogInformation("the database was successfully created");
+        }
+
+        Logger.LogError("error occurred while creating database");
+    }
+
+    public async Task EnsureDeletedAsync()
+    {
+        tokenSource ??= new CancellationTokenSource();
+
+        var result = await Database.EnsureDeletedAsync(tokenSource.Token).ConfigureAwait(false);
+        if (result)
+        {
+            Logger.LogInformation("the database was successfully deleted");
+        }
+
+        Logger.LogError("error occurred while deleting database");
+    }
+
+    public async Task MigrateAsync()
+    {
+        tokenSource ??= new CancellationTokenSource();
+        await Database.MigrateAsync(tokenSource.Token).ConfigureAwait(false);
+    }
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         ConfigureConventionsCore(configurationBuilder);

@@ -25,6 +25,8 @@ public partial class AuthenticationDataContext
         this.logger = logger;
     }
 
+    public ILogger Logger => logger;
+
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         try
