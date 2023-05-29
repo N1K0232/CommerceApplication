@@ -166,7 +166,10 @@ public class OrderService : IOrderService
         var query = dataContext.GetData<Entities.Order>();
         var userId = claimService.GetId();
 
-        query.Where(o => o.UserId == userId);
+        if (userId != Guid.Empty)
+        {
+            query = query.Where(o => o.UserId == userId);
+        }
 
         if (!string.IsNullOrWhiteSpace(orderBy))
         {
@@ -174,10 +177,9 @@ public class OrderService : IOrderService
         }
 
         var totalCount = await query.LongCountAsync();
-
         var dbOrders = await query.Skip(pageIndex * itemsPerPage).Take(itemsPerPage + 1).ToListAsync();
-        var orders = mapper.Map<IEnumerable<Order>>(dbOrders).Take(itemsPerPage);
 
+        var orders = mapper.Map<IEnumerable<Order>>(dbOrders).Take(itemsPerPage);
         await orders.ForEachAsync(async (order) =>
         {
             var products = await GetProductsAsync(order.Id);
@@ -196,17 +198,20 @@ public class OrderService : IOrderService
         }
 
         var totalPrice = 0M;
+        var userId = claimService.GetId();
 
         var query = dataContext.GetData<Entities.Order>();
-        var dbOrder = await query.Include(o => o.OrderDetails).FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == claimService.GetId());
-        if (dbOrder == null)
+        var order = await query.Include(o => o.OrderDetails).ThenInclude(o => o.Product).FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == userId);
+
+        var hasItems = order?.OrderDetails?.Any() ?? false;
+        if (!hasItems)
         {
             return Result.Fail(FailureReasons.ItemNotFound, $"No order found with id {orderId}");
         }
 
-        foreach (var orderDetail in dbOrder.OrderDetails)
+        foreach (var detail in order.OrderDetails)
         {
-            totalPrice += orderDetail.UnitPrice * orderDetail.Quantity;
+            totalPrice += (detail.UnitPrice * detail.Quantity) + detail.Product.ShippingCost.GetValueOrDefault(0M);
         }
 
         return totalPrice;

@@ -155,7 +155,7 @@ public class CartService : ICartService
         var subTotal = 0M;
         foreach (var item in cart.CartItems)
         {
-            subTotal += item.Product.Price * item.Quantity;
+            subTotal += (item.Product.Price * item.Quantity) + item.Product.ShippingCost.GetValueOrDefault(0M);
         }
 
         return subTotal;
