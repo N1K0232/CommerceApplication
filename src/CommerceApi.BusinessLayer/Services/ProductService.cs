@@ -5,6 +5,7 @@ using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.Shared.Models;
 using CommerceApi.Shared.Models.Common;
 using CommerceApi.Shared.Models.Requests;
+using CommerceApi.SharedServices;
 using CommerceApi.StorageProviders.Abstractions;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -19,16 +20,22 @@ public class ProductService : IProductService
     private readonly IStorageProvider storageProvider;
     private readonly IMapper mapper;
     private readonly IValidator<SaveProductRequest> productValidator;
+    private readonly IValidator<SaveReviewRequest> reviewValidator;
+    private readonly IUserClaimService claimService;
 
     public ProductService(IDataContext dataContext,
         IStorageProvider storageProvider,
         IMapper mapper,
-        IValidator<SaveProductRequest> productValidator)
+        IValidator<SaveProductRequest> productValidator,
+        IValidator<SaveReviewRequest> reviewValidator,
+        IUserClaimService claimService)
     {
         this.dataContext = dataContext;
         this.storageProvider = storageProvider;
         this.mapper = mapper;
         this.productValidator = productValidator;
+        this.reviewValidator = reviewValidator;
+        this.claimService = claimService;
     }
 
     public async Task<Result<Product>> CreateAsync(SaveProductRequest product)
@@ -199,6 +206,126 @@ public class ProductService : IProductService
 
             var savedProduct = mapper.Map<Product>(dbProduct);
             return savedProduct;
+        }
+        catch (DbUpdateException ex)
+        {
+            return Result.Fail(FailureReasons.DatabaseError, ex);
+        }
+    }
+
+    public async Task<Result> AddReviewAsync(SaveReviewRequest review)
+    {
+        var validationResult = await reviewValidator.ValidateAsync(review);
+        if (!validationResult.IsValid)
+        {
+            var validationErrors = new List<ValidationError>(validationResult.Errors.Capacity);
+            foreach (var error in validationResult.Errors)
+            {
+                validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
+            }
+
+            return Result.Fail(FailureReasons.ClientError, "validation errors", validationErrors);
+        }
+
+        try
+        {
+            var dbReview = mapper.Map<Entities.Review>(review);
+            dbReview.UserId = claimService.GetId();
+
+            dataContext.Create(dbReview);
+            await dataContext.SaveAsync();
+
+            return Result.Ok();
+        }
+        catch (DbUpdateException ex)
+        {
+            return Result.Fail(FailureReasons.DatabaseError, ex);
+        }
+    }
+
+    public async Task<Result<IEnumerable<Review>>> GetReviewsAsync(Guid productId)
+    {
+        if (productId == Guid.Empty)
+        {
+            return Result.Fail(FailureReasons.ClientError, "invalid id");
+        }
+
+        var query = dataContext.GetData<Entities.Product>();
+
+        var productExists = await query.AnyAsync(p => p.Id == productId);
+        if (!productExists)
+        {
+            return Result.Fail(FailureReasons.ItemNotFound, "the product doesn't exists");
+        }
+
+        var dbReviews = await query.Include(p => p.Reviews)
+            .Where(p => p.Id == productId)
+            .Select(p => p.Reviews)
+            .ToListAsync();
+
+        var reviews = mapper.Map<IEnumerable<Review>>(dbReviews);
+        return Result<IEnumerable<Review>>.Ok(reviews);
+    }
+
+    public async Task<Result> DeleteReviewAsync(Guid reviewId)
+    {
+        if (reviewId == Guid.Empty)
+        {
+            return Result.Fail(FailureReasons.ClientError, "invalid id");
+        }
+
+        try
+        {
+            var review = await dataContext.GetAsync<Entities.Review>(reviewId);
+            if (review != null)
+            {
+                dataContext.Delete(review);
+                await dataContext.SaveAsync();
+
+                return Result.Ok();
+            }
+
+            return Result.Fail(FailureReasons.ItemNotFound, "No review found");
+        }
+        catch (DbUpdateException ex)
+        {
+            return Result.Fail(FailureReasons.DatabaseError, ex);
+        }
+    }
+
+    public async Task<Result> UpdateReviewAsync(Guid reviewId, SaveReviewRequest review)
+    {
+        try
+        {
+            if (reviewId == Guid.Empty)
+            {
+                return Result.Fail(FailureReasons.ClientError, "Invalid id");
+            }
+
+            var validationResult = await reviewValidator.ValidateAsync(review);
+            if (!validationResult.IsValid)
+            {
+                var validationErrors = new List<ValidationError>(validationResult.Errors.Capacity);
+                foreach (var error in validationResult.Errors)
+                {
+                    validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
+                }
+
+                return Result.Fail(FailureReasons.ClientError, "validation errors", validationErrors);
+            }
+
+            var dbReview = await dataContext.GetAsync<Entities.Review>(reviewId);
+            if (dbReview != null)
+            {
+                mapper.Map(review, dbReview);
+
+                dataContext.Update(dbReview);
+                await dataContext.SaveAsync();
+
+                return Result.Ok();
+            }
+
+            return Result.Fail(FailureReasons.ItemNotFound, "No review found");
         }
         catch (DbUpdateException ex)
         {

@@ -98,4 +98,52 @@ public class ProductsController : ControllerBase
         var result = await productService.UploadImageAsync(productId, file.FileName, file.OpenReadStream());
         return CreateResponse(result, StatusCodes.Status200OK);
     }
+
+    [HttpPost("reviews/AddReview")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> AddReview(SaveReviewRequest review)
+    {
+        var result = await productService.AddReviewAsync(review);
+        return CreateResponse(result, StatusCodes.Status200OK);
+    }
+
+    [HttpGet("reviews/{productId}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetReviews(Guid productId)
+    {
+        var result = await productService.GetReviewsAsync(productId);
+        return CreateResponse(result, StatusCodes.Status200OK);
+    }
+
+    [HttpDelete("reviews/{reviewId}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteReview(Guid reviewId)
+    {
+        var result = await productService.DeleteReviewAsync(reviewId);
+        return CreateResponse(result, StatusCodes.Status200OK);
+    }
+
+    [HttpPut("reviews/{reviewId}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateReview(Guid reviewId, SaveReviewRequest review)
+    {
+        var result = await productService.UpdateReviewAsync(reviewId, review);
+        return CreateResponse(result, StatusCodes.Status200OK);
+    }
 }

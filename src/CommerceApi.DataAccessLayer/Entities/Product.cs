@@ -26,6 +26,8 @@ public class Product : DeletableEntity
 
     public virtual Supplier Supplier { get; set; }
 
+    public virtual IList<Review> Reviews { get; set; }
+
     public virtual IList<CartItem> CartItems { get; set; }
 
     public virtual IList<Invoice> Invoices { get; set; }
