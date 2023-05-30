@@ -16,9 +16,7 @@ public class ImageService : IImageService
 {
     private readonly IDataContext dataContext;
     private readonly IStorageProvider storageProvider;
-
     private readonly IMapper mapper;
-
 
     public ImageService(IDataContext dataContext, IStorageProvider storageProvider, IMapper mapper)
     {
@@ -26,7 +24,6 @@ public class ImageService : IImageService
         this.storageProvider = storageProvider;
         this.mapper = mapper;
     }
-
 
     public async Task<Result> DeleteAsync(Guid imageId)
     {
@@ -57,11 +54,11 @@ public class ImageService : IImageService
 
     public async Task<IEnumerable<Image>> GetListAsync()
     {
-        var dbImages = await dataContext.GetData<Entities.Image>()
-            .OrderBy(i => i.Path)
-            .ToListAsync();
+        var query = dataContext.GetData<Entities.Image>();
 
+        var dbImages = await query.OrderBy(i => i.Path).ToListAsync();
         var images = mapper.Map<IEnumerable<Image>>(dbImages);
+
         foreach (var image in images)
         {
             image.ContentType ??= MimeUtility.GetMimeMapping(image.Path);

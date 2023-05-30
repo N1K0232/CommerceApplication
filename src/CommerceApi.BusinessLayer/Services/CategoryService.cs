@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.Shared.Models;
@@ -100,10 +99,9 @@ public class CategoryService : ICategoryService
     public async Task<IEnumerable<Category>> GetListAsync()
     {
         var query = dataContext.GetData<Entities.Category>();
-        var categories = await query.OrderBy(category => category.Name)
-            .ProjectTo<Category>(mapper.ConfigurationProvider)
-            .ToListAsync();
+        var dbCategories = await query.OrderBy(c => c.Name).ToListAsync();
 
+        var categories = mapper.Map<IEnumerable<Category>>(dbCategories);
         return categories;
     }
 
