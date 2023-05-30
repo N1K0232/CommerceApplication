@@ -1,5 +1,4 @@
-﻿using CommerceApi.Client.Settings;
-using MailKit.Net.Smtp;
+﻿using MailKit.Net.Smtp;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MimeKit;
@@ -7,31 +6,29 @@ using MimeKit.Text;
 
 namespace CommerceApi.Client;
 
-#pragma warning disable IDE0007 //use implicit type
 public class EmailClient : IEmailClient
 {
-    private SmtpClient client;
-    private MimeMessage message;
+    private SmtpClient client = null;
+    private MimeMessage message = null;
 
-    private EmailClientSettings settings;
+    private string apiKey = null;
+    private string host = null;
+    private int port = 0;
+
+    private bool disposed = false;
 
     private readonly IConfiguration configuration;
     private readonly ILogger<EmailClient> logger;
 
-    private bool disposed = false;
-
-    public EmailClient(EmailClientSettings settings, IConfiguration configuration, ILogger<EmailClient> logger)
+    public EmailClient(IConfiguration configuration, ILogger<EmailClient> logger)
     {
-        client = null;
-        message = null;
-
-        this.settings = settings;
-
         this.configuration = configuration;
         this.logger = logger;
+
+        Initialize();
     }
 
-    public async Task SendEmailAsync(string to, string subject, string body)
+    public async Task SendAsync(string to, string subject, string body)
     {
         ThrowIfDisposed();
 
@@ -57,30 +54,33 @@ public class EmailClient : IEmailClient
         {
             message = new MimeMessage();
 
-            string emailAddress = configuration.GetValue<string>("EmailAddress");
-            message.From.Add(MailboxAddress.Parse(emailAddress));
+            var section = configuration.GetSection("EmailClientSettings");
 
-            message.To.Add(MailboxAddress.Parse(to));
+            var fromEmailAddress = section["FromEmailAddress"];
+            var fromMailboxAddress = MailboxAddress.Parse(fromEmailAddress);
+            message.From.Add(fromMailboxAddress);
+
+            var destinationMailboxAddress = MailboxAddress.Parse(to);
+            message.To.Add(destinationMailboxAddress);
+
             message.Subject = subject;
             message.Body = new TextPart(TextFormat.Html) { Text = body };
 
             client = new SmtpClient();
-            await client.ConnectAsync(settings.Host, settings.Port);
+            await client.ConnectAsync(host, port);
 
-            string userName = configuration.GetValue<string>("EmailUserName");
-            string password = configuration.GetValue<string>("EmailPassword");
+            var userName = section["EmailUserName"];
+            var password = section["EmailPassword"];
+
             await client.AuthenticateAsync(userName, password);
-
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "couldn't send email");
-            await Task.FromException(ex);
+            logger.LogError(ex, "couldn't send image");
         }
     }
-
 
     public void Dispose()
     {
@@ -98,7 +98,10 @@ public class EmailClient : IEmailClient
             message.Dispose();
             message = null;
 
-            settings = null;
+            apiKey = null;
+            host = null;
+            port = 0;
+
             disposed = true;
         }
     }
@@ -110,5 +113,13 @@ public class EmailClient : IEmailClient
             throw new ObjectDisposedException(GetType().FullName);
         }
     }
+
+    private void Initialize()
+    {
+        var section = configuration.GetSection("EmailClientSettings");
+
+        apiKey = section["ApiKey"];
+        host = section["Host"];
+        port = section.GetValue<int>("Port");
+    }
 }
-#pragma warning restore IDE0007 //use implicit type
