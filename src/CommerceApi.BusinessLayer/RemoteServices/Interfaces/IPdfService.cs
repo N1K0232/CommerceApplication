@@ -4,5 +4,5 @@ namespace CommerceApi.BusinessLayer.RemoteServices.Interfaces;
 
 public interface IPdfService
 {
-    Task UploadAsync(string fileName, string phraseName, params PdfPCell[] cells);
+    Task UploadAsync(string path, string phraseName, params PdfPCell[] cells);
 }

@@ -14,7 +14,7 @@ public class PdfService : IPdfService
         this.storageProvider = storageProvider;
     }
 
-    public async Task UploadAsync(string fileName, string phraseName, params PdfPCell[] cells)
+    public async Task UploadAsync(string path, string phraseName, params PdfPCell[] cells)
     {
         var pdfStream = new MemoryStream();
         var document = new Document(PageSize.A4);
@@ -39,8 +39,6 @@ public class PdfService : IPdfService
         writer.Close();
 
         pdfStream.Position = 0;
-
-        var documentPath = $@"\products\invoices\{fileName}.pdf";
-        await storageProvider.SaveAsync(documentPath, pdfStream, true);
+        await storageProvider.SaveAsync(path, pdfStream, true);
     }
 }
