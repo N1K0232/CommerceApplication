@@ -18,7 +18,6 @@ using CommerceApi.BusinessLayer.Services;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.BusinessLayer.StartupServices;
 using CommerceApi.Client;
-using CommerceApi.Client.Extensions;
 using CommerceApi.ClientContext;
 using CommerceApi.ClientContext.TypeConverters;
 using CommerceApi.DataAccessLayer;
@@ -146,7 +145,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
         options.SetNotNullableIfMinLengthGreaterThenZero = true;
     });
 
-    services.AddEmailClientSettings(configuration);
     services.AddScoped<IEmailClient, EmailClient>();
 
     var sqlConnectionString = configuration.GetConnectionString("SqlConnection");
