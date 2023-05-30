@@ -1,5 +1,4 @@
 ﻿using CommerceApi.BusinessLayer.RemoteServices.Interfaces;
-using CommerceApi.DataAccessLayer.Entities;
 using CommerceApi.StorageProviders.Abstractions;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
@@ -15,28 +14,24 @@ public class PdfService : IPdfService
         this.storageProvider = storageProvider;
     }
 
-    public Task UploadPdfInvoiceAsync(Invoice invoice)
+    public async Task UploadAsync(string fileName, string phraseName, params PdfPCell[] cells)
     {
         var pdfStream = new MemoryStream();
         var document = new Document(PageSize.A4);
-        var writer = PdfWriter.GetInstance(document, pdfStream);
 
+        var writer = PdfWriter.GetInstance(document, pdfStream);
         document.Open();
 
-        var table = new PdfPTable(5);
-        var phrase = new Phrase("Invoices");
+        var table = new PdfPTable(cells.Length + 1);
+        var phrase = new Phrase(phraseName);
 
-        var cell = new PdfPCell(phrase)
+        var phraseCell = new PdfPCell(phrase) { Colspan = 2, HorizontalAlignment = 1 };
+        table.AddCell(phraseCell);
+
+        foreach (var cell in cells)
         {
-            Colspan = 2,
-            HorizontalAlignment = 1
-        };
-
-        table.AddCell(cell);
-        table.AddCell(invoice.Product.Name);
-        table.AddCell(invoice.Price.ToString());
-        table.AddCell(invoice.Quantity.ToString());
-        table.AddCell(invoice.TotalPrice.ToString());
+            table.AddCell(cell);
+        }
 
         document.Add(table);
 
@@ -44,6 +39,8 @@ public class PdfService : IPdfService
         writer.Close();
 
         pdfStream.Position = 0;
-        return Task.CompletedTask;
+
+        var documentPath = $@"\products\invoices\{fileName}.pdf";
+        await storageProvider.SaveAsync(documentPath, pdfStream, true);
     }
 }

@@ -1,8 +1,8 @@
-﻿using CommerceApi.DataAccessLayer.Entities;
+﻿using iTextSharp.text.pdf;
 
 namespace CommerceApi.BusinessLayer.RemoteServices.Interfaces;
 
 public interface IPdfService
 {
-    Task UploadPdfInvoiceAsync(Invoice invoice);
+    Task UploadAsync(string fileName, string phraseName, params PdfPCell[] cells);
 }
