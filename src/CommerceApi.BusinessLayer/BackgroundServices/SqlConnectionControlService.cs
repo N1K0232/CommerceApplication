@@ -21,7 +21,7 @@ public class SqlConnectionControlService : BackgroundService
         logger.LogInformation("testing connection");
 
         var periodicTimer = new PeriodicTimer(TimeSpan.FromMinutes(5));
-        while (!await periodicTimer.WaitForNextTickAsync(stoppingToken))
+        while (await periodicTimer.WaitForNextTickAsync(stoppingToken) && !stoppingToken.IsCancellationRequested)
         {
             try
             {
@@ -30,6 +30,8 @@ public class SqlConnectionControlService : BackgroundService
 
                 await sqlConnection.OpenAsync(stoppingToken);
                 await sqlConnection.CloseAsync();
+
+                logger.LogInformation("connection test succeeded");
             }
             catch (SqlException ex)
             {
