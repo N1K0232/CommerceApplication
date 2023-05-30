@@ -34,11 +34,12 @@ public class PdfService : IPdfService
         }
 
         document.Add(table);
-
         document.Close();
-        writer.Close();
 
+        writer.Close();
         pdfStream.Position = 0;
+
         await storageProvider.SaveAsync(path, pdfStream, true);
+        await pdfStream.DisposeAsync();
     }
 }
