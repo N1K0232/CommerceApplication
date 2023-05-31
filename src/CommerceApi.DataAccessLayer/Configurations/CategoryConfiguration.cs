@@ -9,10 +9,10 @@ public class CategoryConfiguration : BaseEntityConfiguration<Category>
 {
     public override void Configure(EntityTypeBuilder<Category> builder)
     {
-        builder.ToTable("Categories");
-        builder.Property(category => category.Name).HasMaxLength(100).IsRequired();
-        builder.Property(category => category.Description).HasMaxLength(512).IsRequired(false);
+        builder.Property(c => c.Name).HasMaxLength(100).IsRequired();
+        builder.Property(c => c.Description).HasMaxLength(512).IsRequired(false);
 
+        builder.ToTable("Categories");
         base.Configure(builder);
     }
 }

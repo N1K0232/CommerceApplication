@@ -9,8 +9,8 @@ public class CartConfiguration : DeletableEntityConfiguration<Cart>
 {
     public override void Configure(EntityTypeBuilder<Cart> builder)
     {
-        builder.ToTable("Carts");
         builder.Property(c => c.UserId).IsRequired();
+        builder.ToTable("Carts");
 
         base.Configure(builder);
     }

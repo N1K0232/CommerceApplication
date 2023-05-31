@@ -9,7 +9,6 @@ public class ReviewConfiguration : BaseEntityConfiguration<Review>
 {
     public override void Configure(EntityTypeBuilder<Review> builder)
     {
-        builder.ToTable("Reviews");
         builder.Property(r => r.Text).HasColumnType("NVARCHAR(MAX)").IsRequired();
         builder.Property(r => r.Score).IsRequired();
         builder.Property(r => r.ReviewDate).IsRequired().ValueGeneratedOnAdd().HasDefaultValueSql("getutcdate()");
@@ -17,6 +16,7 @@ public class ReviewConfiguration : BaseEntityConfiguration<Review>
         builder.Property(r => r.UserId).IsRequired();
         builder.HasOne(r => r.Product).WithMany(p => p.Reviews).HasForeignKey(r => r.ProductId).IsRequired();
 
+        builder.ToTable("Reviews");
         base.Configure(builder);
     }
 }

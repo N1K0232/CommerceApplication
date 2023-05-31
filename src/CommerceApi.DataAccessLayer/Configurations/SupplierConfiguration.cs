@@ -9,11 +9,11 @@ public class SupplierConfiguration : BaseEntityConfiguration<Supplier>
 {
     public override void Configure(EntityTypeBuilder<Supplier> builder)
     {
-        builder.ToTable("Suppliers");
         builder.Property(s => s.CompanyName).HasMaxLength(100).IsRequired();
         builder.Property(s => s.ContactName).HasMaxLength(100).IsRequired();
         builder.Property(s => s.City).HasMaxLength(50).IsRequired();
 
+        builder.ToTable("Suppliers");
         base.Configure(builder);
     }
 }

@@ -9,8 +9,6 @@ public class ProductConfiguration : DeletableEntityConfiguration<Product>
 {
     public override void Configure(EntityTypeBuilder<Product> builder)
     {
-        builder.ToTable("Products");
-
         builder.Property(p => p.Name).HasMaxLength(100).IsRequired();
         builder.Property(p => p.Quantity).IsRequired();
         builder.Property(p => p.Price).HasPrecision(8, 2).IsRequired();
@@ -24,6 +22,7 @@ public class ProductConfiguration : DeletableEntityConfiguration<Product>
         builder.HasOne(p => p.Category).WithMany(c => c.Products).HasForeignKey(p => p.CategoryId).IsRequired();
         builder.HasOne(p => p.Supplier).WithMany(s => s.Products).HasForeignKey(p => p.SupplierId).IsRequired();
 
+        builder.ToTable("Products");
         base.Configure(builder);
     }
 }
