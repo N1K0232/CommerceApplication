@@ -17,6 +17,18 @@ public partial class AuthenticationDataContext
       IdentityRoleClaim<Guid>,
       IdentityUserToken<Guid>>
 {
+    private DbSet<ApplicationUser> _users;
+    private DbSet<ApplicationRole> _roles;
+
+    private DbSet<ApplicationUserRole> _userRoles;
+    private DbSet<IdentityUserClaim<Guid>> _userClaims;
+    private DbSet<IdentityRoleClaim<Guid>> _roleClaims;
+
+    private DbSet<IdentityUserLogin<Guid>> _userLogins;
+    private DbSet<IdentityUserToken<Guid>> _userTokens;
+
+    private DbSet<Address> _addresses;
+
     private readonly ValueConverter<string, string> trimStringConverter = new(v => v.Trim(), v => v.Trim());
     private readonly ILogger<AuthenticationDataContext> logger;
 
@@ -27,7 +39,123 @@ public partial class AuthenticationDataContext
 
     public ILogger Logger => logger;
 
-    public virtual DbSet<Address> Addresses { get; set; }
+    public override DbSet<ApplicationUser> Users
+    {
+        get
+        {
+            return _users ?? base.Users;
+        }
+        set
+        {
+            var users = value ?? Set<ApplicationUser>();
+            if (_users != value)
+            {
+                _users = users;
+                base.Users = users;
+            }
+        }
+    }
+
+    public override DbSet<ApplicationRole> Roles
+    {
+        get
+        {
+            return _roles ?? base.Roles;
+        }
+        set
+        {
+            var roles = value ?? Set<ApplicationRole>();
+            if (_roles != roles)
+            {
+                _roles = roles;
+                base.Roles = roles;
+            }
+        }
+    }
+
+    public override DbSet<ApplicationUserRole> UserRoles
+    {
+        get
+        {
+            return _userRoles ?? base.UserRoles;
+        }
+        set
+        {
+            var userRoles = value ?? Set<ApplicationUserRole>();
+            if (_userRoles != userRoles)
+            {
+                _userRoles = userRoles;
+                base.UserRoles = userRoles;
+            }
+        }
+    }
+
+    public override DbSet<IdentityUserClaim<Guid>> UserClaims
+    {
+        get
+        {
+            return _userClaims ?? base.UserClaims;
+        }
+        set
+        {
+            var userClaims = value ?? Set<IdentityUserClaim<Guid>>();
+            if (_userClaims != userClaims)
+            {
+                _userClaims = userClaims;
+                base.UserClaims = userClaims;
+            }
+        }
+    }
+
+    public override DbSet<IdentityUserLogin<Guid>> UserLogins
+    {
+        get
+        {
+            return _userLogins ?? base.UserLogins;
+        }
+        set
+        {
+            var userLogins = value ?? Set<IdentityUserLogin<Guid>>();
+            if (_userLogins != userLogins)
+            {
+                _userLogins = userLogins;
+                base.UserLogins = userLogins;
+            }
+        }
+    }
+
+    public override DbSet<IdentityUserToken<Guid>> UserTokens
+    {
+        get
+        {
+            return _userTokens ?? base.UserTokens;
+        }
+        set
+        {
+            var userTokens = value ?? Set<IdentityUserToken<Guid>>();
+            if (_userTokens != userTokens)
+            {
+                _userTokens = userTokens;
+                base.UserTokens = userTokens;
+            }
+        }
+    }
+
+    public virtual DbSet<Address> Addresses
+    {
+        get
+        {
+            return _addresses;
+        }
+        set
+        {
+            var addresses = value ?? Set<Address>();
+            if (_addresses != addresses)
+            {
+                _addresses = addresses;
+            }
+        }
+    }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
