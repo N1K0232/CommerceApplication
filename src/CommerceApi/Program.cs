@@ -157,6 +157,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddSqlContext(options =>
     {
         options.ConnectionString = sqlConnectionString;
+        options.CommandTimeout = configuration.GetValue<int>("AppSettings:CommandTimeout");
     });
 
     services.AddScoped<ApplicationUserManager>();
