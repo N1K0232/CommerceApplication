@@ -26,6 +26,17 @@ public class ApplicationSignInManager : SignInManager<ApplicationUser>
     {
     }
 
+    public async Task<SignInResult> SignInAsync(string email, string password)
+    {
+        var user = await UserManager.FindByEmailAsync(email);
+        if (user == null)
+        {
+            return SignInResult.Failed;
+        }
+
+        return await PasswordSignInAsync(user, password, false, false);
+    }
+
     public override async Task<SignInResult> PasswordSignInAsync(ApplicationUser user, string password, bool isPersistent, bool lockoutOnFailure)
     {
         var canSignIn = await CanSignInAsync(user);
