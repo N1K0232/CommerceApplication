@@ -10,11 +10,11 @@ namespace CommerceApi.DataAccessLayer;
 
 public class SqlContext : ISqlContext
 {
-    private SqlConnection activeConnection = null;
-    private bool disposed = false;
+    private SqlConnection _activeConnection = null;
+    private bool _disposed = false;
 
-    private readonly SqlContextOptions options;
-    private readonly ILogger<SqlContext> logger;
+    private readonly SqlContextOptions _options;
+    private readonly ILogger<SqlContext> _logger;
 
     static SqlContext()
     {
@@ -23,8 +23,8 @@ public class SqlContext : ISqlContext
 
     public SqlContext(SqlContextOptions options, ILogger<SqlContext> logger)
     {
-        this.options = options;
-        this.logger = logger;
+        _options = options;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<T>> GetDataAsync<T>(string sql, object param = null, IDbTransaction transaction = null, CommandType? commandType = null)
@@ -164,14 +164,14 @@ public class SqlContext : ISqlContext
 
     private async Task<IDbConnection> GetConnectionAsync()
     {
-        activeConnection ??= new SqlConnection(options.ConnectionString);
+        _activeConnection ??= new SqlConnection(_options.ConnectionString);
 
-        if (activeConnection.State is ConnectionState.Closed)
+        if (_activeConnection.State is ConnectionState.Closed)
         {
-            await activeConnection.OpenAsync().ConfigureAwait(false);
+            await _activeConnection.OpenAsync().ConfigureAwait(false);
         }
 
-        return activeConnection;
+        return _activeConnection;
     }
 
     public void Dispose()
@@ -182,24 +182,24 @@ public class SqlContext : ISqlContext
 
     private void Dispose(bool disposing)
     {
-        var canDispose = disposing && !disposed;
+        var canDispose = disposing && !_disposed;
         if (canDispose)
         {
-            if (activeConnection.State is ConnectionState.Open)
+            if (_activeConnection.State is ConnectionState.Open)
             {
-                activeConnection.Close();
+                _activeConnection.Close();
             }
 
-            activeConnection.Dispose();
-            activeConnection = null;
+            _activeConnection.Dispose();
+            _activeConnection = null;
 
-            disposed = true;
+            _disposed = true;
         }
     }
 
     private void ThrowIfDisposed()
     {
-        if (disposed)
+        if (_disposed)
         {
             throw new ObjectDisposedException(GetType().FullName);
         }

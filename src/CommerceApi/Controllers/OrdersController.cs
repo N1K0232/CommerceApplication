@@ -8,18 +8,18 @@ namespace CommerceApi.Controllers;
 
 public class OrdersController : ControllerBase
 {
-    private readonly IOrderService orderService;
+    private readonly IOrderService _orderService;
 
     public OrdersController(IOrderService orderService)
     {
-        this.orderService = orderService;
+        _orderService = orderService;
     }
 
     [HttpPost("AddDetails")]
     [RoleAuthorize(RoleNames.User)]
     public async Task<IActionResult> AddDetails([FromBody] SaveOrderDetail order)
     {
-        var result = await orderService.AddDetailsAsync(order);
+        var result = await _orderService.AddDetailsAsync(order);
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
@@ -27,7 +27,7 @@ public class OrdersController : ControllerBase
     [RoleAuthorize(RoleNames.User)]
     public async Task<IActionResult> Create()
     {
-        var result = await orderService.CreateAsync();
+        var result = await _orderService.CreateAsync();
         return CreateResponse(result, StatusCodes.Status202Accepted);
     }
 
@@ -35,7 +35,7 @@ public class OrdersController : ControllerBase
     [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser, RoleNames.User)]
     public async Task<IActionResult> Cancel(Guid orderId)
     {
-        var result = await orderService.DeleteAsync(orderId);
+        var result = await _orderService.DeleteAsync(orderId);
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
@@ -43,7 +43,7 @@ public class OrdersController : ControllerBase
     [RoleAuthorize(RoleNames.User)]
     public async Task<IActionResult> GetOrder(Guid orderId)
     {
-        var order = await orderService.GetAsync(orderId);
+        var order = await _orderService.GetAsync(orderId);
         return CreateResponse(order, StatusCodes.Status200OK);
     }
 
@@ -51,7 +51,7 @@ public class OrdersController : ControllerBase
     [RoleAuthorize(RoleNames.User)]
     public async Task<IActionResult> GetList(string orderBy = "Date DESC", int pageIndex = 0, int itemsPerPage = 50)
     {
-        var orders = await orderService.GetListAsync(orderBy, pageIndex, itemsPerPage);
+        var orders = await _orderService.GetListAsync(orderBy, pageIndex, itemsPerPage);
         return Ok(orders);
     }
 
@@ -59,7 +59,7 @@ public class OrdersController : ControllerBase
     [RoleAuthorize(RoleNames.User)]
     public async Task<IActionResult> GetTotalPrice(Guid orderId)
     {
-        var result = await orderService.GetTotalPriceAsync(orderId);
+        var result = await _orderService.GetTotalPriceAsync(orderId);
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
@@ -67,7 +67,7 @@ public class OrdersController : ControllerBase
     [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser, RoleNames.User)]
     public async Task<IActionResult> UpdateStatus(UpdateOrderStatusRequest request)
     {
-        var result = await orderService.UpdateStatusAsync(request);
+        var result = await _orderService.UpdateStatusAsync(request);
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 }

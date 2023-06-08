@@ -7,18 +7,18 @@ namespace CommerceApi.BusinessLayer.StartupServices;
 
 public class ApplicationStartupService : IHostedService
 {
-    private readonly IServiceProvider serviceProvider;
-    private readonly IMemoryCache cache;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly IMemoryCache _cache;
 
     public ApplicationStartupService(IServiceProvider serviceProvider, IMemoryCache cache)
     {
-        this.serviceProvider = serviceProvider;
-        this.cache = cache;
+        _serviceProvider = serviceProvider;
+        _cache = cache;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = _serviceProvider.CreateScope();
         var services = scope.ServiceProvider;
 
         var dataContext = services.GetRequiredService<IDataContext>();
@@ -28,7 +28,7 @@ public class ApplicationStartupService : IHostedService
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        cache.Dispose();
+        _cache.Dispose();
         return Task.CompletedTask;
     }
 }

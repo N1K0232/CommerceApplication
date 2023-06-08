@@ -7,11 +7,11 @@ namespace CommerceApi.BusinessLayer.Validators;
 
 public class SaveItemValidator : AbstractValidator<SaveItemRequest>
 {
-    private readonly IReadOnlyDataContext dataContext;
+    private readonly IReadOnlyDataContext _dataContext;
 
     public SaveItemValidator(IReadOnlyDataContext dataContext)
     {
-        this.dataContext = dataContext;
+        _dataContext = dataContext;
         CreateRules();
     }
 
@@ -24,13 +24,13 @@ public class SaveItemValidator : AbstractValidator<SaveItemRequest>
 
     private bool CartExists(Guid cartId)
     {
-        var cartExists = dataContext.GetData<Cart>().Any(c => c.Id == cartId);
+        var cartExists = _dataContext.GetData<Cart>().Any(c => c.Id == cartId);
         return cartExists;
     }
 
     private bool ProductExists(Guid productId)
     {
-        var productExists = dataContext.GetData<Product>().Any(p => p.Id == productId);
+        var productExists = _dataContext.GetData<Product>().Any(p => p.Id == productId);
         return productExists;
     }
 }

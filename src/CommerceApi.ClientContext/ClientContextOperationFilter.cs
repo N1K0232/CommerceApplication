@@ -5,11 +5,11 @@ namespace CommerceApi.ClientContext;
 
 internal class ClientContextOperationFilter : IOperationFilter
 {
-    private readonly ClientContextOptions options;
+    private readonly ClientContextOptions _options;
 
     public ClientContextOperationFilter(ClientContextOptions options)
     {
-        this.options = options;
+        _options = options;
     }
 
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
@@ -18,7 +18,7 @@ internal class ClientContextOperationFilter : IOperationFilter
 
         operation.Parameters.Add(new OpenApiParameter
         {
-            Name = options.TimeZoneHeader,
+            Name = _options.TimeZoneHeader,
             In = ParameterLocation.Header,
             Required = false,
             Schema = new OpenApiSchema

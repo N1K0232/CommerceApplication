@@ -1,19 +1,18 @@
 ﻿using System.Security.Claims;
-using CommerceApi.Authentication.Entities;
 using CommerceApi.Authentication.Extensions;
+using CommerceApi.Authentication.Managers;
 using CommerceApi.Authorization.Requirements;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 
 namespace CommerceApi.Authorization.Handlers;
 
 public class UserActiveHandler : AuthorizationHandler<UserActiveRequirement>
 {
-    private readonly UserManager<ApplicationUser> userManager;
+    private readonly ApplicationUserManager _userManager;
 
-    public UserActiveHandler(UserManager<ApplicationUser> userManager)
+    public UserActiveHandler(ApplicationUserManager userManager)
     {
-        this.userManager = userManager;
+        _userManager = userManager;
     }
 
     protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, UserActiveRequirement requirement)
@@ -21,7 +20,7 @@ public class UserActiveHandler : AuthorizationHandler<UserActiveRequirement>
         if (context.User.Identity.IsAuthenticated)
         {
             var userId = context.User.GetId();
-            var user = await userManager.FindByIdAsync(userId.ToString());
+            var user = await _userManager.FindByIdAsync(userId.ToString());
             var securityStamp = context.User.GetClaimValue(ClaimTypes.SerialNumber);
 
             if (user is not null && user.LockoutEnd.GetValueOrDefault() <= DateTimeOffset.UtcNow

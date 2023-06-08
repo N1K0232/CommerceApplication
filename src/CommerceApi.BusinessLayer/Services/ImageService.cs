@@ -14,15 +14,15 @@ namespace CommerceApi.BusinessLayer.Services;
 
 public class ImageService : IImageService
 {
-    private readonly IDataContext dataContext;
-    private readonly IStorageProvider storageProvider;
-    private readonly IMapper mapper;
+    private readonly IDataContext _dataContext;
+    private readonly IStorageProvider _storageProvider;
+    private readonly IMapper _mapper;
 
     public ImageService(IDataContext dataContext, IStorageProvider storageProvider, IMapper mapper)
     {
-        this.dataContext = dataContext;
-        this.storageProvider = storageProvider;
-        this.mapper = mapper;
+        _dataContext = dataContext;
+        _storageProvider = storageProvider;
+        _mapper = mapper;
     }
 
     public async Task<Result> DeleteAsync(Guid imageId)
@@ -34,11 +34,11 @@ public class ImageService : IImageService
 
         try
         {
-            var image = await dataContext.GetAsync<Entities.Image>(imageId);
-            dataContext.Delete(image);
+            var image = await _dataContext.GetAsync<Entities.Image>(imageId);
+            _dataContext.Delete(image);
 
-            await dataContext.SaveAsync();
-            await storageProvider.DeleteAsync(image.Path);
+            await _dataContext.SaveAsync();
+            await _storageProvider.DeleteAsync(image.Path);
 
             return Result.Ok();
         }
@@ -54,10 +54,10 @@ public class ImageService : IImageService
 
     public async Task<IEnumerable<Image>> GetListAsync()
     {
-        var query = dataContext.GetData<Entities.Image>();
+        var query = _dataContext.GetData<Entities.Image>();
 
         var dbImages = await query.OrderBy(i => i.Path).ToListAsync();
-        var images = mapper.Map<IEnumerable<Image>>(dbImages);
+        var images = _mapper.Map<IEnumerable<Image>>(dbImages);
 
         foreach (var image in images)
         {
@@ -74,10 +74,10 @@ public class ImageService : IImageService
             return Result.Fail(FailureReasons.ClientError, "invalid id");
         }
 
-        var image = await dataContext.GetAsync<Entities.Image>(imageId);
+        var image = await _dataContext.GetAsync<Entities.Image>(imageId);
         if (image is not null)
         {
-            var stream = await storageProvider.ReadAsync(image.DownloadFileName);
+            var stream = await _storageProvider.ReadAsync(image.DownloadFileName);
             var contentType = MimeUtility.GetMimeMapping(image.Path);
 
             var imageStream = new ImageStream { Stream = stream, ContentType = contentType };
@@ -103,12 +103,12 @@ public class ImageService : IImageService
                 Description = content.Description
             };
 
-            dataContext.Create(dbImage);
+            _dataContext.Create(dbImage);
 
-            await dataContext.SaveAsync();
-            await storageProvider.SaveAsync(dbImage.DownloadFileName, content.Stream);
+            await _dataContext.SaveAsync();
+            await _storageProvider.SaveAsync(dbImage.DownloadFileName, content.Stream);
 
-            var savedImage = mapper.Map<Image>(dbImage);
+            var savedImage = _mapper.Map<Image>(dbImage);
             return savedImage;
         }
         catch (DbUpdateException ex)

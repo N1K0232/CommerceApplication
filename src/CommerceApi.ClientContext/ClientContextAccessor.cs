@@ -2,11 +2,11 @@
 
 internal class ClientContextAccessor : IClientContextAccessor
 {
-    private static readonly AsyncLocal<IClientContext> clientContext = new();
+    private static readonly AsyncLocal<IClientContext> _clientContext = new();
 
     public IClientContext ClientContext
     {
-        get => clientContext.Value;
-        set => clientContext.Value = value;
+        get => _clientContext.Value;
+        set => _clientContext.Value = value;
     }
 }

@@ -7,11 +7,11 @@ namespace CommerceApi.BusinessLayer.Validators;
 
 public class SaveReviewValidator : AbstractValidator<SaveReviewRequest>
 {
-    private readonly IReadOnlyDataContext dataContext;
+    private readonly IReadOnlyDataContext _dataContext;
 
     public SaveReviewValidator(IReadOnlyDataContext dataContext)
     {
-        this.dataContext = dataContext;
+        _dataContext = dataContext;
         CreateValidationRules();
     }
 
@@ -24,7 +24,7 @@ public class SaveReviewValidator : AbstractValidator<SaveReviewRequest>
 
     private bool ProductExists(Guid productId)
     {
-        var query = dataContext.GetData<Product>();
+        var query = _dataContext.GetData<Product>();
 
         var productExists = query.Any(p => p.Id == productId);
         return productExists;

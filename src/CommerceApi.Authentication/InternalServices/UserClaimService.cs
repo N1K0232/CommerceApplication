@@ -7,33 +7,33 @@ namespace CommerceApi.Authentication.InternalServices;
 
 internal class UserClaimService : IUserClaimService
 {
-    private readonly HttpContext httpContext;
+    private readonly HttpContext _httpContext;
 
     public UserClaimService(IHttpContextAccessor httpContextAccessor)
     {
-        httpContext = httpContextAccessor.HttpContext;
+        _httpContext = httpContextAccessor.HttpContext;
     }
 
     public string GetApplicationId()
     {
-        return httpContext.User.GetApplicationId();
+        return _httpContext.User.GetApplicationId();
     }
 
     public Guid GetId()
     {
-        return httpContext.User.GetId();
+        return _httpContext.User.GetId();
     }
 
     public string GetUserName()
     {
-        return httpContext.User.GetUserName();
+        return _httpContext.User.GetUserName();
     }
 
     public Guid GetTenantId() => Guid.Empty;
 
     public ClaimsIdentity GetIdentity()
     {
-        var identity = httpContext.User.Identity;
+        var identity = _httpContext.User.Identity;
         return identity as ClaimsIdentity;
     }
 }

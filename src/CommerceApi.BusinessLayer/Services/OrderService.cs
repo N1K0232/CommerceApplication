@@ -17,11 +17,11 @@ namespace CommerceApi.BusinessLayer.Services;
 
 public class OrderService : IOrderService
 {
-    private readonly IAuthenticationService authenticationService;
-    private readonly IDataContext dataContext;
-    private readonly IMapper mapper;
-    private readonly IUserClaimService claimService;
-    private readonly IValidator<SaveOrderDetail> orderValidator;
+    private readonly IAuthenticationService _authenticationService;
+    private readonly IDataContext _dataContext;
+    private readonly IMapper _mapper;
+    private readonly IUserClaimService _claimService;
+    private readonly IValidator<SaveOrderDetail> _orderValidator;
 
     public OrderService(IAuthenticationService authenticationService,
         IDataContext dataContext,
@@ -29,18 +29,18 @@ public class OrderService : IOrderService
         IUserClaimService claimService,
         IValidator<SaveOrderDetail> orderValidator)
     {
-        this.authenticationService = authenticationService;
-        this.dataContext = dataContext;
-        this.mapper = mapper;
-        this.claimService = claimService;
-        this.orderValidator = orderValidator;
+        _authenticationService = authenticationService;
+        _dataContext = dataContext;
+        _mapper = mapper;
+        _claimService = claimService;
+        _orderValidator = orderValidator;
     }
 
     public async Task<Result<Order>> AddDetailsAsync(SaveOrderDetail order)
     {
         try
         {
-            var validationResult = await orderValidator.ValidateAsync(order);
+            var validationResult = await _orderValidator.ValidateAsync(order);
             if (!validationResult.IsValid)
             {
                 var validationErrors = new List<ValidationError>(validationResult.Errors.Capacity);
@@ -53,8 +53,8 @@ public class OrderService : IOrderService
             }
 
 
-            var dbProduct = await dataContext.GetData<Entities.Product>(trackingChanges: true).FirstOrDefaultAsync(p => p.Id == order.ProductId);
-            var dbOrder = await dataContext.GetData<Entities.Order>().FirstOrDefaultAsync(o => o.Id == order.OrderId && o.UserId == claimService.GetId());
+            var dbProduct = await _dataContext.GetData<Entities.Product>(trackingChanges: true).FirstOrDefaultAsync(p => p.Id == order.ProductId);
+            var dbOrder = await _dataContext.GetData<Entities.Order>().FirstOrDefaultAsync(o => o.Id == order.OrderId && o.UserId == _claimService.GetId());
 
             var orderDetail = new Entities.OrderDetail
             {
@@ -66,11 +66,11 @@ public class OrderService : IOrderService
 
             dbProduct.Quantity -= order.Quantity;
 
-            dataContext.Update(dbProduct);
-            dataContext.Create(orderDetail);
-            await dataContext.SaveAsync();
+            _dataContext.Update(dbProduct);
+            _dataContext.Create(orderDetail);
+            await _dataContext.SaveAsync();
 
-            var savedOrder = mapper.Map<Order>(dbOrder);
+            var savedOrder = _mapper.Map<Order>(dbOrder);
             return savedOrder;
         }
         catch (DbUpdateException ex)
@@ -85,17 +85,17 @@ public class OrderService : IOrderService
         {
             var dbOrder = new Entities.Order
             {
-                UserId = claimService.GetId(),
+                UserId = _claimService.GetId(),
                 Date = DateOnly.FromDateTime(DateTime.UtcNow),
                 Time = TimeOnly.FromDateTime(DateTime.UtcNow),
                 Status = OrderStatus.New,
             };
 
-            dataContext.Create(dbOrder);
-            await dataContext.SaveAsync();
+            _dataContext.Create(dbOrder);
+            await _dataContext.SaveAsync();
 
-            var savedOrder = mapper.Map<Order>(dbOrder);
-            var user = await authenticationService.GetAsync();
+            var savedOrder = _mapper.Map<Order>(dbOrder);
+            var user = await _authenticationService.GetAsync();
 
             savedOrder.User = $"{user.FirstName} {user.LastName}";
             return savedOrder;
@@ -115,7 +115,7 @@ public class OrderService : IOrderService
 
         try
         {
-            var query = dataContext.GetData<Entities.Order>();
+            var query = _dataContext.GetData<Entities.Order>();
             var dbOrder = await query.Include(o => o.OrderDetails).FirstOrDefaultAsync(o => o.Id == orderId);
             if (dbOrder == null)
             {
@@ -127,11 +127,11 @@ public class OrderService : IOrderService
 
             if (dbOrderDetails.Any())
             {
-                dataContext.Delete(dbOrderDetails);
+                _dataContext.Delete(dbOrderDetails);
             }
 
-            dataContext.Delete(dbOrder);
-            await dataContext.SaveAsync();
+            _dataContext.Delete(dbOrder);
+            await _dataContext.SaveAsync();
 
             return Result.Ok();
         }
@@ -148,14 +148,14 @@ public class OrderService : IOrderService
             return Result.Fail(FailureReasons.ClientError, "Invalid id");
         }
 
-        var query = dataContext.GetData<Entities.Order>();
+        var query = _dataContext.GetData<Entities.Order>();
         var dbOrder = await query.FirstOrDefaultAsync(o => o.Id == orderId);
         if (dbOrder == null)
         {
             return Result.Fail(FailureReasons.ItemNotFound, $"No order found with id {orderId}");
         }
 
-        var order = mapper.Map<Order>(dbOrder);
+        var order = _mapper.Map<Order>(dbOrder);
         order.Products = await GetProductsAsync(orderId);
 
         return order;
@@ -163,8 +163,8 @@ public class OrderService : IOrderService
 
     public async Task<ListResult<Order>> GetListAsync(string orderBy, int pageIndex, int itemsPerPage)
     {
-        var query = dataContext.GetData<Entities.Order>();
-        var userId = claimService.GetId();
+        var query = _dataContext.GetData<Entities.Order>();
+        var userId = _claimService.GetId();
 
         if (userId != Guid.Empty)
         {
@@ -179,7 +179,7 @@ public class OrderService : IOrderService
         var totalCount = await query.LongCountAsync();
         var dbOrders = await query.Skip(pageIndex * itemsPerPage).Take(itemsPerPage + 1).ToListAsync();
 
-        var orders = mapper.Map<IEnumerable<Order>>(dbOrders).Take(itemsPerPage);
+        var orders = _mapper.Map<IEnumerable<Order>>(dbOrders).Take(itemsPerPage);
         await orders.ForEachAsync(async (order) =>
         {
             var products = await GetProductsAsync(order.Id);
@@ -198,9 +198,9 @@ public class OrderService : IOrderService
         }
 
         var totalPrice = 0M;
-        var userId = claimService.GetId();
+        var userId = _claimService.GetId();
 
-        var query = dataContext.GetData<Entities.Order>();
+        var query = _dataContext.GetData<Entities.Order>();
         var order = await query.Include(o => o.OrderDetails).ThenInclude(o => o.Product).FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == userId);
 
         var hasItems = order?.OrderDetails?.Any() ?? false;
@@ -226,7 +226,7 @@ public class OrderService : IOrderService
 
         try
         {
-            var query = dataContext.GetData<Entities.Order>(trackingChanges: true);
+            var query = _dataContext.GetData<Entities.Order>(trackingChanges: true);
             var dbOrder = await query.FirstOrDefaultAsync(o => o.Id == request.OrderId);
             if (dbOrder is null)
             {
@@ -240,10 +240,10 @@ public class OrderService : IOrderService
 
             dbOrder.Status = request.Status;
 
-            dataContext.Update(dbOrder);
-            await dataContext.SaveAsync();
+            _dataContext.Update(dbOrder);
+            await _dataContext.SaveAsync();
 
-            var savedOrder = mapper.Map<Order>(dbOrder);
+            var savedOrder = _mapper.Map<Order>(dbOrder);
             return savedOrder;
         }
         catch (DbUpdateException ex)
@@ -254,7 +254,7 @@ public class OrderService : IOrderService
 
     private async Task<IEnumerable<Product>> GetProductsAsync(Guid orderId)
     {
-        var query = dataContext.GetData<Entities.OrderDetail>();
+        var query = _dataContext.GetData<Entities.OrderDetail>();
         var hasDetails = await query.AnyAsync(o => o.OrderId == orderId);
         if (!hasDetails)
         {
@@ -265,7 +265,7 @@ public class OrderService : IOrderService
         var products = new List<Product>(orderDetails.Count);
         foreach (var orderDetail in orderDetails)
         {
-            var product = mapper.Map<Product>(orderDetail.Product);
+            var product = _mapper.Map<Product>(orderDetail.Product);
             products.Add(product);
         }
 

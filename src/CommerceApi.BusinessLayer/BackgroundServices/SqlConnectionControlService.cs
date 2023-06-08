@@ -7,47 +7,47 @@ namespace CommerceApi.BusinessLayer.BackgroundServices;
 
 public class SqlConnectionControlService : BackgroundService
 {
-    private readonly IConfiguration configuration;
-    private readonly ILogger<SqlConnectionControlService> logger;
+    private readonly IConfiguration _configuration;
+    private readonly ILogger<SqlConnectionControlService> _logger;
 
     public SqlConnectionControlService(IConfiguration configuration, ILogger<SqlConnectionControlService> logger)
     {
-        this.configuration = configuration;
-        this.logger = logger;
+        _configuration = configuration;
+        _logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("testing connection");
+        _logger.LogInformation("testing connection");
 
         var periodicTimer = new PeriodicTimer(TimeSpan.FromMinutes(5));
         while (await periodicTimer.WaitForNextTickAsync(stoppingToken) && !stoppingToken.IsCancellationRequested)
         {
             try
             {
-                var sqlConnectionString = configuration.GetConnectionString("SqlConnection");
+                var sqlConnectionString = _configuration.GetConnectionString("SqlConnection");
                 using var sqlConnection = new SqlConnection(sqlConnectionString);
 
                 await sqlConnection.OpenAsync(stoppingToken);
                 await sqlConnection.CloseAsync();
 
-                logger.LogInformation("connection test succeeded");
+                _logger.LogInformation("connection test succeeded");
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex, "connection test failed");
+                _logger.LogError(ex, "connection test failed");
             }
             catch (InvalidOperationException ex)
             {
-                logger.LogError(ex, "connection test failed");
+                _logger.LogError(ex, "connection test failed");
             }
             catch (TaskCanceledException ex)
             {
-                logger.LogError(ex, "the operation was canceled");
+                _logger.LogError(ex, "the operation was canceled");
             }
             catch (OperationCanceledException ex)
             {
-                logger.LogError(ex, "the operation was canceled");
+                _logger.LogError(ex, "the operation was canceled");
             }
         }
     }

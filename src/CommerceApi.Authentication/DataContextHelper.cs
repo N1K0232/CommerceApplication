@@ -38,7 +38,7 @@ public partial class AuthenticationDataContext
                 {
                     modelBuilder.Entity(entity.Name)
                     .Property(property.Name)
-                    .HasConversion(trimStringConverter);
+                    .HasConversion(_trimStringConverter);
                 }
             }
         }

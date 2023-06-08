@@ -8,78 +8,87 @@ namespace CommerceApi.Client;
 
 public class EmailClient : IEmailClient
 {
-    private SmtpClient client = null;
-    private MimeMessage message = null;
+    private SmtpClient _client;
+    private MimeMessage _message;
 
-    private string apiKey = null;
-    private string host = null;
-    private int port = 0;
+    private CancellationTokenSource _tokenSource;
 
-    private bool disposed = false;
+    private string _apiKey;
+    private string _host;
+    private int _port = 0;
 
-    private readonly IConfiguration configuration;
-    private readonly ILogger<EmailClient> logger;
+    private bool _disposed = false;
+
+    private readonly IConfigurationSection _emailClientSettings;
+    private readonly ILogger<EmailClient> _logger;
 
     public EmailClient(IConfiguration configuration, ILogger<EmailClient> logger)
     {
-        this.configuration = configuration;
-        this.logger = logger;
-
-        Initialize();
+        _emailClientSettings = configuration.GetSection("EmailClientSettings");
+        _logger = logger;
     }
 
     public async Task SendAsync(string to, string subject, string body)
     {
         ThrowIfDisposed();
 
+        _apiKey = _emailClientSettings["ApiKey"];
+        _host = _emailClientSettings["Host"];
+        _port = _emailClientSettings.GetValue<int>("Port");
+
         if (string.IsNullOrWhiteSpace(to))
         {
-            logger.LogError("the destination is required", to);
+            _logger.LogError("the destination is required", to);
             throw new ArgumentNullException(nameof(to), "the destination is required");
         }
 
         if (string.IsNullOrWhiteSpace(subject))
         {
-            logger.LogError("the subject is required", subject);
+            _logger.LogError("the subject is required", subject);
             throw new ArgumentNullException(nameof(subject), "the subject is required");
         }
 
         if (string.IsNullOrWhiteSpace(body))
         {
-            logger.LogError("the body is required", body);
+            _logger.LogError("the body is required", body);
             throw new ArgumentNullException(nameof(body), "the body is required");
         }
 
         try
         {
-            message = new MimeMessage();
+            _message = new MimeMessage();
 
-            var section = configuration.GetSection("EmailClientSettings");
-
-            var fromEmailAddress = section["FromEmailAddress"];
-            var fromMailboxAddress = MailboxAddress.Parse(fromEmailAddress);
-            message.From.Add(fromMailboxAddress);
+            var fromMailboxAddress = GetAddress("FromEmailAddress");
+            _message.From.Add(fromMailboxAddress);
 
             var destinationMailboxAddress = MailboxAddress.Parse(to);
-            message.To.Add(destinationMailboxAddress);
+            _message.To.Add(destinationMailboxAddress);
 
-            message.Subject = subject;
-            message.Body = new TextPart(TextFormat.Html) { Text = body };
+            _message.Subject = subject;
+            _message.Body = new TextPart(TextFormat.Html) { Text = body };
 
-            client = new SmtpClient();
-            await client.ConnectAsync(host, port);
+            _client = new SmtpClient();
+            await _client.ConnectAsync(_host, _port);
 
-            var userName = section["EmailUserName"];
-            var password = section["EmailPassword"];
+            var userName = _emailClientSettings["EmailUserName"];
+            var password = _emailClientSettings["EmailPassword"];
 
-            await client.AuthenticateAsync(userName, password);
-            await client.SendAsync(message);
-            await client.DisconnectAsync(true);
+            await _client.AuthenticateAsync(userName, password);
+            await _client.SendAsync(_message);
+            await _client.DisconnectAsync(true);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "couldn't send image");
+            _logger.LogError(ex, "couldn't send image");
         }
+    }
+
+    private MailboxAddress GetAddress(string key)
+    {
+        var address = _emailClientSettings[key];
+
+        var mailboxAddress = MailboxAddress.Parse(address);
+        return mailboxAddress;
     }
 
     public void Dispose()
@@ -90,36 +99,27 @@ public class EmailClient : IEmailClient
 
     private void Dispose(bool disposing)
     {
-        if (disposing && !disposed)
+        if (disposing && !_disposed)
         {
-            client.Dispose();
-            client = null;
+            _client.Dispose();
+            _client = null;
 
-            message.Dispose();
-            message = null;
+            _message.Dispose();
+            _message = null;
 
-            apiKey = null;
-            host = null;
-            port = 0;
+            _apiKey = null;
+            _host = null;
+            _port = 0;
 
-            disposed = true;
+            _disposed = true;
         }
     }
 
     private void ThrowIfDisposed()
     {
-        if (disposed)
+        if (_disposed)
         {
             throw new ObjectDisposedException(GetType().FullName);
         }
-    }
-
-    private void Initialize()
-    {
-        var section = configuration.GetSection("EmailClientSettings");
-
-        apiKey = section["ApiKey"];
-        host = section["Host"];
-        port = section.GetValue<int>("Port");
     }
 }

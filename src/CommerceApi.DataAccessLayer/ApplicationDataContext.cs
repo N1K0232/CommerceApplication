@@ -14,8 +14,8 @@ namespace CommerceApi.DataAccessLayer;
 
 public partial class ApplicationDataContext : AuthenticationDataContext, IDataContext
 {
-    private readonly IConfiguration configuration;
-    private readonly IMemoryCache memoryCache;
+    private readonly IConfiguration _configuration;
+    private readonly IMemoryCache _memoryCache;
 
     private CancellationTokenSource tokenSource = null;
 
@@ -25,9 +25,9 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
         IConfiguration configuration,
         IMemoryCache memoryCache) : base(options, logger)
     {
-        this.claimService = claimService;
-        this.configuration = configuration;
-        this.memoryCache = memoryCache;
+        _claimService = claimService;
+        _configuration = configuration;
+        _memoryCache = memoryCache;
     }
 
 

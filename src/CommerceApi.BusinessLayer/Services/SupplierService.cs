@@ -13,22 +13,22 @@ namespace CommerceApi.BusinessLayer.Services;
 
 public class SupplierService : ISupplierService
 {
-    private readonly IDataContext dataContext;
-    private readonly IMapper mapper;
-    private readonly IValidator<SaveSupplierRequest> supplierValidator;
+    private readonly IDataContext _dataContext;
+    private readonly IMapper _mapper;
+    private readonly IValidator<SaveSupplierRequest> _supplierValidator;
 
     public SupplierService(IDataContext dataContext, IMapper mapper, IValidator<SaveSupplierRequest> supplierValidator)
     {
-        this.dataContext = dataContext;
-        this.mapper = mapper;
-        this.supplierValidator = supplierValidator;
+        _dataContext = dataContext;
+        _mapper = mapper;
+        _supplierValidator = supplierValidator;
     }
 
     public async Task<Result<Supplier>> CreateAsync(SaveSupplierRequest supplier)
     {
         try
         {
-            var validationResult = await supplierValidator.ValidateAsync(supplier);
+            var validationResult = await _supplierValidator.ValidateAsync(supplier);
             if (!validationResult.IsValid)
             {
                 var validationErrors = new List<ValidationError>(validationResult.Errors.Capacity);
@@ -40,12 +40,12 @@ public class SupplierService : ISupplierService
                 return Result.Fail(FailureReasons.ClientError, "validation errors", validationErrors);
             }
 
-            var dbSupplier = mapper.Map<Entities.Supplier>(supplier);
-            dataContext.Create(dbSupplier);
+            var dbSupplier = _mapper.Map<Entities.Supplier>(supplier);
+            _dataContext.Create(dbSupplier);
 
-            await dataContext.SaveAsync();
+            await _dataContext.SaveAsync();
 
-            var savedSupplier = mapper.Map<Supplier>(dbSupplier);
+            var savedSupplier = _mapper.Map<Supplier>(dbSupplier);
             return savedSupplier;
         }
         catch (DbUpdateException ex)
@@ -63,11 +63,11 @@ public class SupplierService : ISupplierService
                 return Result.Fail(FailureReasons.ClientError, "Invalid id");
             }
 
-            var dbSupplier = await dataContext.GetAsync<Entities.Supplier>(supplierId);
+            var dbSupplier = await _dataContext.GetAsync<Entities.Supplier>(supplierId);
             if (dbSupplier is not null)
             {
-                dataContext.Delete(dbSupplier);
-                await dataContext.SaveAsync();
+                _dataContext.Delete(dbSupplier);
+                await _dataContext.SaveAsync();
 
                 return Result.Ok();
             }
@@ -87,21 +87,21 @@ public class SupplierService : ISupplierService
             return Result.Fail(FailureReasons.ClientError, "Invalid id");
         }
 
-        var dbSupplier = await dataContext.GetAsync<Entities.Supplier>(supplierId);
+        var dbSupplier = await _dataContext.GetAsync<Entities.Supplier>(supplierId);
         if (dbSupplier is null)
         {
             return Result.Fail(FailureReasons.ItemNotFound, $"No supplier found with id {supplierId}");
         }
 
-        var supplier = mapper.Map<Supplier>(dbSupplier);
+        var supplier = _mapper.Map<Supplier>(dbSupplier);
         return supplier;
     }
 
     public async Task<IEnumerable<Supplier>> GetListAsync()
     {
-        var query = dataContext.GetData<Entities.Supplier>();
+        var query = _dataContext.GetData<Entities.Supplier>();
 
-        var suppliers = await query.OrderBy(s => s.CompanyName).ProjectTo<Supplier>(mapper.ConfigurationProvider).ToListAsync();
+        var suppliers = await query.OrderBy(s => s.CompanyName).ProjectTo<Supplier>(_mapper.ConfigurationProvider).ToListAsync();
         return suppliers;
     }
 
@@ -114,7 +114,7 @@ public class SupplierService : ISupplierService
                 return Result.Fail(FailureReasons.ClientError, "Invalid id");
             }
 
-            var validationResult = await supplierValidator.ValidateAsync(supplier);
+            var validationResult = await _supplierValidator.ValidateAsync(supplier);
             if (!validationResult.IsValid)
             {
                 var validationErrors = new List<ValidationError>(validationResult.Errors.Capacity);
@@ -126,18 +126,18 @@ public class SupplierService : ISupplierService
                 return Result.Fail(FailureReasons.ClientError, "validation errors", validationErrors);
             }
 
-            var dbSupplier = await dataContext.GetAsync<Entities.Supplier>(supplierId);
+            var dbSupplier = await _dataContext.GetAsync<Entities.Supplier>(supplierId);
             if (dbSupplier is null)
             {
                 return Result.Fail(FailureReasons.ItemNotFound, $"No supplier found with id {supplierId}");
             }
 
-            mapper.Map(supplier, dbSupplier);
-            dataContext.Update(dbSupplier);
+            _mapper.Map(supplier, dbSupplier);
+            _dataContext.Update(dbSupplier);
 
-            await dataContext.SaveAsync();
+            await _dataContext.SaveAsync();
 
-            var savedSupplier = mapper.Map<Supplier>(dbSupplier);
+            var savedSupplier = _mapper.Map<Supplier>(dbSupplier);
             return savedSupplier;
         }
         catch (DbUpdateException ex)

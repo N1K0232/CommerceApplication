@@ -9,24 +9,24 @@ namespace CommerceApi.BusinessLayer.Services;
 
 public class AuthenticationService : IAuthenticationService
 {
-    private readonly ApplicationUserManager userManager;
-    private readonly IUserClaimService claimService;
-    private readonly IMapper mapper;
+    private readonly ApplicationUserManager _userManager;
+    private readonly IUserClaimService _claimService;
+    private readonly IMapper _mapper;
 
     public AuthenticationService(ApplicationUserManager userManager, IUserClaimService claimService, IMapper mapper)
     {
-        this.userManager = userManager;
-        this.claimService = claimService;
-        this.mapper = mapper;
+        _userManager = userManager;
+        _claimService = claimService;
+        _mapper = mapper;
     }
 
 
     public async Task<User> GetAsync()
     {
         var userId = await GetUserIdCoreAsync();
-        var dbUser = await userManager.FindByIdAsync(userId.ToString());
+        var dbUser = await _userManager.FindByIdAsync(userId.ToString());
 
-        var user = mapper.Map<User>(dbUser);
+        var user = _mapper.Map<User>(dbUser);
         return user;
     }
 
@@ -34,7 +34,7 @@ public class AuthenticationService : IAuthenticationService
 
     public Task<string> GetUserNameAsync()
     {
-        var userName = claimService.GetUserName();
+        var userName = _claimService.GetUserName();
         return Task.FromResult(userName);
     }
 
@@ -48,13 +48,13 @@ public class AuthenticationService : IAuthenticationService
 
     private Task<Guid> GetUserIdCoreAsync()
     {
-        var userId = claimService.GetId();
+        var userId = _claimService.GetId();
         return Task.FromResult(userId);
     }
 
     private Task<ClaimsIdentity> GetIdentityCoreAsync()
     {
-        var identity = claimService.GetIdentity();
+        var identity = _claimService.GetIdentity();
         return Task.FromResult(identity);
     }
 }

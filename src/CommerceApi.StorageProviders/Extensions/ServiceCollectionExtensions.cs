@@ -51,7 +51,7 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    private static IServiceCollection AddStorageProvider<TStorage>(this IServiceCollection services) where TStorage : StorageProvider
+    private static IServiceCollection AddStorageProvider<TStorage>(this IServiceCollection services) where TStorage : class, IStorageProvider
     {
         services.AddScoped<IStorageProvider, TStorage>();
         return services;

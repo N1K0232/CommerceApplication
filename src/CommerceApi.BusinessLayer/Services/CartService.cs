@@ -13,11 +13,11 @@ namespace CommerceApi.BusinessLayer.Services;
 
 public class CartService : ICartService
 {
-    private readonly IDataContext dataContext;
-    private readonly IAuthenticationService authenticationService;
-    private readonly IMapper mapper;
-    private readonly IUserClaimService claimService;
-    private readonly IValidator<SaveItemRequest> itemValidator;
+    private readonly IDataContext _dataContext;
+    private readonly IAuthenticationService _authenticationService;
+    private readonly IMapper _mapper;
+    private readonly IUserClaimService _claimService;
+    private readonly IValidator<SaveItemRequest> _itemValidator;
 
     public CartService(IDataContext dataContext,
         IAuthenticationService authenticationService,
@@ -25,18 +25,18 @@ public class CartService : ICartService
         IUserClaimService claimService,
         IValidator<SaveItemRequest> itemValidator)
     {
-        this.dataContext = dataContext;
-        this.authenticationService = authenticationService;
-        this.mapper = mapper;
-        this.claimService = claimService;
-        this.itemValidator = itemValidator;
+        _dataContext = dataContext;
+        _authenticationService = authenticationService;
+        _mapper = mapper;
+        _claimService = claimService;
+        _itemValidator = itemValidator;
     }
 
     public async Task<Result> AddItemAsync(SaveItemRequest item)
     {
         try
         {
-            var validationResult = await itemValidator.ValidateAsync(item);
+            var validationResult = await _itemValidator.ValidateAsync(item);
             if (!validationResult.IsValid)
             {
                 var validationErrors = new List<ValidationError>(validationResult.Errors.Capacity);
@@ -48,10 +48,10 @@ public class CartService : ICartService
                 return Result.Fail(FailureReasons.ClientError, "Validation errors", validationErrors);
             }
 
-            var dbItem = mapper.Map<Entities.CartItem>(item);
-            dataContext.Create(dbItem);
+            var dbItem = _mapper.Map<Entities.CartItem>(item);
+            _dataContext.Create(dbItem);
 
-            await dataContext.SaveAsync();
+            await _dataContext.SaveAsync();
             return Result.Ok();
         }
         catch (DbUpdateException ex)
@@ -69,13 +69,13 @@ public class CartService : ICartService
 
         try
         {
-            var query = dataContext.GetData<Entities.Cart>();
+            var query = _dataContext.GetData<Entities.Cart>();
 
             var dbCart = await query.Include(c => c.CartItems).FirstOrDefaultAsync(c => c.Id == cartId);
             if (dbCart is not null)
             {
-                dataContext.Delete(dbCart.CartItems);
-                await dataContext.SaveAsync();
+                _dataContext.Delete(dbCart.CartItems);
+                await _dataContext.SaveAsync();
 
                 return Result.Ok();
             }
@@ -92,8 +92,8 @@ public class CartService : ICartService
     {
         try
         {
-            var userId = claimService.GetId();
-            var cartExists = await dataContext.GetData<Entities.Cart>().AnyAsync(c => c.UserId == userId);
+            var userId = _claimService.GetId();
+            var cartExists = await _dataContext.GetData<Entities.Cart>().AnyAsync(c => c.UserId == userId);
             if (cartExists)
             {
                 return Result.Fail(FailureReasons.Conflict, "cart already exists");
@@ -104,11 +104,11 @@ public class CartService : ICartService
                 UserId = userId
             };
 
-            dataContext.Create(dbCart);
-            await dataContext.SaveAsync();
+            _dataContext.Create(dbCart);
+            await _dataContext.SaveAsync();
 
-            var savedCart = mapper.Map<Cart>(dbCart);
-            savedCart.User = await authenticationService.GetAsync();
+            var savedCart = _mapper.Map<Cart>(dbCart);
+            savedCart.User = await _authenticationService.GetAsync();
 
             return savedCart;
         }
@@ -125,11 +125,11 @@ public class CartService : ICartService
             return Result.Fail(FailureReasons.ClientError, "Invalid id");
         }
 
-        var userId = claimService.GetId();
-        var query = dataContext.GetData<Entities.Cart>().Where(c => c.Id == cartId && c.UserId == userId);
+        var userId = _claimService.GetId();
+        var query = _dataContext.GetData<Entities.Cart>().Where(c => c.Id == cartId && c.UserId == userId);
 
         var cart = await query.Include(c => c.CartItems).FirstOrDefaultAsync();
-        var cartItems = mapper.Map<IEnumerable<CartItem>>(cart.CartItems);
+        var cartItems = _mapper.Map<IEnumerable<CartItem>>(cart.CartItems);
 
         var result = Result<IEnumerable<CartItem>>.Ok(cartItems);
         return result;
@@ -142,8 +142,8 @@ public class CartService : ICartService
             return Result.Fail(FailureReasons.ClientError, "Invalid id");
         }
 
-        var userId = claimService.GetId();
-        var query = dataContext.GetData<Entities.Cart>();
+        var userId = _claimService.GetId();
+        var query = _dataContext.GetData<Entities.Cart>();
 
         var cart = await query.Include(c => c.CartItems).ThenInclude(c => c.Product).FirstOrDefaultAsync(c => c.Id == cartId && c.UserId == userId);
         var hasItems = cart?.CartItems?.Any() ?? false;
@@ -175,12 +175,12 @@ public class CartService : ICartService
 
         try
         {
-            var query = dataContext.GetData<Entities.CartItem>(trackingChanges: true);
+            var query = _dataContext.GetData<Entities.CartItem>(trackingChanges: true);
             var cartItem = await query.FirstOrDefaultAsync(c => c.Id == itemId && c.CartId == cartId);
             if (cartItem is not null)
             {
-                dataContext.Delete(cartItem);
-                await dataContext.SaveAsync();
+                _dataContext.Delete(cartItem);
+                await _dataContext.SaveAsync();
 
                 return Result.Ok();
             }

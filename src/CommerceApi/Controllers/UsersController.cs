@@ -12,11 +12,11 @@ namespace CommerceApi.Controllers;
 
 public class UsersController : ControllerBase
 {
-    private readonly IUserService userService;
+    private readonly IUserService _userService;
 
     public UsersController(IUserService userService)
     {
-        this.userService = userService;
+        _userService = userService;
     }
 
 
@@ -26,7 +26,7 @@ public class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> DeleteAccount(Guid userId)
     {
-        var result = await userService.DeleteAccountAsync(userId);
+        var result = await _userService.DeleteAccountAsync(userId);
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
@@ -36,7 +36,7 @@ public class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var response = await userService.LoginAsync(request);
+        var response = await _userService.LoginAsync(request);
         return CreateResponse(response, StatusCodes.Status200OK);
     }
 
@@ -46,7 +46,7 @@ public class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        var response = await userService.RegisterAsync(request);
+        var response = await _userService.RegisterAsync(request);
         return CreateResponse(response, StatusCodes.Status200OK);
     }
 
@@ -56,7 +56,7 @@ public class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
     {
-        var response = await userService.RefreshTokenAsync(request);
+        var response = await _userService.RefreshTokenAsync(request);
         return CreateResponse(response, StatusCodes.Status200OK);
     }
 
@@ -65,7 +65,7 @@ public class UsersController : ControllerBase
     {
         var email = User.GetEmail();
 
-        var result = await userService.SignOutAsync(email);
+        var result = await _userService.SignOutAsync(email);
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
@@ -74,7 +74,7 @@ public class UsersController : ControllerBase
     [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser, RoleNames.User)]
     public async Task<IActionResult> UploadPhoto([FromForm] FormFileContent content)
     {
-        var result = await userService.UploadPhotoAsync(User.GetId(), content.FileName, content.GetFileStream());
+        var result = await _userService.UploadPhotoAsync(User.GetId(), content.File.FileName, content.GetFileStream());
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 

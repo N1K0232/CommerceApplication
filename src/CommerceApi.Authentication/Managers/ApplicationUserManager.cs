@@ -8,7 +8,7 @@ namespace CommerceApi.Authentication.Managers;
 
 public class ApplicationUserManager : UserManager<ApplicationUser>
 {
-    private readonly AuthenticationDataContext authenticationDataContext;
+    private readonly AuthenticationDataContext _authenticationDataContext;
 
     public ApplicationUserManager(AuthenticationDataContext authenticationDataContext,
         IUserStore<ApplicationUser> store,
@@ -30,7 +30,7 @@ public class ApplicationUserManager : UserManager<ApplicationUser>
             services,
             logger)
     {
-        this.authenticationDataContext = authenticationDataContext;
+        _authenticationDataContext = authenticationDataContext;
     }
 
     public override async Task<IdentityResult> CreateAsync(ApplicationUser user, string password)
@@ -68,8 +68,8 @@ public class ApplicationUserManager : UserManager<ApplicationUser>
 
         address.UserId = user.Id;
 
-        await authenticationDataContext.Addresses.AddAsync(address).ConfigureAwait(false);
-        await authenticationDataContext.SaveChangesAsync().ConfigureAwait(false);
+        await _authenticationDataContext.Addresses.AddAsync(address).ConfigureAwait(false);
+        await _authenticationDataContext.SaveChangesAsync().ConfigureAwait(false);
 
         return IdentityResult.Success;
     }
@@ -89,8 +89,8 @@ public class ApplicationUserManager : UserManager<ApplicationUser>
             address.UserId = user.Id;
         }
 
-        await authenticationDataContext.AddRangeAsync(addresses).ConfigureAwait(false);
-        await authenticationDataContext.SaveChangesAsync().ConfigureAwait(false);
+        await _authenticationDataContext.AddRangeAsync(addresses).ConfigureAwait(false);
+        await _authenticationDataContext.SaveChangesAsync().ConfigureAwait(false);
 
         return IdentityResult.Success;
     }
@@ -99,7 +99,7 @@ public class ApplicationUserManager : UserManager<ApplicationUser>
     {
         ArgumentNullException.ThrowIfNull(user, nameof(ApplicationUser));
 
-        var query = authenticationDataContext.Addresses.AsQueryable();
+        var query = _authenticationDataContext.Addresses.AsQueryable();
 
         var addresses = await query.Where(a => a.UserId == user.Id).ToListAsync().ConfigureAwait(false);
         return addresses;

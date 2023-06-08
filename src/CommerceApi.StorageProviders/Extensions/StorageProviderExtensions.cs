@@ -13,24 +13,34 @@ public static class StorageProviderExtensions
 
         var memoryStream = new MemoryStream(content);
         await storageProvider.SaveAsync(path, memoryStream, overwrite).ConfigureAwait(false);
-        await memoryStream.DisposeAsync().ConfigureAwait(false);
     }
 
-    public static async Task<byte[]?> ReadAsync(this IStorageProvider storageProvider, string path)
+    public static async Task<byte[]?> ReadBytesAsync(this IStorageProvider storageProvider, string path)
     {
-        var stream = await storageProvider.ReadAsync(path).ConfigureAwait(false);
+        using var stream = await storageProvider.ReadAsync(path).ConfigureAwait(false);
         if (stream is null)
         {
             return null;
         }
 
-        var memoryStream = new MemoryStream();
+        using var memoryStream = new MemoryStream();
         await stream.CopyToAsync(memoryStream).ConfigureAwait(false);
 
         var content = memoryStream.ToArray();
-        await memoryStream.DisposeAsync().ConfigureAwait(false);
-        await stream.DisposeAsync().ConfigureAwait(false);
+        return content;
+    }
 
+    public static async Task<string?> ReadStringAsync(this IStorageProvider storageProvider, string path)
+    {
+        using var stream = await storageProvider.ReadAsync(path).ConfigureAwait(false);
+        if (stream is null)
+        {
+            return null;
+        }
+
+        using var streamReader = new StreamReader(stream);
+
+        var content = await streamReader.ReadToEndAsync().ConfigureAwait(false);
         return content;
     }
 }

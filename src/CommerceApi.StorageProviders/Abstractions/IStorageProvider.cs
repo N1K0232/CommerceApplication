@@ -7,4 +7,6 @@ public interface IStorageProvider : IDisposable
     Task<Stream?> ReadAsync(string path);
 
     Task DeleteAsync(string path);
+
+    Task<bool> ExistsAsync(string path);
 }

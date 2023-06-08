@@ -9,11 +9,11 @@ namespace CommerceApi.Controllers;
 
 public class ImagesController : ControllerBase
 {
-    private readonly IImageService imageService;
+    private readonly IImageService _imageService;
 
     public ImagesController(IImageService imageService)
     {
-        this.imageService = imageService;
+        _imageService = imageService;
     }
 
 
@@ -27,7 +27,7 @@ public class ImagesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Delete(Guid imageId)
     {
-        var result = await imageService.DeleteAsync(imageId);
+        var result = await _imageService.DeleteAsync(imageId);
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
@@ -40,7 +40,7 @@ public class ImagesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetList()
     {
-        var images = await imageService.GetListAsync();
+        var images = await _imageService.GetListAsync();
         return Ok(images);
     }
 
@@ -53,7 +53,7 @@ public class ImagesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Get(Guid imageId)
     {
-        var result = await imageService.GetAsync(imageId);
+        var result = await _imageService.GetAsync(imageId);
         return result.Success ?
             File(result.Content.Stream, result.Content.ContentType) :
             CreateResponse(result);
@@ -71,7 +71,7 @@ public class ImagesController : ControllerBase
     public async Task<IActionResult> Upload([FromForm] UploadImageRequest request)
     {
         var content = request.ToStreamFileContent();
-        var result = await imageService.UploadAsync(content);
+        var result = await _imageService.UploadAsync(content);
 
         return CreateResponse(result, StatusCodes.Status200OK);
     }

@@ -2,88 +2,140 @@
 
 namespace CommerceApi.StorageProviders.FileSystem;
 
-public class FileSystemStorageProvider : StorageProvider, IStorageProvider
+public class FileSystemStorageProvider : IStorageProvider
 {
-    private FileSystemSettings settings;
+    private FileSystemSettings _fileSystemSettings;
+    private CancellationTokenSource? _tokenSource;
 
-    public FileSystemStorageProvider(FileSystemSettings settings)
+    private bool _disposed = false;
+
+    public FileSystemStorageProvider(FileSystemSettings fileSystemSettings)
     {
-        this.settings = settings;
+        _fileSystemSettings = fileSystemSettings;
     }
 
-    public override async Task SaveAsync(string path, Stream stream, bool overwrite = false)
+    private CancellationToken CancellationToken
     {
-        ThrowIfDisposed();
-
-        var normalizedPath = await NormalizePathAsync(path).ConfigureAwait(false);
-        if (!File.Exists(normalizedPath))
+        get
         {
-            var directoryName = Path.GetDirectoryName(normalizedPath);
-            if (!string.IsNullOrWhiteSpace(directoryName) && !Directory.Exists(directoryName))
-            {
-                Directory.CreateDirectory(directoryName);
-            }
+            _tokenSource ??= new CancellationTokenSource();
+            return _tokenSource.Token;
+        }
+    }
 
-            var outputStream = await GetOutputStreamAsync(path, overwrite).ConfigureAwait(false);
+    public async Task SaveAsync(string path, Stream stream, bool overwrite = false)
+    {
+        ArgumentNullException.ThrowIfNull(path, nameof(path));
+        ArgumentNullException.ThrowIfNull(stream, nameof(stream));
+
+        var cancellationToken = CancellationToken;
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var fileExists = CheckExists(path);
+        if (!fileExists)
+        {
+            await CreateDirectoryAsync(path, cancellationToken).ConfigureAwait(false);
+            var normalizedPath = NormalizePath(path);
+
+            var fileMode = overwrite ? FileMode.Append : FileMode.CreateNew;
+            var outputStream = new FileStream(normalizedPath, fileMode, FileAccess.Write);
 
             stream.Position = 0;
-            await stream.CopyToAsync(outputStream).ConfigureAwait(false);
+            await stream.CopyToAsync(outputStream, cancellationToken);
 
             outputStream.Close();
             await outputStream.DisposeAsync().ConfigureAwait(false);
         }
     }
 
-    public override async Task<Stream?> ReadAsync(string path)
+    public Task<Stream?> ReadAsync(string path)
     {
-        var normalizedPath = await NormalizePathAsync(path).ConfigureAwait(false);
-        if (!File.Exists(normalizedPath))
+        var fileExists = CheckExists(path);
+        if (!fileExists)
         {
-            return null;
+            return Task.FromResult<Stream?>(null);
         }
 
-        var stream = File.OpenRead(normalizedPath) ?? Stream.Null;
-        return stream;
+        var normalizedPath = NormalizePath(path);
+
+        var stream = File.OpenRead(normalizedPath);
+        return Task.FromResult<Stream?>(stream);
     }
 
-    public override async Task DeleteAsync(string path)
+    public Task DeleteAsync(string path)
     {
-        var normalizedPath = await NormalizePathAsync(path).ConfigureAwait(false);
-        if (File.Exists(normalizedPath))
+        var fileExists = CheckExists(path);
+        if (fileExists)
         {
+            var normalizedPath = NormalizePath(path);
             File.Delete(normalizedPath);
         }
+
+        return Task.CompletedTask;
     }
 
-    protected override void Dispose(bool disposing)
+    public Task<bool> ExistsAsync(string path)
     {
-        if (disposing)
+        var cancellationToken = CancellationToken;
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var fileExists = CheckExists(path);
+        return Task.FromResult(fileExists);
+    }
+
+    private bool CheckExists(string path)
+    {
+        var normalizedPath = NormalizePath(path);
+        return File.Exists(normalizedPath);
+    }
+
+    private string NormalizePath(string path)
+    {
+        var storageFolder = _fileSystemSettings.StorageFolder;
+
+        var normalizedPath = Path.Combine(storageFolder, path);
+        return normalizedPath;
+    }
+
+    private Task CreateDirectoryAsync(string path, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        try
         {
-            settings = null!;
+            var normalizedPath = NormalizePath(path);
+            var directoryName = Path.GetDirectoryName(normalizedPath) ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(directoryName) || !Directory.Exists(directoryName))
+            {
+                Directory.CreateDirectory(directoryName);
+            }
+
+            return Task.CompletedTask;
         }
-
-        base.Dispose(disposing);
-    }
-
-    protected override async Task<string> NormalizePathAsync(string? path)
-    {
-        if (string.IsNullOrWhiteSpace(path))
+        catch (IOException ex)
         {
-            throw new ArgumentNullException(nameof(path), "the path is required");
+            return Task.FromException(ex);
         }
-
-        var normalizedPath = await base.NormalizePathAsync(path).ConfigureAwait(false);
-
-        var fullPath = Path.Combine(settings.StorageFolder, normalizedPath);
-        return fullPath;
     }
 
-    private Task<Stream> GetOutputStreamAsync(string path, bool overwrite)
+    public void Dispose()
     {
-        var stream = !overwrite ?
-                new FileStream(path, FileMode.CreateNew, FileAccess.Write) :
-                new FileStream(path, FileMode.Append, FileAccess.Write);
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
 
-        return Task.FromResult<Stream>(stream);
+    private void Dispose(bool disposing)
+    {
+        if (disposing && !_disposed)
+        {
+            _fileSystemSettings = null!;
+            if (_tokenSource != null)
+            {
+                _tokenSource.Dispose();
+                _tokenSource = null;
+            }
+
+            _disposed = true;
+        }
     }
 }

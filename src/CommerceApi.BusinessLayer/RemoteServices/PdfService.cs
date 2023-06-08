@@ -7,11 +7,11 @@ namespace CommerceApi.BusinessLayer.RemoteServices;
 
 public class PdfService : IPdfService
 {
-    private readonly IStorageProvider storageProvider;
+    private readonly IStorageProvider _storageProvider;
 
     public PdfService(IStorageProvider storageProvider)
     {
-        this.storageProvider = storageProvider;
+        _storageProvider = storageProvider;
     }
 
     public async Task UploadAsync(string path, string phraseName, params PdfPCell[] cells)
@@ -39,7 +39,7 @@ public class PdfService : IPdfService
         writer.Close();
         pdfStream.Position = 0;
 
-        await storageProvider.SaveAsync(path, pdfStream, true);
+        await _storageProvider.SaveAsync(path, pdfStream, true);
         await pdfStream.DisposeAsync();
     }
 }

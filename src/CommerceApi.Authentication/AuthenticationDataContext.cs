@@ -29,15 +29,15 @@ public partial class AuthenticationDataContext
 
     private DbSet<Address> _addresses;
 
-    private readonly ValueConverter<string, string> trimStringConverter = new(v => v.Trim(), v => v.Trim());
-    private readonly ILogger<AuthenticationDataContext> logger;
+    private readonly ValueConverter<string, string> _trimStringConverter = new(v => v.Trim(), v => v.Trim());
+    private readonly ILogger<AuthenticationDataContext> _logger;
 
     public AuthenticationDataContext(DbContextOptions options, ILogger<AuthenticationDataContext> logger) : base(options)
     {
-        this.logger = logger;
+        _logger = logger;
     }
 
-    public ILogger Logger => logger;
+    public ILogger Logger => _logger;
 
     public override DbSet<ApplicationUser> Users
     {
@@ -162,28 +162,28 @@ public partial class AuthenticationDataContext
         try
         {
             var savedEntries = await base.SaveChangesAsync(cancellationToken);
-            logger.LogInformation("saved {savedEntries} rows in the database", savedEntries);
+            _logger.LogInformation("saved {savedEntries} rows in the database", savedEntries);
 
             return savedEntries;
         }
         catch (DbUpdateConcurrencyException ex)
         {
-            logger.LogError(ex, "error while updating database");
+            _logger.LogError(ex, "error while updating database");
             throw ex;
         }
         catch (DbUpdateException ex)
         {
-            logger.LogError(ex, "error while updating");
+            _logger.LogError(ex, "error while updating");
             throw ex;
         }
         catch (TaskCanceledException ex)
         {
-            logger.LogError(ex, "Request timeout");
+            _logger.LogError(ex, "Request timeout");
             throw ex;
         }
         catch (OperationCanceledException ex)
         {
-            logger.LogError(ex, "Request timeout");
+            _logger.LogError(ex, "Request timeout");
             throw ex;
         }
     }

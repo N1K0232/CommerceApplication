@@ -9,25 +9,25 @@ namespace CommerceApi.BusinessLayer.StartupServices;
 
 public class AuthenticationStartupService : IHostedService
 {
-    private readonly IServiceProvider serviceProvider;
-    private readonly IConfiguration configuration;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly IConfiguration _configuration;
 
     public AuthenticationStartupService(IServiceProvider serviceProvider, IConfiguration configuration)
     {
-        this.serviceProvider = serviceProvider;
-        this.configuration = configuration;
+        _serviceProvider = serviceProvider;
+        _configuration = configuration;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        using var scope = serviceProvider.CreateScope();
+        using var scope = _serviceProvider.CreateScope();
         var identityService = scope.ServiceProvider.GetRequiredService<IIdentityService>();
 
         var roleNames = new string[] { RoleNames.Administrator, RoleNames.PowerUser, RoleNames.User };
         await identityService.CreateRolesAsync(roleNames);
 
-        var administratorUserSection = configuration.GetSection("AdministratorUser");
-        var powerUserSection = configuration.GetSection("PowerUser");
+        var administratorUserSection = _configuration.GetSection("AdministratorUser");
+        var powerUserSection = _configuration.GetSection("PowerUser");
 
         var administratorUser = new ApplicationUser
         {

@@ -21,7 +21,7 @@ public partial class ApplicationDataContext
         .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
         .Single(t => t.IsGenericMethod && t.Name == nameof(SetQueryFilterOnTenantEntity));
 
-    private readonly IUserClaimService claimService;
+    private readonly IUserClaimService _claimService;
 
     private ValidationContext validationContext = null;
     private IDbContextTransaction transaction = null;
@@ -83,7 +83,7 @@ public partial class ApplicationDataContext
     {
         if (!optionsBuilder.IsConfigured)
         {
-            var sqlConnectionString = configuration.GetConnectionString("SqlConnection");
+            var sqlConnectionString = _configuration.GetConnectionString("SqlConnection");
             optionsBuilder.UseSqlServer(sqlConnectionString, sqlOptions =>
             {
                 sqlOptions.EnableRetryOnFailure(10, TimeSpan.FromSeconds(2), null);
@@ -92,7 +92,7 @@ public partial class ApplicationDataContext
 
         var interceptors = GetInterceptorsFromAssembly(Assembly.GetExecutingAssembly());
         optionsBuilder.AddInterceptors(interceptors);
-        optionsBuilder.UseMemoryCache(memoryCache);
+        optionsBuilder.UseMemoryCache(_memoryCache);
     }
 
     partial void OnModelCreatingCore(ModelBuilder modelBuilder)
@@ -153,7 +153,7 @@ public partial class ApplicationDataContext
 
     private void SetQueryFilterOnTenantEntity<TEntity>(ModelBuilder modelBuilder) where TEntity : TenantEntity
     {
-        var tenantId = claimService.GetTenantId();
+        var tenantId = _claimService.GetTenantId();
         var builder = modelBuilder.Entity<TEntity>();
         builder.HasQueryFilter(e => e.TenantId == tenantId);
     }

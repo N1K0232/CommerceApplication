@@ -8,18 +8,18 @@ namespace CommerceApi.Controllers;
 
 public class InvoicesController : ControllerBase
 {
-    private readonly IInvoiceService invoiceService;
+    private readonly IInvoiceService _invoiceService;
 
     public InvoicesController(IInvoiceService invoiceService)
     {
-        this.invoiceService = invoiceService;
+        _invoiceService = invoiceService;
     }
 
     [HttpPost]
     [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser)]
     public async Task<IActionResult> Create([FromBody] SaveInvoiceRequest invoice)
     {
-        var savedInvoice = await invoiceService.CreateAsync(invoice);
+        var savedInvoice = await _invoiceService.CreateAsync(invoice);
         return CreateResponse(savedInvoice, StatusCodes.Status201Created);
     }
 
@@ -27,7 +27,7 @@ public class InvoicesController : ControllerBase
     [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser)]
     public async Task<IActionResult> Delete(Guid invoiceId)
     {
-        var deleteResult = await invoiceService.DeleteAsync(invoiceId);
+        var deleteResult = await _invoiceService.DeleteAsync(invoiceId);
         return CreateResponse(deleteResult, StatusCodes.Status200OK);
     }
 
@@ -35,7 +35,7 @@ public class InvoicesController : ControllerBase
     [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser)]
     public async Task<IActionResult> GetList()
     {
-        var invoices = await invoiceService.GetListAsync();
+        var invoices = await _invoiceService.GetListAsync();
         return Ok(invoices);
     }
 
@@ -43,7 +43,7 @@ public class InvoicesController : ControllerBase
     [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser)]
     public async Task<IActionResult> Get(Guid invoiceId)
     {
-        var invoice = await invoiceService.GetAsync(invoiceId);
+        var invoice = await _invoiceService.GetAsync(invoiceId);
         return CreateResponse(invoice, StatusCodes.Status200OK);
     }
 
@@ -51,7 +51,7 @@ public class InvoicesController : ControllerBase
     [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser)]
     public async Task<IActionResult> Update(Guid invoiceId, SaveInvoiceRequest invoice)
     {
-        var savedInvoice = await invoiceService.UpdateAsync(invoiceId, invoice);
+        var savedInvoice = await _invoiceService.UpdateAsync(invoiceId, invoice);
         return CreateResponse(savedInvoice, StatusCodes.Status200OK);
     }
 }

@@ -8,11 +8,11 @@ namespace CommerceApi.Controllers;
 
 public class CategoriesController : ControllerBase
 {
-    private readonly ICategoryService categoryService;
+    private readonly ICategoryService _categoryService;
 
     public CategoriesController(ICategoryService categoryService)
     {
-        this.categoryService = categoryService;
+        _categoryService = categoryService;
     }
 
     [HttpPost]
@@ -24,7 +24,7 @@ public class CategoriesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Create(SaveCategoryRequest category)
     {
-        var result = await categoryService.CreateAsync(category);
+        var result = await _categoryService.CreateAsync(category);
         return CreateResponse(result, StatusCodes.Status201Created);
     }
 
@@ -37,7 +37,7 @@ public class CategoriesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Delete(Guid categoryId)
     {
-        var result = await categoryService.DeleteAsync(categoryId);
+        var result = await _categoryService.DeleteAsync(categoryId);
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
@@ -50,7 +50,7 @@ public class CategoriesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Get(Guid categoryId)
     {
-        var result = await categoryService.GetAsync(categoryId);
+        var result = await _categoryService.GetAsync(categoryId);
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
@@ -62,7 +62,7 @@ public class CategoriesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetList()
     {
-        var categories = await categoryService.GetListAsync();
+        var categories = await _categoryService.GetListAsync();
         return Ok(categories);
     }
 
@@ -76,7 +76,7 @@ public class CategoriesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Update(Guid categoryId, SaveCategoryRequest category)
     {
-        var result = await categoryService.UpdateAsync(categoryId, category);
+        var result = await _categoryService.UpdateAsync(categoryId, category);
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 }

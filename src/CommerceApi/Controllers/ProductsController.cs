@@ -10,11 +10,11 @@ namespace CommerceApi.Controllers;
 
 public class ProductsController : ControllerBase
 {
-    private readonly IProductService productService;
+    private readonly IProductService _productService;
 
     public ProductsController(IProductService productService)
     {
-        this.productService = productService;
+        _productService = productService;
     }
 
     [HttpPost("AddProduct")]
@@ -27,7 +27,7 @@ public class ProductsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Create([FromBody] SaveProductRequest product)
     {
-        var result = await productService.CreateAsync(product);
+        var result = await _productService.CreateAsync(product);
         return CreateResponse(result, StatusCodes.Status201Created);
     }
 
@@ -41,7 +41,7 @@ public class ProductsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Delete(Guid productId)
     {
-        var result = await productService.DeleteAsync(productId);
+        var result = await _productService.DeleteAsync(productId);
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
@@ -55,7 +55,7 @@ public class ProductsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Get(Guid productId)
     {
-        var result = await productService.GetAsync(productId);
+        var result = await _productService.GetAsync(productId);
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
@@ -67,7 +67,7 @@ public class ProductsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetList(string orderBy = null, int pageIndex = 0, int itemsPerPage = 50)
     {
-        var products = await productService.GetListAsync(orderBy, pageIndex, itemsPerPage);
+        var products = await _productService.GetListAsync(orderBy, pageIndex, itemsPerPage);
         return Ok(products);
     }
 
@@ -82,7 +82,7 @@ public class ProductsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Update(Guid productId, SaveProductRequest product)
     {
-        var result = await productService.UpdateAsync(productId, product);
+        var result = await _productService.UpdateAsync(productId, product);
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
@@ -95,7 +95,7 @@ public class ProductsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UploadImage(Guid productId, IFormFile file)
     {
-        var result = await productService.UploadImageAsync(productId, file.FileName, file.OpenReadStream());
+        var result = await _productService.UploadImageAsync(productId, file.FileName, file.OpenReadStream());
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
@@ -107,7 +107,7 @@ public class ProductsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> AddReview(SaveReviewRequest review)
     {
-        var result = await productService.AddReviewAsync(review);
+        var result = await _productService.AddReviewAsync(review);
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
@@ -119,7 +119,7 @@ public class ProductsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetReviews(Guid productId)
     {
-        var result = await productService.GetReviewsAsync(productId);
+        var result = await _productService.GetReviewsAsync(productId);
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
@@ -131,7 +131,7 @@ public class ProductsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteReview(Guid reviewId)
     {
-        var result = await productService.DeleteReviewAsync(reviewId);
+        var result = await _productService.DeleteReviewAsync(reviewId);
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
@@ -143,7 +143,7 @@ public class ProductsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateReview(Guid reviewId, SaveReviewRequest review)
     {
-        var result = await productService.UpdateReviewAsync(reviewId, review);
+        var result = await _productService.UpdateReviewAsync(reviewId, review);
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 }

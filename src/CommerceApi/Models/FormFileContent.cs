@@ -11,8 +11,6 @@ public class FormFileContent
 
     public IFormFile File { get; }
 
-    public string FileName => File.FileName;
-
     public Stream GetFileStream() => File.OpenReadStream();
 
     public static async ValueTask<FormFileContent> BindAsync(HttpContext context)

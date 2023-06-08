@@ -6,30 +6,30 @@ namespace CommerceApi.ClientContext;
 
 internal class ClientContextMiddleware
 {
-    private readonly RequestDelegate next;
-    private readonly IClientContextAccessor clientContextAccessor;
-    private readonly ClientContextOptions clientContextOptions;
+    private readonly RequestDelegate _next;
+    private readonly IClientContextAccessor _clientContextAccessor;
+    private readonly ClientContextOptions _clientContextOptions;
 
     public ClientContextMiddleware(RequestDelegate next, IClientContextAccessor clientContextAccessor, ClientContextOptions clientContextOptions)
     {
-        this.next = next;
-        this.clientContextAccessor = clientContextAccessor;
-        this.clientContextOptions = clientContextOptions;
+        _next = next;
+        _clientContextAccessor = clientContextAccessor;
+        _clientContextOptions = clientContextOptions;
     }
 
     public async Task Invoke(HttpContext context)
     {
-        clientContextAccessor.ClientContext = new DefaultClientContext(clientContextOptions.DefaultTimeZone);
+        _clientContextAccessor.ClientContext = new DefaultClientContext(_clientContextOptions.DefaultTimeZone);
 
         try
         {
-            var hasTimeZoneHeader = context.Request.Headers.TryGetValue(clientContextOptions.TimeZoneHeader, out var timeZone) && !StringValues.IsNullOrEmpty(timeZone);
+            var hasTimeZoneHeader = context.Request.Headers.TryGetValue(_clientContextOptions.TimeZoneHeader, out var timeZone) && !StringValues.IsNullOrEmpty(timeZone);
             if (hasTimeZoneHeader)
             {
                 var isValidTimeZone = TZConvert.TryGetTimeZoneInfo(timeZone.ToString(), out var timeZoneInfo);
                 if (isValidTimeZone)
                 {
-                    clientContextAccessor.ClientContext.TimeZone = timeZoneInfo;
+                    _clientContextAccessor.ClientContext.TimeZone = timeZoneInfo;
                 }
             }
         }
@@ -37,6 +37,6 @@ internal class ClientContextMiddleware
         {
         }
 
-        await next(context);
+        await _next(context);
     }
 }

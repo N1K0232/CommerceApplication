@@ -13,22 +13,22 @@ namespace CommerceApi.BusinessLayer.Services;
 
 public class InvoiceService : IInvoiceService
 {
-    private readonly IDataContext dataContext;
-    private readonly IMapper mapper;
-    private readonly IValidator<SaveInvoiceRequest> invoiceValidator;
+    private readonly IDataContext _dataContext;
+    private readonly IMapper _mapper;
+    private readonly IValidator<SaveInvoiceRequest> _invoiceValidator;
 
     public InvoiceService(IDataContext dataContext, IMapper mapper, IValidator<SaveInvoiceRequest> invoiceValidator)
     {
-        this.dataContext = dataContext;
-        this.mapper = mapper;
-        this.invoiceValidator = invoiceValidator;
+        _dataContext = dataContext;
+        _mapper = mapper;
+        _invoiceValidator = invoiceValidator;
     }
 
     public async Task<Result<Invoice>> CreateAsync(SaveInvoiceRequest invoice)
     {
         try
         {
-            var validationResult = await invoiceValidator.ValidateAsync(invoice);
+            var validationResult = await _invoiceValidator.ValidateAsync(invoice);
             if (!validationResult.IsValid)
             {
                 var validationErrors = new List<ValidationError>(validationResult.Errors.Capacity);
@@ -40,12 +40,12 @@ public class InvoiceService : IInvoiceService
                 return Result.Fail(FailureReasons.ClientError, "validation errors", validationErrors);
             }
 
-            var dbInvoice = mapper.Map<Entities.Invoice>(invoice);
-            dataContext.Create(dbInvoice);
+            var dbInvoice = _mapper.Map<Entities.Invoice>(invoice);
+            _dataContext.Create(dbInvoice);
 
-            await dataContext.SaveAsync();
+            await _dataContext.SaveAsync();
 
-            var savedInvoice = mapper.Map<Invoice>(dbInvoice);
+            var savedInvoice = _mapper.Map<Invoice>(dbInvoice);
             return savedInvoice;
         }
         catch (DbUpdateException ex)
@@ -63,14 +63,14 @@ public class InvoiceService : IInvoiceService
                 return Result.Fail(FailureReasons.ClientError, "Invalid id");
             }
 
-            var invoice = await dataContext.GetAsync<Entities.Invoice>(invoiceId);
+            var invoice = await _dataContext.GetAsync<Entities.Invoice>(invoiceId);
             if (invoice is null)
             {
                 return Result.Fail(FailureReasons.ItemNotFound, $"No invoice found for id {invoiceId}");
             }
 
-            dataContext.Delete(invoice);
-            await dataContext.SaveAsync();
+            _dataContext.Delete(invoice);
+            await _dataContext.SaveAsync();
 
             return Result.Ok();
         }
@@ -87,22 +87,22 @@ public class InvoiceService : IInvoiceService
             return Result.Fail(FailureReasons.ClientError, "Invalid id");
         }
 
-        var dbInvoice = await dataContext.GetAsync<Entities.Invoice>(invoiceId);
+        var dbInvoice = await _dataContext.GetAsync<Entities.Invoice>(invoiceId);
         if (dbInvoice is null)
         {
             return Result.Fail(FailureReasons.ItemNotFound, $"No invoice found for id {invoiceId}");
         }
 
 
-        var invoice = mapper.Map<Invoice>(dbInvoice);
+        var invoice = _mapper.Map<Invoice>(dbInvoice);
         return invoice;
     }
 
     public async Task<IEnumerable<Invoice>> GetListAsync()
     {
-        var query = dataContext.GetData<Entities.Invoice>();
+        var query = _dataContext.GetData<Entities.Invoice>();
 
-        var invoices = await query.ProjectTo<Invoice>(mapper.ConfigurationProvider).ToListAsync();
+        var invoices = await query.ProjectTo<Invoice>(_mapper.ConfigurationProvider).ToListAsync();
         return invoices;
     }
 
@@ -115,7 +115,7 @@ public class InvoiceService : IInvoiceService
                 return Result.Fail(FailureReasons.ClientError, "Invalid id");
             }
 
-            var validationResult = await invoiceValidator.ValidateAsync(invoice);
+            var validationResult = await _invoiceValidator.ValidateAsync(invoice);
             if (!validationResult.IsValid)
             {
                 var validationErrors = new List<ValidationError>(validationResult.Errors.Capacity);
@@ -127,18 +127,18 @@ public class InvoiceService : IInvoiceService
                 return Result.Fail(FailureReasons.ClientError, "validation errors", validationErrors);
             }
 
-            var dbInvoice = await dataContext.GetAsync<Entities.Invoice>(invoiceId);
+            var dbInvoice = await _dataContext.GetAsync<Entities.Invoice>(invoiceId);
             if (dbInvoice is null)
             {
                 return Result.Fail(FailureReasons.ItemNotFound, $"No invoice found for id {invoiceId}");
             }
 
-            mapper.Map(invoice, dbInvoice);
+            _mapper.Map(invoice, dbInvoice);
 
-            dataContext.Update(dbInvoice);
-            await dataContext.SaveAsync();
+            _dataContext.Update(dbInvoice);
+            await _dataContext.SaveAsync();
 
-            var savedInvoice = mapper.Map<Invoice>(dbInvoice);
+            var savedInvoice = _mapper.Map<Invoice>(dbInvoice);
             return savedInvoice;
         }
         catch (DbUpdateException ex)

@@ -16,12 +16,12 @@ namespace CommerceApi.BusinessLayer.Services;
 
 public class ProductService : IProductService
 {
-    private readonly IDataContext dataContext;
-    private readonly IStorageProvider storageProvider;
-    private readonly IMapper mapper;
-    private readonly IValidator<SaveProductRequest> productValidator;
-    private readonly IValidator<SaveReviewRequest> reviewValidator;
-    private readonly IUserClaimService claimService;
+    private readonly IDataContext _dataContext;
+    private readonly IStorageProvider _storageProvider;
+    private readonly IMapper _mapper;
+    private readonly IValidator<SaveProductRequest> _productValidator;
+    private readonly IValidator<SaveReviewRequest> _reviewValidator;
+    private readonly IUserClaimService _claimService;
 
     public ProductService(IDataContext dataContext,
         IStorageProvider storageProvider,
@@ -30,17 +30,17 @@ public class ProductService : IProductService
         IValidator<SaveReviewRequest> reviewValidator,
         IUserClaimService claimService)
     {
-        this.dataContext = dataContext;
-        this.storageProvider = storageProvider;
-        this.mapper = mapper;
-        this.productValidator = productValidator;
-        this.reviewValidator = reviewValidator;
-        this.claimService = claimService;
+        _dataContext = dataContext;
+        _storageProvider = storageProvider;
+        _mapper = mapper;
+        _productValidator = productValidator;
+        _reviewValidator = reviewValidator;
+        _claimService = claimService;
     }
 
     public async Task<Result<Product>> CreateAsync(SaveProductRequest product)
     {
-        var validationResult = await productValidator.ValidateAsync(product);
+        var validationResult = await _productValidator.ValidateAsync(product);
         if (!validationResult.IsValid)
         {
             var validationErrors = new List<ValidationError>();
@@ -54,21 +54,21 @@ public class ProductService : IProductService
 
         try
         {
-            var query = dataContext.GetData<Entities.Product>();
+            var query = _dataContext.GetData<Entities.Product>();
             var productExists = await query.AnyAsync(p => p.Name == product.Name);
             if (productExists)
             {
                 return Result.Fail(FailureReasons.Conflict, "the product already exists");
             }
 
-            var dbProduct = mapper.Map<Entities.Product>(product);
+            var dbProduct = _mapper.Map<Entities.Product>(product);
             dbProduct.HasDiscount = product.DiscountPercentage.GetValueOrDefault() > 0;
             dbProduct.HasShipping = product.ShippingCost.GetValueOrDefault() > 0;
 
-            dataContext.Create(dbProduct);
-            await dataContext.SaveAsync();
+            _dataContext.Create(dbProduct);
+            await _dataContext.SaveAsync();
 
-            var savedProduct = mapper.Map<Product>(dbProduct);
+            var savedProduct = _mapper.Map<Product>(dbProduct);
             return savedProduct;
         }
         catch (DbUpdateException ex)
@@ -84,19 +84,19 @@ public class ProductService : IProductService
             return Result.Fail(FailureReasons.ClientError, "Invalid id");
         }
 
-        var dbProduct = await dataContext.GetData<Entities.Product>().FirstOrDefaultAsync(p => p.Id == productId);
+        var dbProduct = await _dataContext.GetData<Entities.Product>().FirstOrDefaultAsync(p => p.Id == productId);
         if (dbProduct is null)
         {
             return Result.Fail(FailureReasons.ItemNotFound, $"No product found with id {productId}");
         }
 
-        var product = mapper.Map<Product>(dbProduct);
+        var product = _mapper.Map<Product>(dbProduct);
         return product;
     }
 
     public async Task<ListResult<Product>> GetListAsync(string orderBy, int pageIndex, int itemsPerPage)
     {
-        var query = dataContext.GetData<Entities.Product>();
+        var query = _dataContext.GetData<Entities.Product>();
         if (!string.IsNullOrWhiteSpace(orderBy))
         {
             query = query.OrderBy(orderBy);
@@ -107,7 +107,7 @@ public class ProductService : IProductService
             .Take(itemsPerPage + 1)
             .ToListAsync();
 
-        var products = mapper.Map<IEnumerable<Product>>(dbProducts).Take(itemsPerPage);
+        var products = _mapper.Map<IEnumerable<Product>>(dbProducts).Take(itemsPerPage);
 
         var result = new ListResult<Product>(products, totalCount, products.Count() > itemsPerPage);
         return result;
@@ -122,14 +122,14 @@ public class ProductService : IProductService
 
         try
         {
-            var product = await dataContext.GetData<Entities.Product>().FirstOrDefaultAsync(p => p.Id == productId);
+            var product = await _dataContext.GetData<Entities.Product>().FirstOrDefaultAsync(p => p.Id == productId);
             if (product is null)
             {
                 return Result.Fail(FailureReasons.ItemNotFound, $"No product found with id {productId}");
             }
 
-            dataContext.Delete(product);
-            await dataContext.SaveAsync();
+            _dataContext.Delete(product);
+            await _dataContext.SaveAsync();
 
             return Result.Ok();
         }
@@ -148,7 +148,7 @@ public class ProductService : IProductService
 
         try
         {
-            var query = dataContext.GetData<Entities.Product>();
+            var query = _dataContext.GetData<Entities.Product>();
             var productExists = await query.AnyAsync(p => p.Id == productId);
             if (!productExists)
             {
@@ -156,11 +156,11 @@ public class ProductService : IProductService
             }
 
             var filePath = $@"\products\attachments\{productId}_{fileName}";
-            await storageProvider.SaveAsync(filePath, fileStream);
+            await _storageProvider.SaveAsync(filePath, fileStream);
 
             var dbProduct = await query.FirstOrDefaultAsync(p => p.Id == productId);
 
-            var savedProduct = mapper.Map<Product>(dbProduct);
+            var savedProduct = _mapper.Map<Product>(dbProduct);
             return savedProduct;
         }
         catch (Exception ex)
@@ -176,7 +176,7 @@ public class ProductService : IProductService
             return Result.Fail(FailureReasons.ClientError, "Invalid id");
         }
 
-        var validationResult = await productValidator.ValidateAsync(product);
+        var validationResult = await _productValidator.ValidateAsync(product);
         if (!validationResult.IsValid)
         {
             var validationErrors = new List<ValidationError>();
@@ -190,21 +190,21 @@ public class ProductService : IProductService
 
         try
         {
-            var query = dataContext.GetData<Entities.Product>(ignoreQueryFilters: true, trackingChanges: true);
+            var query = _dataContext.GetData<Entities.Product>(ignoreQueryFilters: true, trackingChanges: true);
             var dbProduct = await query.FirstOrDefaultAsync(p => p.Id == productId);
             if (dbProduct is null)
             {
                 return Result.Fail(FailureReasons.ItemNotFound, $"No product found with id {productId}");
             }
 
-            mapper.Map(product, dbProduct);
+            _mapper.Map(product, dbProduct);
             dbProduct.HasDiscount = product.DiscountPercentage.GetValueOrDefault() > 0;
             dbProduct.HasShipping = product.ShippingCost.GetValueOrDefault() > 0;
 
-            dataContext.Update(dbProduct);
-            await dataContext.SaveAsync();
+            _dataContext.Update(dbProduct);
+            await _dataContext.SaveAsync();
 
-            var savedProduct = mapper.Map<Product>(dbProduct);
+            var savedProduct = _mapper.Map<Product>(dbProduct);
             return savedProduct;
         }
         catch (DbUpdateException ex)
@@ -215,7 +215,7 @@ public class ProductService : IProductService
 
     public async Task<Result> AddReviewAsync(SaveReviewRequest review)
     {
-        var validationResult = await reviewValidator.ValidateAsync(review);
+        var validationResult = await _reviewValidator.ValidateAsync(review);
         if (!validationResult.IsValid)
         {
             var validationErrors = new List<ValidationError>(validationResult.Errors.Capacity);
@@ -229,11 +229,11 @@ public class ProductService : IProductService
 
         try
         {
-            var dbReview = mapper.Map<Entities.Review>(review);
-            dbReview.UserId = claimService.GetId();
+            var dbReview = _mapper.Map<Entities.Review>(review);
+            dbReview.UserId = _claimService.GetId();
 
-            dataContext.Create(dbReview);
-            await dataContext.SaveAsync();
+            _dataContext.Create(dbReview);
+            await _dataContext.SaveAsync();
 
             return Result.Ok();
         }
@@ -250,7 +250,7 @@ public class ProductService : IProductService
             return Result.Fail(FailureReasons.ClientError, "invalid id");
         }
 
-        var query = dataContext.GetData<Entities.Product>();
+        var query = _dataContext.GetData<Entities.Product>();
 
         var productExists = await query.AnyAsync(p => p.Id == productId);
         if (!productExists)
@@ -263,7 +263,7 @@ public class ProductService : IProductService
             .Select(p => p.Reviews)
             .ToListAsync();
 
-        var reviews = mapper.Map<IEnumerable<Review>>(dbReviews);
+        var reviews = _mapper.Map<IEnumerable<Review>>(dbReviews);
         return Result<IEnumerable<Review>>.Ok(reviews);
     }
 
@@ -276,11 +276,11 @@ public class ProductService : IProductService
 
         try
         {
-            var review = await dataContext.GetAsync<Entities.Review>(reviewId);
+            var review = await _dataContext.GetAsync<Entities.Review>(reviewId);
             if (review != null)
             {
-                dataContext.Delete(review);
-                await dataContext.SaveAsync();
+                _dataContext.Delete(review);
+                await _dataContext.SaveAsync();
 
                 return Result.Ok();
             }
@@ -302,7 +302,7 @@ public class ProductService : IProductService
                 return Result.Fail(FailureReasons.ClientError, "Invalid id");
             }
 
-            var validationResult = await reviewValidator.ValidateAsync(review);
+            var validationResult = await _reviewValidator.ValidateAsync(review);
             if (!validationResult.IsValid)
             {
                 var validationErrors = new List<ValidationError>(validationResult.Errors.Capacity);
@@ -314,13 +314,13 @@ public class ProductService : IProductService
                 return Result.Fail(FailureReasons.ClientError, "validation errors", validationErrors);
             }
 
-            var dbReview = await dataContext.GetAsync<Entities.Review>(reviewId);
+            var dbReview = await _dataContext.GetAsync<Entities.Review>(reviewId);
             if (dbReview != null)
             {
-                mapper.Map(review, dbReview);
+                _mapper.Map(review, dbReview);
 
-                dataContext.Update(dbReview);
-                await dataContext.SaveAsync();
+                _dataContext.Update(dbReview);
+                await _dataContext.SaveAsync();
 
                 return Result.Ok();
             }

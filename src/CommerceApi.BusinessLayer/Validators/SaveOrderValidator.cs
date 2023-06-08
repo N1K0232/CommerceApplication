@@ -8,14 +8,13 @@ namespace CommerceApi.BusinessLayer.Validators;
 
 public class SaveOrderValidator : AbstractValidator<SaveOrderDetail>
 {
-    private readonly IReadOnlyDataContext dataContext;
-    private readonly IUserClaimService claimService;
+    private readonly IReadOnlyDataContext _dataContext;
+    private readonly IUserClaimService _claimService;
 
     public SaveOrderValidator(IReadOnlyDataContext dataContext, IUserClaimService claimService)
     {
-        this.dataContext = dataContext;
-        this.claimService = claimService;
-
+        _dataContext = dataContext;
+        _claimService = claimService;
         CreateRules();
     }
 
@@ -27,15 +26,15 @@ public class SaveOrderValidator : AbstractValidator<SaveOrderDetail>
 
     private bool OrderExist(Guid orderId)
     {
-        var orderExists = dataContext.GetData<Entities.Order>()
-            .Any(o => o.Id == orderId && o.UserId == claimService.GetId());
+        var orderExists = _dataContext.GetData<Entities.Order>()
+            .Any(o => o.Id == orderId && o.UserId == _claimService.GetId());
 
         return orderExists;
     }
 
     private bool ProductExist(Guid productId)
     {
-        var productExists = dataContext.GetData<Entities.Product>()
+        var productExists = _dataContext.GetData<Entities.Product>()
             .Any(p => p.Id == productId);
 
         return productExists;

@@ -12,20 +12,20 @@ namespace CommerceApi.BusinessLayer.Services;
 
 public class CategoryService : ICategoryService
 {
-    private readonly IDataContext dataContext;
-    private readonly IMapper mapper;
-    private readonly IValidator<SaveCategoryRequest> categoryValidator;
+    private readonly IDataContext _dataContext;
+    private readonly IMapper _mapper;
+    private readonly IValidator<SaveCategoryRequest> _categoryValidator;
 
     public CategoryService(IDataContext dataContext, IMapper mapper, IValidator<SaveCategoryRequest> categoryValidator)
     {
-        this.dataContext = dataContext;
-        this.mapper = mapper;
-        this.categoryValidator = categoryValidator;
+        _dataContext = dataContext;
+        _mapper = mapper;
+        _categoryValidator = categoryValidator;
     }
 
     public async Task<Result<Category>> CreateAsync(SaveCategoryRequest category)
     {
-        var validationResult = await categoryValidator.ValidateAsync(category);
+        var validationResult = await _categoryValidator.ValidateAsync(category);
         if (!validationResult.IsValid)
         {
             var validationErrors = new List<ValidationError>(validationResult.Errors.Capacity);
@@ -39,12 +39,12 @@ public class CategoryService : ICategoryService
 
         try
         {
-            var dbCategory = mapper.Map<Entities.Category>(category);
-            dataContext.Create(dbCategory);
+            var dbCategory = _mapper.Map<Entities.Category>(category);
+            _dataContext.Create(dbCategory);
 
-            await dataContext.SaveAsync();
+            await _dataContext.SaveAsync();
 
-            var savedCategory = mapper.Map<Category>(dbCategory);
+            var savedCategory = _mapper.Map<Category>(dbCategory);
             return savedCategory;
         }
         catch (DbUpdateException ex)
@@ -62,14 +62,14 @@ public class CategoryService : ICategoryService
 
         try
         {
-            var dbCategory = await dataContext.GetAsync<Entities.Category>(categoryId);
+            var dbCategory = await _dataContext.GetAsync<Entities.Category>(categoryId);
             if (dbCategory is null)
             {
                 return Result.Fail(FailureReasons.ItemNotFound, $"category not found with id {categoryId}");
             }
 
-            dataContext.Delete(dbCategory);
-            await dataContext.SaveAsync();
+            _dataContext.Delete(dbCategory);
+            await _dataContext.SaveAsync();
 
             return Result.Ok();
         }
@@ -86,22 +86,22 @@ public class CategoryService : ICategoryService
             return Result.Fail(FailureReasons.ClientError, "Invalid id");
         }
 
-        var dbCategory = await dataContext.GetAsync<Entities.Category>(categoryId);
+        var dbCategory = await _dataContext.GetAsync<Entities.Category>(categoryId);
         if (dbCategory is null)
         {
             return Result.Fail(FailureReasons.ItemNotFound, $"category not found with id {categoryId}");
         }
 
-        var category = mapper.Map<Category>(dbCategory);
+        var category = _mapper.Map<Category>(dbCategory);
         return category;
     }
 
     public async Task<IEnumerable<Category>> GetListAsync()
     {
-        var query = dataContext.GetData<Entities.Category>();
+        var query = _dataContext.GetData<Entities.Category>();
         var dbCategories = await query.OrderBy(c => c.Name).ToListAsync();
 
-        var categories = mapper.Map<IEnumerable<Category>>(dbCategories);
+        var categories = _mapper.Map<IEnumerable<Category>>(dbCategories);
         return categories;
     }
 
@@ -112,7 +112,7 @@ public class CategoryService : ICategoryService
             return Result.Fail(FailureReasons.ClientError, "Invalid id");
         }
 
-        var validationResult = await categoryValidator.ValidateAsync(category);
+        var validationResult = await _categoryValidator.ValidateAsync(category);
         if (!validationResult.IsValid)
         {
             var validationErrors = new List<ValidationError>(validationResult.Errors.Capacity);
@@ -126,17 +126,17 @@ public class CategoryService : ICategoryService
 
         try
         {
-            var dbCategory = await dataContext.GetAsync<Entities.Category>(categoryId);
+            var dbCategory = await _dataContext.GetAsync<Entities.Category>(categoryId);
             if (dbCategory is null)
             {
                 return Result.Fail(FailureReasons.ItemNotFound, $"category not found with id {categoryId}");
             }
 
-            mapper.Map(category, dbCategory);
-            dataContext.Update(dbCategory);
-            await dataContext.SaveAsync();
+            _mapper.Map(category, dbCategory);
+            _dataContext.Update(dbCategory);
+            await _dataContext.SaveAsync();
 
-            var savedCategory = mapper.Map<Category>(dbCategory);
+            var savedCategory = _mapper.Map<Category>(dbCategory);
             return savedCategory;
         }
         catch (DbUpdateException ex)
