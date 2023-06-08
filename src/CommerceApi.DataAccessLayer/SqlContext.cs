@@ -171,7 +171,6 @@ public class SqlContext : ISqlContext
     private async Task<IDbConnection> GetConnectionAsync()
     {
         var connectionString = _options.ConnectionString;
-
         _connection ??= new SqlConnection(connectionString);
         _tokenSource ??= new CancellationTokenSource();
 
