@@ -17,7 +17,7 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
     private readonly IConfiguration _configuration;
     private readonly IMemoryCache _memoryCache;
 
-    private CancellationTokenSource tokenSource = null;
+    private CancellationTokenSource _tokenSource = null;
 
     public ApplicationDataContext(DbContextOptions<ApplicationDataContext> options,
         ILogger<ApplicationDataContext> logger,
@@ -91,9 +91,9 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
 
     public async ValueTask<TEntity> GetAsync<TEntity>(params object[] keyValues) where TEntity : BaseEntity
     {
-        tokenSource ??= new CancellationTokenSource();
+        _tokenSource ??= new CancellationTokenSource();
 
-        var token = tokenSource.Token;
+        var token = _tokenSource.Token;
         var set = Set<TEntity>();
 
         var entity = await set.FindAsync(keyValues, token).ConfigureAwait(false);
@@ -116,9 +116,9 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
 #pragma warning disable IDE0007 //Use implicit type
     public async Task SaveAsync()
     {
-        tokenSource ??= new CancellationTokenSource();
+        _tokenSource ??= new CancellationTokenSource();
 
-        var token = tokenSource.Token;
+        var token = _tokenSource.Token;
         var entries = GetEntries();
 
         foreach (var entry in entries)
@@ -191,9 +191,9 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
 
     public async Task EnsureCreatedAsync()
     {
-        tokenSource ??= new CancellationTokenSource();
+        _tokenSource ??= new CancellationTokenSource();
 
-        var result = await Database.EnsureCreatedAsync(tokenSource.Token).ConfigureAwait(false);
+        var result = await Database.EnsureCreatedAsync(_tokenSource.Token).ConfigureAwait(false);
         if (result)
         {
             Logger.LogInformation("the database was successfully created");
@@ -204,9 +204,9 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
 
     public async Task EnsureDeletedAsync()
     {
-        tokenSource ??= new CancellationTokenSource();
+        _tokenSource ??= new CancellationTokenSource();
 
-        var result = await Database.EnsureDeletedAsync(tokenSource.Token).ConfigureAwait(false);
+        var result = await Database.EnsureDeletedAsync(_tokenSource.Token).ConfigureAwait(false);
         if (result)
         {
             Logger.LogInformation("the database was successfully deleted");
@@ -217,8 +217,8 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
 
     public async Task MigrateAsync()
     {
-        tokenSource ??= new CancellationTokenSource();
-        await Database.MigrateAsync(tokenSource.Token).ConfigureAwait(false);
+        _tokenSource ??= new CancellationTokenSource();
+        await Database.MigrateAsync(_tokenSource.Token).ConfigureAwait(false);
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
@@ -247,22 +247,22 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
 
     public override void Dispose()
     {
-        if (tokenSource != null)
+        if (_tokenSource != null)
         {
-            tokenSource.Dispose();
-            tokenSource = null;
+            _tokenSource.Dispose();
+            _tokenSource = null;
         }
 
-        if (transaction != null)
+        if (_transaction != null)
         {
-            transaction.Dispose();
-            transaction = null;
+            _transaction.Dispose();
+            _transaction = null;
         }
 
-        if (generator != null)
+        if (_generator != null)
         {
-            generator.Dispose();
-            generator = null;
+            _generator.Dispose();
+            _generator = null;
         }
 
         base.Dispose();

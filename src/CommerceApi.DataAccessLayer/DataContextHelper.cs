@@ -13,20 +13,20 @@ namespace CommerceApi.DataAccessLayer;
 
 public partial class ApplicationDataContext
 {
-    private static readonly MethodInfo setQueryFilterOnDeletableEntity = typeof(ApplicationDataContext)
+    private static readonly MethodInfo _setQueryFilterOnDeletableEntity = typeof(ApplicationDataContext)
         .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
         .Single(t => t.IsGenericMethod && t.Name == nameof(SetQueryFilterOnDeletableEntity));
 
-    private static readonly MethodInfo setQueryFilterOnTenantEntity = typeof(ApplicationDataContext)
+    private static readonly MethodInfo _setQueryFilterOnTenantEntity = typeof(ApplicationDataContext)
         .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
         .Single(t => t.IsGenericMethod && t.Name == nameof(SetQueryFilterOnTenantEntity));
 
     private readonly IUserClaimService _claimService;
 
-    private ValidationContext validationContext = null;
-    private IDbContextTransaction transaction = null;
+    private ValidationContext _validationContext = null;
+    private IDbContextTransaction _transaction = null;
 
-    private RandomNumberGenerator generator = null;
+    private RandomNumberGenerator _generator = null;
 
     protected override void OnSavedChanges(object sender, SaveChangesEventArgs e) => base.OnSavedChanges(sender, e);
 
@@ -36,20 +36,20 @@ public partial class ApplicationDataContext
 
     private async Task ExecuteTransactionCoreAsync(Func<Task> action)
     {
-        tokenSource ??= new CancellationTokenSource();
-        var token = tokenSource.Token;
+        _tokenSource ??= new CancellationTokenSource();
+        var token = _tokenSource.Token;
 
-        transaction = await Database.BeginTransactionAsync(token).ConfigureAwait(false);
+        _transaction = await Database.BeginTransactionAsync(token).ConfigureAwait(false);
         await action.Invoke().ConfigureAwait(false);
-        await transaction.CommitAsync(token).ConfigureAwait(false);
+        await _transaction.CommitAsync(token).ConfigureAwait(false);
     }
 
     private Task ValidateAsync(BaseEntity entity)
     {
         try
         {
-            validationContext = new ValidationContext(entity);
-            Validator.ValidateObject(entity, validationContext, true);
+            _validationContext = new ValidationContext(entity);
+            Validator.ValidateObject(entity, _validationContext, true);
 
             return Task.CompletedTask;
         }
@@ -61,10 +61,10 @@ public partial class ApplicationDataContext
 
     private string GenerateSecurityStamp()
     {
-        generator = RandomNumberGenerator.Create();
+        _generator = RandomNumberGenerator.Create();
         var bytes = new byte[50];
 
-        generator.GetBytes(bytes);
+        _generator.GetBytes(bytes);
 
         var securityStamp = Convert.ToBase64String(bytes).ToUpperInvariant();
         return securityStamp;
@@ -121,12 +121,12 @@ public partial class ApplicationDataContext
 
         if (typeof(DeletableEntity).IsAssignableFrom(entityType))
         {
-            result.Add(setQueryFilterOnDeletableEntity);
+            result.Add(_setQueryFilterOnDeletableEntity);
         }
 
         if (typeof(TenantEntity).IsAssignableFrom(entityType))
         {
-            result.Add(setQueryFilterOnTenantEntity);
+            result.Add(_setQueryFilterOnTenantEntity);
         }
 
         return result;
