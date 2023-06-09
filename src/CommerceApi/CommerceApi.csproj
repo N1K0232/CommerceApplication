@@ -23,6 +23,7 @@
     <ProjectReference Include="..\CommerceApi.Authorization\CommerceApi.Authorization.csproj" />
     <ProjectReference Include="..\CommerceApi.BusinessLayer\CommerceApi.BusinessLayer.csproj" />
     <ProjectReference Include="..\CommerceApi.ClientContext\CommerceApi.ClientContext.csproj" />
+    <ProjectReference Include="..\CommerceApi.DataProtectionLayer\CommerceApi.DataProtectionLayer.csproj" />
     <ProjectReference Include="..\CommerceApi.Logging\CommerceApi.Logging.csproj" />
     <ProjectReference Include="..\CommerceApi.Security\CommerceApi.Security.csproj" />
     <ProjectReference Include="..\CommerceApi.TenantContext\CommerceApi.TenantContext.csproj" />
