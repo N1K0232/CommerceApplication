@@ -7,33 +7,39 @@ namespace CommerceApi.Authentication.InternalServices;
 
 internal class UserClaimService : IUserClaimService
 {
-    private readonly HttpContext _httpContext;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public UserClaimService(IHttpContextAccessor httpContextAccessor)
     {
-        _httpContext = httpContextAccessor.HttpContext;
+        _httpContextAccessor = httpContextAccessor;
     }
 
-    public string GetApplicationId()
+    private HttpContext HttpContext
     {
-        return _httpContext.User.GetApplicationId();
+        get
+        {
+            return _httpContextAccessor.HttpContext;
+        }
     }
 
-    public Guid GetId()
-    {
-        return _httpContext.User.GetId();
-    }
+    public string GetApplicationId() => HttpContext.User.GetApplicationId();
 
-    public string GetUserName()
-    {
-        return _httpContext.User.GetUserName();
-    }
-
-    public Guid GetTenantId() => Guid.Empty;
+    public Guid GetId() => HttpContext.User.GetId();
 
     public ClaimsIdentity GetIdentity()
     {
-        var identity = _httpContext.User.Identity;
+        var identity = HttpContext.User.Identity;
         return identity as ClaimsIdentity;
     }
+
+    public Guid GetTenantId()
+    {
+        var tenantIdString = GetClaimValue("TenantId");
+        return Guid.TryParse(tenantIdString, out var tenantId) ? tenantId : Guid.Empty;
+    }
+
+    public string GetUserName() => HttpContext.User.GetUserName();
+
+    private string GetClaimValue(string claimType)
+        => HttpContext.User.GetClaimValueInternal(claimType);
 }
