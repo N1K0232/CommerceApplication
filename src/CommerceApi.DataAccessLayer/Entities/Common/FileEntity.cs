@@ -10,5 +10,9 @@ public abstract class FileEntity : BaseEntity
 
     public string ContentType { get; set; }
 
+    public string Extension { get; set; }
+
     public string DownloadFileName { get; set; }
+
+    public string DownloadPath { get; set; }
 }

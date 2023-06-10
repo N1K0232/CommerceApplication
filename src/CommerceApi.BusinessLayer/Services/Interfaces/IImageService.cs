@@ -1,7 +1,5 @@
-﻿using CommerceApi.BusinessLayer.Models;
-using CommerceApi.Shared.Models;
+﻿using CommerceApi.Shared.Models;
 using OperationResults;
-using StreamFileContent = CommerceApi.BusinessLayer.Models.StreamFileContent;
 
 namespace CommerceApi.BusinessLayer.Services.Interfaces;
 
@@ -11,7 +9,7 @@ public interface IImageService
 
     Task<IEnumerable<Image>> GetListAsync();
 
-    Task<Result<ImageStream>> GetAsync(Guid imageId);
+    Task<Result<StreamFileContent>> GetAsync(Guid imageId);
 
-    Task<Result<Image>> UploadAsync(StreamFileContent content);
+    Task<Result> UploadAsync(Stream stream, string fileName, string title, string description);
 }

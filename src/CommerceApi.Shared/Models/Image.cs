@@ -14,5 +14,11 @@ public class Image : BaseObject
 
     public string ContentType { get; set; } = null!;
 
+    public string Extension { get; set; } = null!;
+
+    public string DownloadFileName { get; set; } = null!;
+
+    public string DownloadPath { get; set; } = null!;
+
     public string? Description { get; set; }
 }

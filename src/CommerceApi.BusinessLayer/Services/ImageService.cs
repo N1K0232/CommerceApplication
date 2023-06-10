@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.DataAccessLayer.Abstractions;
+using CommerceApi.Security;
 using CommerceApi.Shared.Models;
 using CommerceApi.StorageProviders.Abstractions;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +9,6 @@ using MimeMapping;
 using OperationResults;
 using TinyHelpers.Extensions;
 using Entities = CommerceApi.DataAccessLayer.Entities;
-using StreamFileContent = CommerceApi.BusinessLayer.Models.StreamFileContent;
 
 namespace CommerceApi.BusinessLayer.Services;
 
@@ -67,7 +67,7 @@ public class ImageService : IImageService
         return images;
     }
 
-    public async Task<Result<ImageStream>> GetAsync(Guid imageId)
+    public async Task<Result<StreamFileContent>> GetAsync(Guid imageId)
     {
         if (imageId == Guid.Empty)
         {
@@ -77,47 +77,54 @@ public class ImageService : IImageService
         var image = await _dataContext.GetAsync<Entities.Image>(imageId);
         if (image is not null)
         {
-            var stream = await _storageProvider.ReadAsync(image.DownloadFileName);
+            var stream = await _storageProvider.ReadAsync(image.DownloadPath);
             var contentType = MimeUtility.GetMimeMapping(image.Path);
 
-            var imageStream = new ImageStream { Stream = stream, ContentType = contentType };
-            return imageStream;
+            var content = new StreamFileContent(stream, contentType, image.DownloadFileName);
+            return content;
         }
 
         return Result.Fail(FailureReasons.ItemNotFound, "no image found");
     }
 
-    public async Task<Result<Image>> UploadAsync(StreamFileContent content)
+    public async Task<Result> UploadAsync(Stream stream, string fileName, string title, string description)
     {
         try
         {
-            var path = CreatePath(content.FileName);
+            var contentType = MimeUtility.GetMimeMapping(fileName);
+            var extension = Path.GetExtension(fileName);
 
-            var dbImage = new Entities.Image
+            var path = PathGenerator.Generate(fileName);
+
+            var downloadFileName = $"{Guid.NewGuid()}.{extension}";
+            var downloadPath = PathGenerator.Generate(downloadFileName);
+
+            var image = new Entities.Image
             {
-                FileName = content.FileName,
+                Title = title,
+                Description = description,
+                FileName = fileName,
+                Length = stream.Length,
                 Path = path,
-                Title = content.Title,
-                Length = content.Length,
-                ContentType = content.ContentType,
-                Description = content.Description
+                DownloadFileName = downloadFileName,
+                DownloadPath = downloadPath,
+                ContentType = contentType,
+                Extension = extension
             };
 
-            _dataContext.Create(dbImage);
-
+            _dataContext.Create(image);
             await _dataContext.SaveAsync();
-            await _storageProvider.SaveAsync(dbImage.DownloadFileName, content.Stream);
+            await _storageProvider.SaveAsync(downloadPath, stream);
 
-            var savedImage = _mapper.Map<Image>(dbImage);
-            return savedImage;
+            return Result.Ok();
         }
         catch (DbUpdateException ex)
         {
             return Result.Fail(FailureReasons.DatabaseError, ex);
         }
-        catch (InvalidOperationException ex)
+        catch (IOException ex)
         {
-            return Result.Fail(FailureReasons.GenericError, ex);
+            return Result.Fail(FailureReasons.DatabaseError, ex);
         }
     }
 
