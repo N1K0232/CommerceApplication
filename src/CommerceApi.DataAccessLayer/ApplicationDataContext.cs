@@ -226,6 +226,17 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
         await Database.MigrateAsync(_tokenSource.Token).ConfigureAwait(false);
     }
 
+    public async Task<bool> TestConnectionAsync()
+    {
+        _tokenSource ??= new CancellationTokenSource();
+
+        var openConnectionTask = Database.OpenConnectionAsync(_tokenSource.Token);
+        var closeConnectionTask = Database.CloseConnectionAsync();
+
+        await Task.WhenAll(openConnectionTask, closeConnectionTask).ConfigureAwait(false);
+        return openConnectionTask.IsCompletedSuccessfully && closeConnectionTask.IsCompletedSuccessfully;
+    }
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         configurationBuilder.Properties<DateOnly>().HaveConversion<DateOnlyConverter, DateOnlyComparer>().HaveColumnType("date");

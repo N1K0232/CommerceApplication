@@ -168,6 +168,36 @@ public class SqlContext : ISqlContext
         return connection.BeginTransaction(isolationLevel);
     }
 
+    public async Task<bool> TestConnectionAsync()
+    {
+        var connectionString = _options.ConnectionString;
+        _connection ??= new SqlConnection(connectionString);
+        _tokenSource ??= new CancellationTokenSource();
+
+        try
+        {
+            await _connection.OpenAsync(_tokenSource.Token);
+            await _connection.CloseAsync();
+
+            return true;
+        }
+        catch (SqlException ex)
+        {
+            _logger.LogError(ex, "Unable to connect to database");
+            return false;
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError(ex, "Unable to connect to database");
+            return false;
+        }
+        catch (TaskCanceledException ex)
+        {
+            _logger.LogError(ex, "task was canceled unexpectedly");
+            return false;
+        }
+    }
+
     private async Task<IDbConnection> GetConnectionAsync()
     {
         var connectionString = _options.ConnectionString;

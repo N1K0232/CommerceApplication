@@ -25,4 +25,6 @@ public interface IDataContext : IReadOnlyDataContext
     Task EnsureDeletedAsync();
 
     Task MigrateAsync();
+
+    Task<bool> TestConnectionAsync();
 }
