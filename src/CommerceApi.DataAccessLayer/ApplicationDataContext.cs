@@ -105,22 +105,18 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
 
         var token = _tokenSource.Token;
         var set = Set<TEntity>();
-
-        var entity = await set.FindAsync(keyValues, token).ConfigureAwait(false);
-        return entity;
+        return await set.FindAsync(keyValues, token).ConfigureAwait(false);
     }
 
     public IQueryable<TEntity> GetData<TEntity>(bool ignoreQueryFilters = false, bool trackingChanges = false) where TEntity : BaseEntity
     {
         var set = Set<TEntity>().AsQueryable();
-
         if (ignoreQueryFilters)
         {
             set = set.IgnoreQueryFilters();
         }
 
-        var result = trackingChanges ? set.AsTracking() : set.AsNoTrackingWithIdentityResolution();
-        return result;
+        return trackingChanges ? set.AsTracking() : set.AsNoTrackingWithIdentityResolution();
     }
 
 #pragma warning disable IDE0007 //Use implicit type
