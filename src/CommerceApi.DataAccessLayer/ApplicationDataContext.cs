@@ -143,11 +143,6 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
                     deletableEntity.DeletedTime = null;
                 }
 
-                if (baseEntity is FileEntity fileEntity)
-                {
-                    fileEntity.DownloadFileName = $"{Guid.NewGuid()}_{fileEntity.FileName}";
-                }
-
                 baseEntity.SecurityStamp = GenerateSecurityStamp();
                 baseEntity.ConcurrencyStamp = Guid.NewGuid().ToString();
 

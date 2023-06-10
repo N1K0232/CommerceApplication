@@ -82,9 +82,9 @@
     <Build Include="dbo\Tables\Reviews.sql" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="CommerceApi.Database.publish.xml" />
+    <RefactorLog Include="CommerceApi.Database.refactorlog" />
   </ItemGroup>
   <ItemGroup>
-    <RefactorLog Include="CommerceApi.Database.refactorlog" />
+    <None Include="CommerceApi.Database.publish.xml" />
   </ItemGroup>
 </Project>
