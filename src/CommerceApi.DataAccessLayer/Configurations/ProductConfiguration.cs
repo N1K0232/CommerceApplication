@@ -9,7 +9,9 @@ public class ProductConfiguration : DeletableEntityConfiguration<Product>
 {
     public override void Configure(EntityTypeBuilder<Product> builder)
     {
-        builder.Property(p => p.Name).HasMaxLength(100).IsRequired();
+        builder.Property(p => p.Name).HasMaxLength(256).IsRequired();
+        builder.Property(p => p.Description).HasMaxLength(4000).IsRequired();
+
         builder.Property(p => p.Quantity).IsRequired();
         builder.Property(p => p.Price).HasPrecision(8, 2).IsRequired();
 

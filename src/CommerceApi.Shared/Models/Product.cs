@@ -6,7 +6,11 @@ public class Product : BaseObject
 {
     public Category Category { get; set; } = null!;
 
+    public Supplier? Supplier { get; set; }
+
     public string Name { get; set; } = null!;
+
+    public string Description { get; set; } = null!;
 
     public int Quantity { get; set; }
 

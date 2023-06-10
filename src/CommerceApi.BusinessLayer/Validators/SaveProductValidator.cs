@@ -19,7 +19,8 @@ public class SaveProductValidator : AbstractValidator<SaveProductRequest>
     {
         RuleFor(p => p.CategoryId).NotEmpty().Must(ExistsCategory).WithMessage("Insert a valid category");
         RuleFor(p => p.SupplierId).NotEmpty().Must(ExistsSupplier).WithMessage("Insert a valid supplier");
-        RuleFor(p => p.Name).NotNull().NotEmpty().MaximumLength(100).WithMessage("Insert a valid name");
+        RuleFor(p => p.Name).NotNull().NotEmpty().MaximumLength(256).WithMessage("Insert a valid name");
+        RuleFor(p => p.Description).NotNull().NotEmpty().MaximumLength(4000).WithMessage("description is required");
         RuleFor(p => p.Price).GreaterThan(0).PrecisionScale(8, 2, false).WithMessage("Insert a valid price");
         RuleFor(p => p.Quantity).GreaterThanOrEqualTo(0).WithMessage("you can't add a product with negative quantity");
     }

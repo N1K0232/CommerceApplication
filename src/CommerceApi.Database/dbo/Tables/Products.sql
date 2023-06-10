@@ -2,7 +2,8 @@
     [Id]                   UNIQUEIDENTIFIER DEFAULT (newid()) NOT NULL,
     [CategoryId]           UNIQUEIDENTIFIER NOT NULL,
     [SupplierId]           UNIQUEIDENTIFIER NOT NULL,
-    [Name]                 NVARCHAR (100)   NOT NULL,
+    [Name]                 NVARCHAR (256)   NOT NULL,
+    [Description]          NVARCHAR (4000)  NOT NULL,
     [Quantity]             INT              NOT NULL,
     [Price]                DECIMAL (8, 2)   NOT NULL,
     [DiscountPercentage]   FLOAT (53)       NULL,
@@ -24,4 +25,3 @@
     FOREIGN KEY ([CategoryId]) REFERENCES [dbo].[Categories] ([Id]),
     FOREIGN KEY ([SupplierId]) REFERENCES [dbo].[Suppliers] ([Id])
 );
-
