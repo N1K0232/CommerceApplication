@@ -185,6 +185,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IProductService, ProductService>();
     services.AddScoped<ISupplierService, SupplierService>();
     services.AddScoped<IUserService, UserService>();
+    services.AddScoped<ICouponService, CouponService>();
 
     //add remote services
     services.AddScoped<IPdfService, PdfService>();

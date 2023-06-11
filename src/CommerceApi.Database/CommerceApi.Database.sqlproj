@@ -9,8 +9,7 @@
     <ProjectGuid>{00d99841-521a-4d23-9172-d18537e24046}</ProjectGuid>
     <DSP>Microsoft.Data.Tools.Schema.Sql.Sql150DatabaseSchemaProvider</DSP>
     <OutputType>Database</OutputType>
-    <RootPath>
-    </RootPath>
+    <RootPath />
     <RootNamespace>CommerceApi.Database</RootNamespace>
     <AssemblyName>CommerceApi.Database</AssemblyName>
     <ModelCollation>1033,CI</ModelCollation>
@@ -50,7 +49,6 @@
   </PropertyGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
-    <!-- Default to the v11.0 targets path if the targets file for the current VS version is not found -->
     <SSDTExists Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets')">True</SSDTExists>
     <VisualStudioVersion Condition="'$(SSDTExists)' == ''">11.0</VisualStudioVersion>
   </PropertyGroup>
@@ -81,6 +79,7 @@
     <Build Include="dbo\Tables\Addresses.sql" />
     <Build Include="dbo\Tables\Reviews.sql" />
     <Build Include="dbo\Tables\DataProtectionKeys.sql" />
+    <Build Include="dbo\Tables\Coupons.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="CommerceApi.Database.refactorlog" />
