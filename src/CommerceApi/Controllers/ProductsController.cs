@@ -88,7 +88,7 @@ public class ProductsController : ControllerBase
 
     [HttpPost("UploadImage")]
     [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser)]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Product))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

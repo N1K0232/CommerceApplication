@@ -3,5 +3,7 @@
     public interface IPathGenerator
     {
         string? Generate(string? fileName);
+
+        string? Generate(string? path, string? input, string extension);
     }
 }

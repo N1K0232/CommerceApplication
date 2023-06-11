@@ -19,5 +19,15 @@ namespace CommerceApi.Security
 
             return Path.Combine(year, month, day, fileName);
         }
+
+        public string? Generate(string? path, string? input, string extension)
+        {
+            if (path is null || input is null)
+            {
+                return null;
+            }
+
+            return $@"{path}\{input}.{extension}";
+        }
     }
 }
