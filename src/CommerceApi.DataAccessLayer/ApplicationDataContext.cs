@@ -4,6 +4,7 @@ using CommerceApi.DataAccessLayer.Comparers;
 using CommerceApi.DataAccessLayer.Converters;
 using CommerceApi.DataAccessLayer.Entities.Common;
 using CommerceApi.SharedServices;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
@@ -12,7 +13,7 @@ using TinyHelpers.Extensions;
 
 namespace CommerceApi.DataAccessLayer;
 
-public partial class ApplicationDataContext : AuthenticationDataContext, IDataContext
+public partial class ApplicationDataContext : AuthenticationDataContext, IDataContext, IDataProtectionKeyContext
 {
     private readonly IConfiguration _configuration;
     private readonly IMemoryCache _memoryCache;
@@ -30,6 +31,7 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
         _memoryCache = memoryCache;
     }
 
+    public virtual DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     public void Create<TEntity>(TEntity entity) where TEntity : BaseEntity
     {

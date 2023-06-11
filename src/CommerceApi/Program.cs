@@ -75,7 +75,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddMemoryCache();
     services.AddOperationResult();
     services.AddUserClaimService();
-    services.AddDataProtection();
+    services.AddDataProtection().PersistKeysToDbContext<ApplicationDataContext>();
 
     services.AddMapperProfiles();
     services.AddValidators();

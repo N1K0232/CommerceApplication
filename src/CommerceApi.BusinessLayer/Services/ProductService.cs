@@ -103,7 +103,8 @@ public class ProductService : IProductService
         }
 
         var totalCount = await query.CountAsync();
-        var dbProducts = await query.Skip(pageIndex * itemsPerPage)
+        var dbProducts = await query.Include(p => p.Category)
+            .Skip(pageIndex * itemsPerPage)
             .Take(itemsPerPage + 1)
             .ToListAsync();
 

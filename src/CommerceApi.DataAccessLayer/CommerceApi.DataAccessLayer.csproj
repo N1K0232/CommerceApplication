@@ -7,6 +7,7 @@
 
     <ItemGroup>
        <PackageReference Include="Dapper" Version="2.0.123" />
+       <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="7.0.5" />
        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.5" />
        <PackageReference Include="Microsoft.Extensions.Caching.SqlServer" Version="7.0.5" />
        <PackageReference Include="TinyHelpers" Version="2.0.30" />
@@ -14,6 +15,7 @@
 
     <ItemGroup>
        <ProjectReference Include="..\CommerceApi.Authentication\CommerceApi.Authentication.csproj" />
+       <ProjectReference Include="..\CommerceApi.DataProtectionLayer\CommerceApi.DataProtectionLayer.csproj" />
        <ProjectReference Include="..\CommerceApi.SharedServices\CommerceApi.SharedServices.csproj" />
        <ProjectReference Include="..\CommerceApi.Shared\CommerceApi.Shared.csproj" />
   </ItemGroup>
