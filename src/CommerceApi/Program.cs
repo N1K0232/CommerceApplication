@@ -1,9 +1,7 @@
 using System.ComponentModel;
 using System.Net.Mime;
-using System.Reflection;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using CommerceApi.Authentication;
 using CommerceApi.Authentication.Common;
 using CommerceApi.Authentication.Entities;
@@ -24,11 +22,9 @@ using CommerceApi.DataAccessLayer;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.DataAccessLayer.Extensions;
 using CommerceApi.DataProtectionLayer;
-using CommerceApi.Documentation;
-using CommerceApi.OperationFilters;
+using CommerceApi.Extensions;
 using CommerceApi.Security.Extensions;
 using Hellang.Middleware.ProblemDetails;
-using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
@@ -37,15 +33,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 using OperationResults.AspNetCore;
 using Serilog;
-using Swashbuckle.AspNetCore.SwaggerGen;
-using TinyHelpers.Json.Serialization;
-using DateOnlyConverter = CommerceApi.ClientContext.Converters.DateOnlyConverter;
-using TimeOnlyConverter = CommerceApi.ClientContext.Converters.TimeOnlyConverter;
 
 var builder = WebApplication.CreateBuilder(args);
 ConfigureServices(builder.Services, builder.Configuration, builder.Host);
@@ -84,73 +74,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddMapperProfiles();
     services.AddValidators();
 
-    services.AddControllers().AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-        options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-        options.JsonSerializerOptions.Converters.Add(new DateOnlyConverter());
-        options.JsonSerializerOptions.Converters.Add(new TimeOnlyConverter());
-    });
-
-    services.AddApiVersioning(options =>
-    {
-        options.ReportApiVersions = true;
-    });
-    services.AddVersionedApiExplorer(options =>
-    {
-        options.GroupNameFormat = "'v'VVV";
-        options.SubstituteApiVersionInUrl = true;
-    });
-
-    services.AddEndpointsApiExplorer();
-
-    services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
-    services.AddSwaggerGen(options =>
-    {
-        options.OperationFilter<FormFileOperationFilter>();
-        options.OperationFilter<SwaggerDefaultValues>();
-
-        options.AddClientContextOperationFilter();
-
-        options.MapType<DateOnly>("string", "date");
-        options.MapType<TimeOnly>("string", "date", TimeOnly.FromDateTime(DateTime.Now).ToString("HH:mm:ss"));
-
-        options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
-        {
-            In = ParameterLocation.Header,
-            Description = "Insert JWT token with the \"Bearer \" prefix",
-            Name = "Authorization",
-            Type = SecuritySchemeType.ApiKey
-        });
-
-        options.AddSecurityRequirement(new OpenApiSecurityRequirement
-        {
-            {
-                new OpenApiSecurityScheme
-                {
-                    Reference = new OpenApiReference
-                    {
-                        Type = ReferenceType.SecurityScheme,
-                        Id = JwtBearerDefaults.AuthenticationScheme
-                    }
-                },
-                Array.Empty<string>()
-            }
-        });
-
-        var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-        options.IncludeXmlComments(xmlPath);
-
-        options.CustomOperationIds(api => $"{api.ActionDescriptor.RouteValues["controller"]}_{api.ActionDescriptor.RouteValues["action"]}");
-        options.UseAllOfToExtendReferenceSchemas();
-    })
-    .AddFluentValidationRulesToSwagger(options =>
-    {
-        options.SetNotNullableIfMinLengthGreaterThenZero = true;
-    });
-
+    services.AddSwaggerDocumentation();
     services.AddScoped<IEmailClient, EmailClient>();
 
     var sqlConnectionString = configuration.GetConnectionString("SqlConnection");
@@ -235,7 +159,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     });
 
     services.AddScoped<IAuthorizationHandler, UserActiveHandler>();
-
     services.AddHealthChecks().AddAsyncCheck("sql", async () =>
     {
         try
@@ -303,22 +226,12 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
 void Configure(IApplicationBuilder app, IApiVersionDescriptionProvider provider)
 {
     app.UseProblemDetails();
-
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        foreach (var description in provider.ApiVersionDescriptions)
-        {
-            options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName);
-            options.RoutePrefix = string.Empty;
-        }
-    });
+    app.UseSwaggerDocumentation(provider);
 
     app.UseHttpsRedirection();
     app.UseRouting();
 
     app.UseCors();
-
     app.UseClientContext();
 
     app.UseAuthentication();
@@ -332,7 +245,6 @@ void Configure(IApplicationBuilder app, IApiVersionDescriptionProvider provider)
     app.UseEndpoints(endpoints =>
     {
         endpoints.MapControllers();
-
         endpoints.MapHealthChecks("/status",
                 new HealthCheckOptions
                 {
