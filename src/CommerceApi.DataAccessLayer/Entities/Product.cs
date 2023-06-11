@@ -24,6 +24,8 @@ public class Product : DeletableEntity
 
     public bool HasShipping { get; set; }
 
+    public double? AverageScore { get; set; }
+
     public virtual Category Category { get; set; }
 
     public virtual Supplier Supplier { get; set; }

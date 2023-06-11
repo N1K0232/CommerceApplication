@@ -21,6 +21,8 @@ public class ProductConfiguration : DeletableEntityConfiguration<Product>
         builder.Property(p => p.ShippingCost).HasPrecision(5, 2).IsRequired(false);
         builder.Property(p => p.HasShipping).IsRequired();
 
+        builder.Property(p => p.AverageScore).IsRequired(false);
+
         builder.HasOne(p => p.Category).WithMany(c => c.Products).HasForeignKey(p => p.CategoryId).IsRequired();
         builder.HasOne(p => p.Supplier).WithMany(s => s.Products).HasForeignKey(p => p.SupplierId).IsRequired();
 

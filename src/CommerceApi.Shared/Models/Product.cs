@@ -23,4 +23,6 @@ public class Product : BaseObject
     public decimal? ShippingCost { get; set; }
 
     public bool HasShipping { get; set; }
+
+    public double? AverageScore { get; set; }
 }
