@@ -56,14 +56,7 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
     public void Delete<TEntity>(TEntity entity) where TEntity : BaseEntity
     {
         ArgumentNullException.ThrowIfNull(entity, nameof(entity));
-
-        var set = Set<TEntity>();
-        if (entity is DeletableEntity)
-        {
-            set.Attach(entity);
-        }
-
-        set.Remove(entity);
+        DeleteInternal(entity);
     }
 
     public void Delete<TEntity>(IEnumerable<TEntity> entities) where TEntity : BaseEntity
@@ -74,9 +67,10 @@ public partial class ApplicationDataContext : AuthenticationDataContext, IDataCo
             throw new ArgumentNullException(nameof(entities), "you must provide at least one entity");
         }
 
-        var set = Set<TEntity>();
-        //set.AttachRange(entities);
-        set.RemoveRange(entities);
+        foreach (var entity in entities)
+        {
+            DeleteInternal(entity);
+        }
     }
 
     void IDataContext.Update<TEntity>(TEntity entity)

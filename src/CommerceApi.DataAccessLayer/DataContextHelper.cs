@@ -34,6 +34,17 @@ public partial class ApplicationDataContext
 
     protected override void OnSaveChangesFailed(object sender, SaveChangesFailedEventArgs e) => base.OnSaveChangesFailed(sender, e);
 
+    private void DeleteInternal<TEntity>(TEntity entity) where TEntity : BaseEntity
+    {
+        var set = Set<TEntity>();
+        if (entity is DeletableEntity)
+        {
+            set.Attach(entity);
+        }
+
+        set.Remove(entity);
+    }
+
     private async Task ExecuteTransactionCoreAsync(Func<Task> action)
     {
         _tokenSource ??= new CancellationTokenSource();
