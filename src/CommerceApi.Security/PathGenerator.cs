@@ -1,14 +1,23 @@
-﻿namespace CommerceApi.Security;
+﻿using System;
+using System.IO;
+using CommerceApi.Security.Abstractions;
 
-public static class PathGenerator
+namespace CommerceApi.Security
 {
-    public static string Generate(string fileName)
+    public class PathGenerator : IPathGenerator
     {
-        var now = DateTime.UtcNow;
-        var year = now.Year.ToString("0000");
-        var month = now.Month.ToString("00");
-        var day = now.Day.ToString("00");
+        public string? Generate(string? fileName)
+        {
+            if (fileName is null)
+            {
+                return null;
+            }
 
-        return Path.Combine(year, month, day, fileName);
+            var year = DateTime.UtcNow.Year.ToString("0000");
+            var month = DateTime.UtcNow.Month.ToString("00");
+            var day = DateTime.UtcNow.Day.ToString("00");
+
+            return Path.Combine(year, month, day, fileName);
+        }
     }
 }

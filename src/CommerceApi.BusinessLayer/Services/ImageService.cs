@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.DataAccessLayer.Abstractions;
-using CommerceApi.Security;
+using CommerceApi.Security.Abstractions;
 using CommerceApi.Shared.Models;
 using CommerceApi.StorageProviders.Abstractions;
 using Microsoft.EntityFrameworkCore;
@@ -16,12 +16,14 @@ public class ImageService : IImageService
 {
     private readonly IDataContext _dataContext;
     private readonly IStorageProvider _storageProvider;
+    private readonly IPathGenerator _pathGenerator;
     private readonly IMapper _mapper;
 
-    public ImageService(IDataContext dataContext, IStorageProvider storageProvider, IMapper mapper)
+    public ImageService(IDataContext dataContext, IStorageProvider storageProvider, IPathGenerator pathGenerator, IMapper mapper)
     {
         _dataContext = dataContext;
         _storageProvider = storageProvider;
+        _pathGenerator = pathGenerator;
         _mapper = mapper;
     }
 
@@ -94,10 +96,10 @@ public class ImageService : IImageService
             var contentType = MimeUtility.GetMimeMapping(fileName);
             var extension = Path.GetExtension(fileName);
 
-            var path = PathGenerator.Generate(fileName);
+            var path = _pathGenerator.Generate(fileName);
 
             var downloadFileName = $"{Guid.NewGuid()}.{extension}";
-            var downloadPath = PathGenerator.Generate(downloadFileName);
+            var downloadPath = _pathGenerator.Generate(downloadFileName);
 
             var image = new Entities.Image
             {

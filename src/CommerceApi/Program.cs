@@ -26,6 +26,7 @@ using CommerceApi.DataAccessLayer.Extensions;
 using CommerceApi.DataProtectionLayer;
 using CommerceApi.Documentation;
 using CommerceApi.OperationFilters;
+using CommerceApi.Security.Extensions;
 using Hellang.Middleware.ProblemDetails;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -75,6 +76,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddMemoryCache();
     services.AddOperationResult();
     services.AddUserClaimService();
+    services.AddPasswordHasher();
+    services.AddPathGenerator();
+    services.AddStringHasher();
     services.AddDataProtection().PersistKeysToDbContext<ApplicationDataContext>();
 
     services.AddMapperProfiles();

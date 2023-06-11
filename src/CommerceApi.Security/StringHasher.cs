@@ -1,13 +1,20 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
+using CommerceApi.Security.Abstractions;
 
-namespace CommerceApi.Security;
-
-public static class StringHasher
+namespace CommerceApi.Security
 {
-    public static string GetString(string input)
+    public class StringHasher : IStringHasher
     {
-        var bytes = Convert.FromBase64String(input);
-        var originalString = Encoding.UTF8.GetString(bytes);
-        return originalString;
+        public string? GetString(string? input)
+        {
+            if (input is null)
+            {
+                return null;
+            }
+
+            var bytes = Convert.FromBase64String(input);
+            return Encoding.UTF8.GetString(bytes);
+        }
     }
 }
