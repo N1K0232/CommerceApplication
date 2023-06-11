@@ -72,9 +72,8 @@ public partial class ApplicationDataContext
 
     private string GenerateSecurityStamp()
     {
+        var bytes = new byte[256];
         _generator = RandomNumberGenerator.Create();
-        var bytes = new byte[50];
-
         _generator.GetBytes(bytes);
 
         var securityStamp = Convert.ToBase64String(bytes).ToUpperInvariant();
