@@ -23,12 +23,14 @@ using CommerceApi.ClientContext.TypeConverters;
 using CommerceApi.DataAccessLayer;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.DataAccessLayer.Extensions;
+using CommerceApi.DataProtectionLayer;
 using CommerceApi.Documentation;
 using CommerceApi.OperationFilters;
 using Hellang.Middleware.ProblemDetails;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
@@ -73,6 +75,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddMemoryCache();
     services.AddOperationResult();
     services.AddUserClaimService();
+    services.AddDataProtection();
 
     services.AddMapperProfiles();
     services.AddValidators();
@@ -95,7 +98,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
         options.GroupNameFormat = "'v'VVV";
         options.SubstituteApiVersionInUrl = true;
     });
-
 
     services.AddEndpointsApiExplorer();
 
@@ -266,6 +268,13 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
 
     //add background services
     services.AddHostedService<SqlConnectionControlService>();
+
+    services.AddScoped<IDataProtectionService, DataProtectionService>();
+    services.AddSingleton(services =>
+    {
+        var dataProtectionProvider = services.GetRequiredService<IDataProtectionProvider>();
+        return dataProtectionProvider.CreateProtector("default");
+    });
 
     var storageConnectionString = configuration.GetConnectionString("StorageConnection");
     if (!string.IsNullOrWhiteSpace(storageConnectionString))
