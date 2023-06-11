@@ -35,6 +35,7 @@ public class ProductService : IProductService
     {
         _dataContext = dataContext;
         _storageProvider = storageProvider;
+        _pathGenerator = pathGenerator;
         _mapper = mapper;
         _productValidator = productValidator;
         _reviewValidator = reviewValidator;
