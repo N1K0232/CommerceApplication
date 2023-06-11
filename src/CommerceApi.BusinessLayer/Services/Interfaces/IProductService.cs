@@ -17,7 +17,7 @@ public interface IProductService
 
     Task<Result<Product>> UpdateAsync(Guid productId, SaveProductRequest product);
 
-    Task<Result<Product>> UploadImageAsync(Guid productId, string fileName, Stream fileStream);
+    Task<Result> UploadImageAsync(Guid productId, string fileName, Stream fileStream);
 
     Task<Result> AddReviewAsync(SaveReviewRequest review);
 

@@ -2,6 +2,7 @@
 using AutoMapper;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.DataAccessLayer.Abstractions;
+using CommerceApi.Security.Abstractions;
 using CommerceApi.Shared.Models;
 using CommerceApi.Shared.Models.Common;
 using CommerceApi.Shared.Models.Requests;
@@ -18,6 +19,7 @@ public class ProductService : IProductService
 {
     private readonly IDataContext _dataContext;
     private readonly IStorageProvider _storageProvider;
+    private readonly IPathGenerator _pathGenerator;
     private readonly IMapper _mapper;
     private readonly IValidator<SaveProductRequest> _productValidator;
     private readonly IValidator<SaveReviewRequest> _reviewValidator;
@@ -25,6 +27,7 @@ public class ProductService : IProductService
 
     public ProductService(IDataContext dataContext,
         IStorageProvider storageProvider,
+        IPathGenerator pathGenerator,
         IMapper mapper,
         IValidator<SaveProductRequest> productValidator,
         IValidator<SaveReviewRequest> reviewValidator,
@@ -140,7 +143,7 @@ public class ProductService : IProductService
         }
     }
 
-    public async Task<Result<Product>> UploadImageAsync(Guid productId, string fileName, Stream fileStream)
+    public async Task<Result> UploadImageAsync(Guid productId, string fileName, Stream fileStream)
     {
         if (productId == Guid.Empty)
         {
@@ -156,17 +159,15 @@ public class ProductService : IProductService
                 return Result.Fail(FailureReasons.ItemNotFound, $"No product found with id {productId}");
             }
 
-            var filePath = $@"\products\attachments\{productId}_{fileName}";
+            var extension = Path.GetExtension(fileName);
+            var filePath = _pathGenerator.Generate(@"\products", productId.ToString(), extension);
+
             await _storageProvider.SaveAsync(filePath, fileStream);
-
-            var dbProduct = await query.FirstOrDefaultAsync(p => p.Id == productId);
-
-            var savedProduct = _mapper.Map<Product>(dbProduct);
-            return savedProduct;
+            return Result.Ok();
         }
         catch (Exception ex)
         {
-            return Result.Fail(FailureReasons.GenericError, ex);
+            return Result.Fail(FailureReasons.DatabaseError, ex);
         }
     }
 
@@ -235,6 +236,7 @@ public class ProductService : IProductService
 
             _dataContext.Create(dbReview);
             await _dataContext.SaveAsync();
+            await UpdateAverageScoreAsync(review.ProductId);
 
             return Result.Ok();
         }
@@ -242,6 +244,22 @@ public class ProductService : IProductService
         {
             return Result.Fail(FailureReasons.DatabaseError, ex);
         }
+    }
+
+    private async Task UpdateAverageScoreAsync(Guid productId)
+    {
+        var query = _dataContext.GetData<Entities.Product>(trackingChanges: true);
+        var product = await query.Include(p => p.Reviews).FirstAsync(p => p.Id == productId);
+
+        var score = 0;
+        foreach (var review in product.Reviews)
+        {
+            score += review.Score;
+        }
+
+        product.AverageScore = score / product.Reviews.Count;
+        _dataContext.Update(product);
+        await _dataContext.SaveAsync();
     }
 
     public async Task<Result<IEnumerable<Review>>> GetReviewsAsync(Guid productId)
@@ -319,9 +337,9 @@ public class ProductService : IProductService
             if (dbReview != null)
             {
                 _mapper.Map(review, dbReview);
-
                 _dataContext.Update(dbReview);
                 await _dataContext.SaveAsync();
+                await UpdateAverageScoreAsync(review.ProductId);
 
                 return Result.Ok();
             }
