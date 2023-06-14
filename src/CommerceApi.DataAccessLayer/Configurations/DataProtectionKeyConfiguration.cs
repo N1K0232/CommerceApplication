@@ -8,11 +8,12 @@ public class DataProtectionKeyConfiguration : IEntityTypeConfiguration<DataProte
 {
     public void Configure(EntityTypeBuilder<DataProtectionKey> builder)
     {
-        builder.ToTable("DataProtectionKeys");
         builder.HasKey(k => k.Id);
         builder.Property(k => k.Id).UseIdentityColumn(1, 1);
 
         builder.Property(k => k.FriendlyName).HasColumnType("NVARCHAR(MAX)").IsRequired(false);
         builder.Property(k => k.Xml).HasColumnType("NVARCHAR(MAX)").IsRequired(false);
+
+        builder.ToTable("DataProtectionKeys");
     }
 }

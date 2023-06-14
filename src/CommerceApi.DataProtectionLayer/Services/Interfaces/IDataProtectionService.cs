@@ -1,4 +1,4 @@
-﻿namespace CommerceApi.DataProtectionLayer.Abstractions;
+﻿namespace CommerceApi.DataProtectionLayer.Services.Interfaces;
 
 public interface IDataProtectionService
 {

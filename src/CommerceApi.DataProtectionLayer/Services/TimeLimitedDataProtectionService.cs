@@ -1,7 +1,7 @@
-﻿using CommerceApi.DataProtectionLayer.Abstractions;
+﻿using CommerceApi.DataProtectionLayer.Services.Interfaces;
 using Microsoft.AspNetCore.DataProtection;
 
-namespace CommerceApi.DataProtectionLayer;
+namespace CommerceApi.DataProtectionLayer.Services;
 
 public class TimeLimitedDataProtectionService : ITimeLimitedDataProtectionService
 {
