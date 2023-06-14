@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.DataProtection;
+﻿using CommerceApi.DataProtectionLayer.Abstractions;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace CommerceApi.DataProtectionLayer;
 
@@ -11,15 +12,25 @@ public class DataProtectionService : IDataProtectionService
         _dataProtector = dataProtector;
     }
 
-    public Task<string> ProtectAsync(string input)
+    public string? Protect(string input)
     {
+        if (input is null)
+        {
+            return null;
+        }
+
         var protectedString = _dataProtector.Protect(input);
-        return Task.FromResult(protectedString);
+        return protectedString;
     }
 
-    public Task<string> UnprotectAsync(string input)
+    public string? Unprotect(string input)
     {
+        if (input is null)
+        {
+            return null;
+        }
+
         var unprotectedString = _dataProtector.Unprotect(input);
-        return Task.FromResult(unprotectedString);
+        return unprotectedString;
     }
 }
