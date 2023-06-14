@@ -8,9 +8,9 @@ namespace CommerceApi.Authentication.Managers;
 
 public class ApplicationUserManager : UserManager<ApplicationUser>
 {
-    private readonly AuthenticationDataContext _authenticationDataContext;
+    private readonly AuthenticationDbContext _authenticationDataContext;
 
-    public ApplicationUserManager(AuthenticationDataContext authenticationDataContext,
+    public ApplicationUserManager(AuthenticationDbContext authenticationDataContext,
         IUserStore<ApplicationUser> store,
         IOptions<IdentityOptions> optionsAccessor,
         IPasswordHasher<ApplicationUser> passwordHasher,

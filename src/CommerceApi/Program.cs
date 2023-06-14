@@ -71,7 +71,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddPasswordHasher();
     services.AddPathGenerator();
     services.AddStringHasher();
-    services.AddDataProtection().PersistKeysToDbContext<ApplicationDataContext>();
+    services.AddDataProtection().PersistKeysToDbContext<ApplicationDbContext>();
     services.AddDataProtector();
     services.AddTimeLimitedDataProtector();
 
@@ -82,11 +82,11 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IEmailClient, EmailClient>();
 
     var sqlConnectionString = configuration.GetConnectionString("SqlConnection");
-    services.AddSqlServer<ApplicationDataContext>(sqlConnectionString);
-    services.AddSqlServer<AuthenticationDataContext>(sqlConnectionString);
+    services.AddSqlServer<ApplicationDbContext>(sqlConnectionString);
+    services.AddSqlServer<AuthenticationDbContext>(sqlConnectionString);
 
-    services.AddScoped<IReadOnlyDataContext>(provider => provider.GetRequiredService<ApplicationDataContext>());
-    services.AddScoped<IDataContext>(provider => provider.GetRequiredService<ApplicationDataContext>());
+    services.AddScoped<IReadOnlyDataContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
+    services.AddScoped<IDataContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
     services.AddSqlContext(options =>
     {
@@ -106,7 +106,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
         options.Password.RequireUppercase = true;
         options.Password.RequireDigit = true;
     })
-    .AddEntityFrameworkStores<AuthenticationDataContext>()
+    .AddEntityFrameworkStores<AuthenticationDbContext>()
     .AddDefaultTokenProviders()
     .AddUserManager<ApplicationUserManager>()
     .AddSignInManager<ApplicationSignInManager>();

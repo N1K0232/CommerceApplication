@@ -13,15 +13,15 @@ using TinyHelpers.Extensions;
 
 namespace CommerceApi.DataAccessLayer;
 
-public partial class ApplicationDataContext : AuthenticationDataContext, IDataContext, IDataProtectionKeyContext
+public partial class ApplicationDbContext : AuthenticationDbContext, IDataContext, IDataProtectionKeyContext
 {
     private readonly IConfiguration _configuration;
     private readonly IMemoryCache _memoryCache;
 
     private CancellationTokenSource _tokenSource = null;
 
-    public ApplicationDataContext(DbContextOptions<ApplicationDataContext> options,
-        ILogger<ApplicationDataContext> logger,
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options,
+        ILogger<ApplicationDbContext> logger,
         IUserClaimService claimService,
         IConfiguration configuration,
         IMemoryCache memoryCache) : base(options, logger)

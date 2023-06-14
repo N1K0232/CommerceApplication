@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CommerceApi.Authentication;
 
-public partial class AuthenticationDataContext
+public partial class AuthenticationDbContext
 {
     protected virtual void OnSavedChanges(object sender, SaveChangesEventArgs e)
     {

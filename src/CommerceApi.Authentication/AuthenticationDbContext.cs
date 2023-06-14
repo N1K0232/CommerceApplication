@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace CommerceApi.Authentication;
 
-public partial class AuthenticationDataContext
+public partial class AuthenticationDbContext
     : IdentityDbContext<ApplicationUser,
       ApplicationRole,
       Guid,
@@ -30,9 +30,9 @@ public partial class AuthenticationDataContext
     private DbSet<Address> _addresses;
 
     private readonly ValueConverter<string, string> _trimStringConverter = new(v => v.Trim(), v => v.Trim());
-    private readonly ILogger<AuthenticationDataContext> _logger;
+    private readonly ILogger<AuthenticationDbContext> _logger;
 
-    public AuthenticationDataContext(DbContextOptions options, ILogger<AuthenticationDataContext> logger) : base(options)
+    public AuthenticationDbContext(DbContextOptions options, ILogger<AuthenticationDbContext> logger) : base(options)
     {
         _logger = logger;
     }
@@ -107,6 +107,23 @@ public partial class AuthenticationDataContext
         }
     }
 
+    public override DbSet<IdentityRoleClaim<Guid>> RoleClaims
+    {
+        get
+        {
+            return _roleClaims ?? base.RoleClaims;
+        }
+        set
+        {
+            var roleClaims = value ?? Set<IdentityRoleClaim<Guid>>();
+            if (_roleClaims != roleClaims)
+            {
+                _roleClaims = roleClaims;
+                base.RoleClaims = roleClaims;
+            }
+        }
+    }
+
     public override DbSet<IdentityUserLogin<Guid>> UserLogins
     {
         get
@@ -161,7 +178,7 @@ public partial class AuthenticationDataContext
     {
         try
         {
-            var savedEntries = await base.SaveChangesAsync(cancellationToken);
+            var savedEntries = await base.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             _logger.LogInformation("saved {savedEntries} rows in the database", savedEntries);
 
             return savedEntries;
