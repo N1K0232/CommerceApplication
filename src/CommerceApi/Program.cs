@@ -22,6 +22,8 @@ using CommerceApi.DataAccessLayer;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.DataAccessLayer.Extensions;
 using CommerceApi.DataProtectionLayer;
+using CommerceApi.DataProtectionLayer.Abstractions;
+using CommerceApi.DataProtectionLayer.Extensions;
 using CommerceApi.Extensions;
 using CommerceApi.Security.Extensions;
 using Hellang.Middleware.ProblemDetails;
@@ -70,6 +72,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddPathGenerator();
     services.AddStringHasher();
     services.AddDataProtection().PersistKeysToDbContext<ApplicationDataContext>();
+    services.AddDataProtector();
+    services.AddTimeLimitedDataProtector();
 
     services.AddMapperProfiles();
     services.AddValidators();
@@ -198,11 +202,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddHostedService<SqlConnectionControlService>();
 
     services.AddScoped<IDataProtectionService, DataProtectionService>();
-    services.AddSingleton(services =>
-    {
-        var dataProtectionProvider = services.GetRequiredService<IDataProtectionProvider>();
-        return dataProtectionProvider.CreateProtector("default");
-    });
+    services.AddScoped<ITimeLimitedDataProtectionService, TimeLimitedDataProtectionService>();
 
     var storageConnectionString = configuration.GetConnectionString("StorageConnection");
     if (!string.IsNullOrWhiteSpace(storageConnectionString))
