@@ -30,6 +30,7 @@ using Hellang.Middleware.ProblemDetails;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
@@ -87,6 +88,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
 
     services.AddScoped<IReadOnlyDataContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
     services.AddScoped<IDataContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
+    services.AddScoped<IDataProtectionKeyContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
     services.AddSqlContext(options =>
     {
@@ -190,6 +192,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<ISupplierService, SupplierService>();
     services.AddScoped<IUserService, UserService>();
     services.AddScoped<ICouponService, CouponService>();
+    services.AddScoped<IKeyService, KeyService>();
 
     //add remote services
     services.AddScoped<IPdfService, PdfService>();
