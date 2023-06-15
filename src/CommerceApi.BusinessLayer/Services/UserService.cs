@@ -66,13 +66,21 @@ public class UserService : IUserService
         }
 
         var signInResult = await _identityService.SignInAsync(request.Email, request.Password);
-        if (!signInResult.Succeeded)
+        if (signInResult.Succeeded)
         {
-            return Result.Fail(FailureReasons.ClientError, "Invalid email or password");
+            return await _identityService.LoginAsync(request.Email);
         }
 
-        var loginResponse = await _identityService.LoginAsync(request.Email);
-        return loginResponse;
+        if (signInResult.IsLockedOut)
+        {
+            return Result.Fail(FailureReasons.GenericError, "you're locked out!");
+        }
+
+        if (signInResult.RequiresTwoFactor)
+        {
+        }
+
+        return Result.Fail(FailureReasons.ClientError, "Invalid email or password");
     }
 
     public async Task<Result<LoginResponse>> RefreshTokenAsync(RefreshTokenRequest request)
@@ -90,9 +98,7 @@ public class UserService : IUserService
         }
 
         var principal = await _identityService.ValidateAccessTokenAsync(request.AccessToken);
-
-        var loginResponse = await _identityService.RefreshTokenAsync(principal, request.RefreshToken);
-        return loginResponse;
+        return await _identityService.RefreshTokenAsync(principal, request.RefreshToken);
     }
 
     public async Task<Result<RegisterResponse>> RegisterAsync(RegisterRequest request)
@@ -113,9 +119,7 @@ public class UserService : IUserService
         var address = _mapper.Map<Address>(request);
 
         var identityResult = await _identityService.RegisterUserAsync(user, address, request.Password, RoleNames.User);
-
-        var registerResponse = new RegisterResponse(identityResult.Succeeded, identityResult.Errors.Select(e => e.Description));
-        return registerResponse;
+        return new RegisterResponse(identityResult.Succeeded, identityResult.Errors.Select(e => e.Description));
     }
 
     public async Task<Result> SignOutAsync(string email)

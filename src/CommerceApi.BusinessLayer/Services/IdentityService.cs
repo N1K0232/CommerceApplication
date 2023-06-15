@@ -22,15 +22,22 @@ public class IdentityService : IIdentityService
     private readonly RoleManager<ApplicationRole> _roleManager;
     private readonly ApplicationSignInManager _signInManager;
 
+    private readonly EmailTokenProvider<ApplicationUser> _emailTokenProvider;
+    private readonly PhoneNumberTokenProvider<ApplicationUser> _phoneNumberTokenProvider;
+
     public IdentityService(IOptions<JwtSettings> jwtSettingsOptions,
                            ApplicationUserManager userManager,
                            RoleManager<ApplicationRole> roleManager,
-                           ApplicationSignInManager signInManager)
+                           ApplicationSignInManager signInManager,
+                           EmailTokenProvider<ApplicationUser> emailTokenProvider,
+                           PhoneNumberTokenProvider<ApplicationUser> phoneNumberTokenProvider)
     {
         _jwtSettings = jwtSettingsOptions.Value;
         _userManager = userManager;
         _roleManager = roleManager;
         _signInManager = signInManager;
+        _emailTokenProvider = emailTokenProvider;
+        _phoneNumberTokenProvider = phoneNumberTokenProvider;
     }
 
     public async Task CreateRoleAsync(string roleName)
@@ -68,6 +75,11 @@ public class IdentityService : IIdentityService
         return identityResult;
     }
 
+    public Task<IdentityResult> GenerateTwoFactorAuthenticationTokenAsync(ApplicationUser user)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<ApplicationUser> GetUserAsync(string userId)
     {
         var user = await _userManager.FindByIdAsync(userId);
@@ -81,10 +93,9 @@ public class IdentityService : IIdentityService
         await _userManager.GenerateConcurrencyStampAsync(user);
 
         var claims = await GetClaimsAsync(user);
-
         var loginResponse = CreateLoginResponse(claims);
-        await SaveRefreshTokenAsync(user, loginResponse.RefreshToken);
 
+        await SaveRefreshTokenAsync(user, loginResponse.RefreshToken);
         return loginResponse;
     }
 
@@ -177,6 +188,41 @@ public class IdentityService : IIdentityService
         return Task.FromResult<ClaimsPrincipal>(null);
     }
 
+    public async Task<IdentityResult> SetLockoutEnabledAsync(string email, DateTimeOffset lockoutEnd, bool enabled)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user is null)
+        {
+            var error = new IdentityError { Code = "404", Description = "user not found" };
+            return IdentityResult.Failed(error);
+        }
+
+        var setLockoutEnabledResult = await _userManager.SetLockoutEnabledAsync(user, enabled);
+        var setLockoutEndDateResult = await _userManager.SetLockoutEndDateAsync(user, lockoutEnd);
+
+        if (setLockoutEnabledResult.Succeeded && setLockoutEndDateResult.Succeeded)
+        {
+            return IdentityResult.Success;
+        }
+
+        var errors = GetIdentityErrors(setLockoutEnabledResult, setLockoutEndDateResult);
+        return IdentityResult.Failed(errors.ToArray());
+    }
+
+    private static IEnumerable<IdentityError> GetIdentityErrors(params IdentityResult[] identityResults)
+    {
+        var errors = new List<IdentityError>();
+        foreach (var result in identityResults)
+        {
+            foreach (var error in result.Errors)
+            {
+                errors.Add(error);
+            }
+        }
+
+        return errors;
+    }
+
     private LoginResponse CreateLoginResponse(IEnumerable<Claim> claims)
     {
         var securityKeyBytes = Encoding.UTF8.GetBytes(_jwtSettings.SecurityKey);
@@ -188,17 +234,15 @@ public class IdentityService : IIdentityService
             DateTime.UtcNow, DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes), credentials);
 
         var tokenHandler = new JwtSecurityTokenHandler();
-
         var accessToken = tokenHandler.WriteToken(jwtSecurityToken);
 
         using var generator = RandomNumberGenerator.Create();
         var randomNumber = new byte[256];
-        generator.GetBytes(randomNumber);
 
+        generator.GetBytes(randomNumber);
         var refreshToken = Convert.ToBase64String(randomNumber);
 
-        var loginResponse = new LoginResponse(accessToken, refreshToken);
-        return loginResponse;
+        return new LoginResponse(accessToken, refreshToken);
     }
 
     private async Task<IEnumerable<Claim>> GetClaimsAsync(ApplicationUser user)
@@ -276,6 +320,7 @@ public class IdentityService : IIdentityService
     {
         user.RefreshToken = refreshToken;
         user.RefreshTokenExpirationDate = DateTime.UtcNow.AddMinutes(_jwtSettings.RefreshTokenExpirationMinutes);
+
         await _userManager.UpdateAsync(user);
     }
 }

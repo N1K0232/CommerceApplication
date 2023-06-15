@@ -101,6 +101,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
 
     services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
     {
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromHours(3);
+        options.Lockout.AllowedForNewUsers = true;
         options.User.RequireUniqueEmail = true;
         options.Password.RequiredLength = 8;
         options.Password.RequireNonAlphanumeric = true;

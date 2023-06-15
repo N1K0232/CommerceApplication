@@ -13,6 +13,8 @@ public interface IIdentityService
 
     Task<IdentityResult> DeleteAccountAsync(string userId);
 
+    Task<IdentityResult> GenerateTwoFactorAuthenticationTokenAsync(ApplicationUser user);
+
     Task<ApplicationUser> GetUserAsync(string userId);
 
     Task<LoginResponse> LoginAsync(string email);
@@ -28,4 +30,6 @@ public interface IIdentityService
     Task SignOutAsync(string email);
 
     Task<ClaimsPrincipal> ValidateAccessTokenAsync(string accessToken);
+
+    Task<IdentityResult> SetLockoutEnabledAsync(string email, DateTimeOffset lockoutEnd, bool enabled);
 }
