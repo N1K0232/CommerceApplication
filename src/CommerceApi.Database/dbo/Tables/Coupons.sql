@@ -3,6 +3,7 @@
     [Id] UNIQUEIDENTIFIER NOT NULL DEFAULT newid(),
     [UserId] UNIQUEIDENTIFIER NOT NULL,
     [Code] NVARCHAR(MAX) NOT NULL,
+    [DiscountPercentage] FLOAT NOT NULL,
     [StartDate] DATETIME NOT NULL,
     [ExpirationDate] DATETIME NOT NULL,
     [Status] NVARCHAR(50) NOT NULL,

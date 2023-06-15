@@ -10,6 +10,8 @@ public class Coupon : DeletableEntity
 
     public string Code { get; set; }
 
+    public double DiscountPercentage { get; set; }
+
     public DateTime StartDate { get; set; }
 
     public DateTime ExpirationDate { get; set; }
