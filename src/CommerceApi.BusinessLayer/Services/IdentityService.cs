@@ -68,14 +68,20 @@ public class IdentityService : IIdentityService
             });
         }
 
-        await _userManager.RemoveClaimsAsync(user, userClaims);
-        await _userManager.RemoveFromRolesAsync(user, userRoles);
+        var deletedClaimsResult = await _userManager.RemoveClaimsAsync(user, userClaims);
+        var deletedRolesResult = await _userManager.RemoveFromRolesAsync(user, userRoles);
+        var deletedUserResult = await _userManager.DeleteAsync(user);
 
-        var identityResult = await _userManager.DeleteAsync(user);
-        return identityResult;
+        var errors = GetIdentityErrors(deletedClaimsResult, deletedRolesResult, deletedUserResult);
+        return IdentityResult.Failed(errors.ToArray());
     }
 
-    public Task<IdentityResult> GenerateTwoFactorAuthenticationTokenAsync(ApplicationUser user)
+    public Task<string> GenerateTwoFactorTokenAsync(string email)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<SignInResult> TwoFactorLoginAsync(string token)
     {
         throw new NotImplementedException();
     }
@@ -141,9 +147,7 @@ public class IdentityService : IIdentityService
     public async Task<SignInResult> SignInAsync(string email, string password)
     {
         var user = await _userManager.FindByEmailAsync(email);
-
-        var signInResult = await _signInManager.PasswordSignInAsync(user, password, false, false);
-        return signInResult;
+        return await _signInManager.PasswordSignInAsync(user, password, false, true);
     }
 
     public async Task SignOutAsync(string email)
@@ -251,7 +255,8 @@ public class IdentityService : IIdentityService
         var userAddresses = await _userManager.GetAddressesAsync(user);
         var userClaims = await _userManager.GetClaimsAsync(user);
 
-        if (userClaims is null || !userClaims.Any())
+        var hasItems = userClaims?.Any() ?? false;
+        if (!hasItems)
         {
             userClaims = new List<Claim> { new(ClaimTypes.NameIdentifier, user.Id.ToString()) };
             foreach (var role in userRoles)
@@ -274,7 +279,8 @@ public class IdentityService : IIdentityService
             new Claim(ClaimTypes.Name, user.UserName),
         };
 
-        if (userAddresses != null && userAddresses.Any())
+        hasItems = userAddresses?.Any() ?? false;
+        if (hasItems)
         {
             foreach (var address in userAddresses)
             {

@@ -78,6 +78,9 @@ public class UserService : IUserService
 
         if (signInResult.RequiresTwoFactor)
         {
+            var twoFactorToken = await _identityService.GenerateTwoFactorTokenAsync(request.Email);
+            signInResult = await _identityService.TwoFactorLoginAsync(twoFactorToken);
+            return signInResult.Succeeded ? await _identityService.LoginAsync(request.Email) : null;
         }
 
         return Result.Fail(FailureReasons.ClientError, "Invalid email or password");

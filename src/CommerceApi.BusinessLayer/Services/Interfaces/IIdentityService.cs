@@ -13,7 +13,7 @@ public interface IIdentityService
 
     Task<IdentityResult> DeleteAccountAsync(string userId);
 
-    Task<IdentityResult> GenerateTwoFactorAuthenticationTokenAsync(ApplicationUser user);
+    Task<string> GenerateTwoFactorTokenAsync(string email);
 
     Task<ApplicationUser> GetUserAsync(string userId);
 
@@ -28,6 +28,8 @@ public interface IIdentityService
     Task<SignInResult> SignInAsync(string email, string password);
 
     Task SignOutAsync(string email);
+
+    Task<SignInResult> TwoFactorLoginAsync(string token);
 
     Task<ClaimsPrincipal> ValidateAccessTokenAsync(string accessToken);
 

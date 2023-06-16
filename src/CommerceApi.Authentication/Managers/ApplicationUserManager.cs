@@ -105,41 +105,6 @@ public class ApplicationUserManager : UserManager<ApplicationUser>
         return addresses;
     }
 
-    public override async Task<IdentityResult> DeleteAsync(ApplicationUser user)
-    {
-        var userRoles = await GetRolesAsync(user).ConfigureAwait(false);
-        var userClaims = await GetClaimsAsync(user).ConfigureAwait(false);
-
-        var deletedRolesResult = await RemoveFromRolesAsync(user, userRoles).ConfigureAwait(false);
-        var deletedClaimsResult = await RemoveClaimsAsync(user, userClaims).ConfigureAwait(false);
-        var deletedUserResult = await base.DeleteAsync(user).ConfigureAwait(false);
-
-        var succeeded = deletedRolesResult.Succeeded && deletedClaimsResult.Succeeded && deletedUserResult.Succeeded;
-        if (succeeded)
-        {
-            return IdentityResult.Success;
-        }
-
-        var errors = GetErrors(deletedRolesResult, deletedClaimsResult, deletedUserResult).ToArray();
-
-        var identityResult = IdentityResult.Failed(errors);
-        return identityResult;
-    }
-
-    private IEnumerable<IdentityError> GetErrors(params IdentityResult[] identityResults)
-    {
-        var errors = new List<IdentityError>();
-        foreach (var result in identityResults)
-        {
-            foreach (var error in result.Errors)
-            {
-                errors.Add(error);
-            }
-        }
-
-        return errors;
-    }
-
     public override async Task<string> GenerateConcurrencyStampAsync(ApplicationUser user)
     {
         var concurrencyStamp = await base.GenerateConcurrencyStampAsync(user).ConfigureAwait(false);
