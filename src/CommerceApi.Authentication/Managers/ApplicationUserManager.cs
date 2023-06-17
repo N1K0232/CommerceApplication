@@ -8,7 +8,8 @@ namespace CommerceApi.Authentication.Managers;
 
 public class ApplicationUserManager : UserManager<ApplicationUser>
 {
-    private readonly AuthenticationDbContext _authenticationDataContext;
+    private AuthenticationDbContext _authenticationDataContext;
+    private CancellationTokenSource _tokenSource;
 
     public ApplicationUserManager(AuthenticationDbContext authenticationDataContext,
         IUserStore<ApplicationUser> store,
@@ -31,6 +32,21 @@ public class ApplicationUserManager : UserManager<ApplicationUser>
             logger)
     {
         _authenticationDataContext = authenticationDataContext;
+        _tokenSource = new CancellationTokenSource();
+    }
+
+    protected override CancellationToken CancellationToken
+    {
+        get
+        {
+            var token = base.CancellationToken;
+            if (token == CancellationToken.None)
+            {
+                token = _tokenSource.Token;
+            }
+
+            return token;
+        }
     }
 
     public override async Task<IdentityResult> CreateAsync(ApplicationUser user, string password)
@@ -68,7 +84,8 @@ public class ApplicationUserManager : UserManager<ApplicationUser>
 
         address.UserId = user.Id;
 
-        await _authenticationDataContext.Addresses.AddAsync(address).ConfigureAwait(false);
+        var addresses = _authenticationDataContext.Addresses;
+        await addresses.AddAsync(address).ConfigureAwait(false);
         await _authenticationDataContext.SaveChangesAsync().ConfigureAwait(false);
 
         return IdentityResult.Success;
@@ -99,10 +116,8 @@ public class ApplicationUserManager : UserManager<ApplicationUser>
     {
         ArgumentNullException.ThrowIfNull(user, nameof(ApplicationUser));
 
-        var query = _authenticationDataContext.Addresses.AsQueryable();
-
-        var addresses = await query.Where(a => a.UserId == user.Id).ToListAsync().ConfigureAwait(false);
-        return addresses;
+        var query = _authenticationDataContext.Addresses.Where(a => a.UserId == user.Id);
+        return await query.ToListAsync().ConfigureAwait(false);
     }
 
     public override async Task<string> GenerateConcurrencyStampAsync(ApplicationUser user)
@@ -112,5 +127,19 @@ public class ApplicationUserManager : UserManager<ApplicationUser>
 
         await UpdateAsync(user).ConfigureAwait(false);
         return concurrencyStamp;
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _authenticationDataContext.Dispose();
+            _authenticationDataContext = null;
+
+            _tokenSource.Dispose();
+            _tokenSource = null;
+        }
+
+        base.Dispose(disposing);
     }
 }
