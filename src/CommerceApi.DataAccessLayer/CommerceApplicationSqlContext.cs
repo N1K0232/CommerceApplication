@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace CommerceApi.DataAccessLayer;
 
-public class CommerceApplicationSqlContext : ISqlContext
+public class CommerceApplicationSqlContext : ICommerceApplicationSqlContext
 {
     private SqlConnection _connection = null;
     private CancellationTokenSource _tokenSource = null;
