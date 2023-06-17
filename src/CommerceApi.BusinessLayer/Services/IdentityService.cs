@@ -1,4 +1,5 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
+using System.Linq.Dynamic.Core;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -19,7 +20,7 @@ public class IdentityService : IIdentityService
 {
     private readonly JwtSettings _jwtSettings;
     private readonly ApplicationUserManager _userManager;
-    private readonly RoleManager<ApplicationRole> _roleManager;
+    private readonly ApplicationRoleManager _roleManager;
     private readonly ApplicationSignInManager _signInManager;
 
     private readonly EmailTokenProvider<ApplicationUser> _emailTokenProvider;
@@ -27,7 +28,7 @@ public class IdentityService : IIdentityService
 
     public IdentityService(IOptions<JwtSettings> jwtSettingsOptions,
                            ApplicationUserManager userManager,
-                           RoleManager<ApplicationRole> roleManager,
+                           ApplicationRoleManager roleManager,
                            ApplicationSignInManager signInManager,
                            EmailTokenProvider<ApplicationUser> emailTokenProvider,
                            PhoneNumberTokenProvider<ApplicationUser> phoneNumberTokenProvider)
@@ -42,14 +43,24 @@ public class IdentityService : IIdentityService
 
     public async Task CreateRoleAsync(string roleName)
     {
-        await CreateRoleCoreAsync(roleName);
+        var roleExists = await _roleManager.RoleExistsAsync(roleName);
+        if (!roleExists)
+        {
+            var role = new ApplicationRole(roleName);
+            await _roleManager.CreateAsync(role);
+        }
     }
 
     public async Task CreateRolesAsync(IEnumerable<string> roleNames)
     {
         foreach (var roleName in roleNames)
         {
-            await CreateRoleCoreAsync(roleName);
+            var roleExists = await _roleManager.RoleExistsAsync(roleName);
+            if (!roleExists)
+            {
+                var role = new ApplicationRole(roleName);
+                await _roleManager.CreateAsync(role);
+            }
         }
     }
 
@@ -72,8 +83,14 @@ public class IdentityService : IIdentityService
         var deletedRolesResult = await _userManager.RemoveFromRolesAsync(user, userRoles);
         var deletedUserResult = await _userManager.DeleteAsync(user);
 
-        var errors = GetIdentityErrors(deletedClaimsResult, deletedRolesResult, deletedUserResult);
-        return IdentityResult.Failed(errors.ToArray());
+        var success = deletedClaimsResult.Succeeded && deletedRolesResult.Succeeded && deletedUserResult.Succeeded;
+        if (!success)
+        {
+            var errors = GetIdentityErrors(deletedClaimsResult, deletedRolesResult, deletedUserResult);
+            return IdentityResult.Failed(errors.ToArray());
+        }
+
+        return IdentityResult.Success;
     }
 
     public Task<string> GenerateTwoFactorTokenAsync(string email)
@@ -292,20 +309,6 @@ public class IdentityService : IIdentityService
         }
 
         return claims;
-    }
-
-    private async Task CreateRoleCoreAsync(string roleName)
-    {
-        var roleExists = await _roleManager.RoleExistsAsync(roleName);
-        if (!roleExists)
-        {
-            var role = new ApplicationRole(roleName)
-            {
-                ConcurrencyStamp = Guid.NewGuid().ToString()
-            };
-
-            await _roleManager.CreateAsync(role);
-        }
     }
 
     private async Task UpdateClaimAsync(ApplicationUser user, string type, string value)
