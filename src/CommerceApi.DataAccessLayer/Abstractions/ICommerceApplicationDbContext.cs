@@ -2,7 +2,7 @@
 
 namespace CommerceApi.DataAccessLayer.Abstractions;
 
-public interface IDataContext : IReadOnlyDataContext
+public interface ICommerceApplicationDbContext : IReadOnlyDataContext
 {
     void Delete<TEntity>(TEntity entity) where TEntity : BaseEntity;
 

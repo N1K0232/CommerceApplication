@@ -72,7 +72,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddPasswordHasher();
     services.AddPathGenerator();
     services.AddStringHasher();
-    services.AddDataProtection().PersistKeysToDbContext<ApplicationDbContext>();
+    services.AddDataProtection().PersistKeysToDbContext<CommerceApplicationDbContext>();
     services.AddDataProtector();
     services.AddTimeLimitedDataProtector();
 
@@ -83,12 +83,12 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IEmailClient, EmailClient>();
 
     var sqlConnectionString = configuration.GetConnectionString("SqlConnection");
-    services.AddSqlServer<ApplicationDbContext>(sqlConnectionString);
+    services.AddSqlServer<CommerceApplicationDbContext>(sqlConnectionString);
     services.AddSqlServer<AuthenticationDbContext>(sqlConnectionString);
 
-    services.AddScoped<IReadOnlyDataContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
-    services.AddScoped<IDataContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
-    services.AddScoped<IDataProtectionKeyContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
+    services.AddScoped<IReadOnlyDataContext>(provider => provider.GetRequiredService<CommerceApplicationDbContext>());
+    services.AddScoped<ICommerceApplicationDbContext>(provider => provider.GetRequiredService<CommerceApplicationDbContext>());
+    services.AddScoped<IDataProtectionKeyContext>(provider => provider.GetRequiredService<CommerceApplicationDbContext>());
 
     services.AddSqlContext(options =>
     {

@@ -25,29 +25,29 @@ public class ApplicationStartupService : IHostedService
         using var scope = _serviceProvider.CreateScope();
         var services = scope.ServiceProvider;
 
-        var dataContext = services.GetRequiredService<IDataContext>();
+        var dataContext = services.GetRequiredService<ICommerceApplicationDbContext>();
         var dataContextConnectionResult = await dataContext.TestConnectionAsync();
         if (dataContextConnectionResult)
         {
-            _logger.LogInformation("connection test succeeded for {dataContext} object", typeof(ApplicationDbContext).Name);
+            _logger.LogInformation("connection test succeeded for {dataContext} object", typeof(CommerceApplicationDbContext).Name);
 
             await dataContext.EnsureCreatedAsync();
             await dataContext.MigrateAsync();
         }
         else
         {
-            _logger.LogError("connection test failed for {dataContext} object", typeof(ApplicationDbContext).Name);
+            _logger.LogError("connection test failed for {dataContext} object", typeof(CommerceApplicationDbContext).Name);
         }
 
-        var sqlContext = services.GetRequiredService<ISqlContext>();
+        var sqlContext = services.GetRequiredService<ICommerceApplicationSqlContext>();
         var sqlContextConnectionResult = await sqlContext.TestConnectionAsync();
         if (sqlContextConnectionResult)
         {
-            _logger.LogInformation("connection test succeeded for {sqlContext} object", typeof(SqlContext).Name);
+            _logger.LogInformation("connection test succeeded for {sqlContext} object", typeof(CommerceApplicationSqlContext).Name);
         }
         else
         {
-            _logger.LogError("connection test failed for {sqlContext} object", typeof(SqlContext).Name);
+            _logger.LogError("connection test failed for {sqlContext} object", typeof(CommerceApplicationSqlContext).Name);
         }
     }
 

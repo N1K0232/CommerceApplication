@@ -16,13 +16,13 @@ namespace CommerceApi.BusinessLayer.Services;
 
 public class CouponService : ICouponService
 {
-    private readonly IDataContext _dataContext;
+    private readonly ICommerceApplicationDbContext _dataContext;
     private readonly IDataProtector _dataProtector;
     private readonly IUserClaimService _claimService;
     private readonly IMapper _mapper;
     private readonly IValidator<SaveCouponRequest> _couponValidator;
 
-    public CouponService(IDataContext dataContext,
+    public CouponService(ICommerceApplicationDbContext dataContext,
         IDataProtector dataProtector,
         IUserClaimService claimService,
         IMapper mapper,

@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace CommerceApi.DataAccessLayer;
 
-public class SqlContext : ISqlContext
+public class CommerceApplicationSqlContext : ISqlContext
 {
     private SqlConnection _connection = null;
     private CancellationTokenSource _tokenSource = null;
@@ -16,20 +16,20 @@ public class SqlContext : ISqlContext
     private bool _disposed = false;
 
     private readonly SqlContextOptions _options;
-    private readonly ILogger<SqlContext> _logger;
+    private readonly ILogger<CommerceApplicationSqlContext> _logger;
 
-    static SqlContext()
+    static CommerceApplicationSqlContext()
     {
         SqlMapper.AddTypeHandler(new StringArrayTypeHandler());
     }
 
-    public SqlContext(SqlContextOptions options, ILogger<SqlContext> logger)
+    public CommerceApplicationSqlContext(SqlContextOptions options, ILogger<CommerceApplicationSqlContext> logger)
     {
         _options = options;
         _logger = logger;
     }
 
-    ~SqlContext()
+    ~CommerceApplicationSqlContext()
     {
         Dispose(disposing: false);
     }

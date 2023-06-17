@@ -13,11 +13,11 @@ namespace CommerceApi.BusinessLayer.Services;
 
 public class InvoiceService : IInvoiceService
 {
-    private readonly IDataContext _dataContext;
+    private readonly ICommerceApplicationDbContext _dataContext;
     private readonly IMapper _mapper;
     private readonly IValidator<SaveInvoiceRequest> _invoiceValidator;
 
-    public InvoiceService(IDataContext dataContext, IMapper mapper, IValidator<SaveInvoiceRequest> invoiceValidator)
+    public InvoiceService(ICommerceApplicationDbContext dataContext, IMapper mapper, IValidator<SaveInvoiceRequest> invoiceValidator)
     {
         _dataContext = dataContext;
         _mapper = mapper;

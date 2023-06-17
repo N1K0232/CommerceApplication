@@ -2,7 +2,7 @@
 
 namespace CommerceApi.DataAccessLayer.Abstractions;
 
-public interface ISqlContext : IDisposable
+public interface ICommerceApplicationSqlContext : IDisposable
 {
     Task<IEnumerable<T>> GetDataAsync<T>(string sql, object param = null, IDbTransaction transaction = null, CommandType? commandType = null)
         where T : class;
