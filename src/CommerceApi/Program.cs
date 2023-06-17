@@ -96,6 +96,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
         options.CommandTimeout = configuration.GetValue<int>("AppSettings:CommandTimeout");
     });
 
+    services.AddScoped<ApplicationRoleManager>();
     services.AddScoped<ApplicationUserManager>();
     services.AddScoped<ApplicationSignInManager>();
 
@@ -113,6 +114,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     })
     .AddEntityFrameworkStores<AuthenticationDbContext>()
     .AddDefaultTokenProviders()
+    .AddRoleManager<ApplicationRoleManager>()
     .AddUserManager<ApplicationUserManager>()
     .AddSignInManager<ApplicationSignInManager>();
 
