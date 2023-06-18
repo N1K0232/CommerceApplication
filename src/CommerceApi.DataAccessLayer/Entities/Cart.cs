@@ -1,13 +1,10 @@
-﻿using CommerceApi.Authentication.Entities;
-using CommerceApi.DataAccessLayer.Entities.Common;
+﻿using CommerceApi.DataAccessLayer.Entities.Common;
 
 namespace CommerceApi.DataAccessLayer.Entities;
 
 public class Cart : DeletableEntity
 {
     public Guid UserId { get; set; }
-
-    public virtual ApplicationUser User { get; set; }
 
     public virtual IList<CartItem> CartItems { get; set; }
 }

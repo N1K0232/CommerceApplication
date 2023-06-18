@@ -30,12 +30,6 @@ public partial class CommerceApplicationDbContext
 
     private RandomNumberGenerator _generator = null;
 
-    protected override void OnSavedChanges(object sender, SaveChangesEventArgs e) => base.OnSavedChanges(sender, e);
-
-    protected override void OnSavingChanges(object sender, SavingChangesEventArgs e) => base.OnSavingChanges(sender, e);
-
-    protected override void OnSaveChangesFailed(object sender, SaveChangesFailedEventArgs e) => base.OnSaveChangesFailed(sender, e);
-
     private void DeleteInternal<TEntity>(TEntity entity) where TEntity : BaseEntity
     {
         var set = Set<TEntity>();

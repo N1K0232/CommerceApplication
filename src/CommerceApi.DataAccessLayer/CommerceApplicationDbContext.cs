@@ -1,6 +1,5 @@
 ﻿using System.Data.Common;
 using System.Reflection;
-using CommerceApi.Authentication;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.DataAccessLayer.Comparers;
 using CommerceApi.DataAccessLayer.Converters;
@@ -14,10 +13,11 @@ using TinyHelpers.Extensions;
 
 namespace CommerceApi.DataAccessLayer;
 
-public partial class CommerceApplicationDbContext : AuthenticationDbContext, ICommerceApplicationDbContext
+public partial class CommerceApplicationDbContext : DbContext, ICommerceApplicationDbContext
 {
     private readonly IConfiguration _configuration;
     private readonly IMemoryCache _memoryCache;
+    private readonly ILogger<CommerceApplicationDbContext> _logger;
 
     private CancellationTokenSource _tokenSource = null;
 
@@ -25,8 +25,9 @@ public partial class CommerceApplicationDbContext : AuthenticationDbContext, ICo
         ILogger<CommerceApplicationDbContext> logger,
         IUserClaimService claimService,
         IConfiguration configuration,
-        IMemoryCache memoryCache) : base(options, logger)
+        IMemoryCache memoryCache) : base(options)
     {
+        _logger = logger;
         _claimService = claimService;
         _configuration = configuration;
         _memoryCache = memoryCache;
@@ -214,10 +215,10 @@ public partial class CommerceApplicationDbContext : AuthenticationDbContext, ICo
         var result = await Database.EnsureCreatedAsync(_tokenSource.Token).ConfigureAwait(false);
         if (result)
         {
-            Logger.LogInformation("the database was successfully created");
+            _logger.LogInformation("the database was successfully created");
         }
 
-        Logger.LogError("the database already exists or an error occurred while creating database");
+        _logger.LogError("the database already exists or an error occurred while creating database");
     }
 
     public async Task EnsureDeletedAsync()
@@ -227,10 +228,10 @@ public partial class CommerceApplicationDbContext : AuthenticationDbContext, ICo
         var result = await Database.EnsureDeletedAsync(_tokenSource.Token).ConfigureAwait(false);
         if (result)
         {
-            Logger.LogInformation("the database was successfully deleted");
+            _logger.LogInformation("the database was successfully deleted");
         }
 
-        Logger.LogError("error occurred while deleting database");
+        _logger.LogError("error occurred while deleting database");
     }
 
     public async Task MigrateAsync()

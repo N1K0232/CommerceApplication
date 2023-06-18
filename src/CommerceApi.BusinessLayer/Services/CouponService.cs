@@ -108,7 +108,7 @@ public class CouponService : ICouponService
             query = query.Where(c => c.UserId == userId);
         }
 
-        var dbCoupons = await query.Include(c => c.User).ToListAsync();
+        var dbCoupons = await query.ToListAsync();
         var coupons = _mapper.Map<IEnumerable<Coupon>>(dbCoupons);
 
         foreach (var coupon in coupons)
@@ -127,7 +127,7 @@ public class CouponService : ICouponService
         }
 
         var query = _dataContext.GetData<Entities.Coupon>();
-        var dbCoupon = await query.Include(c => c.User).FirstOrDefaultAsync(c => c.Id == couponId);
+        var dbCoupon = await query.FirstOrDefaultAsync(c => c.Id == couponId);
         if (dbCoupon == null)
         {
             return Result.Fail(FailureReasons.ItemNotFound, $"No coupon found with id {couponId}");

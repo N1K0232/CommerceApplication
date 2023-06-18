@@ -1,4 +1,5 @@
-﻿using CommerceApi.Authentication.Entities;
+﻿using CommerceApi.Authentication.Configurations;
+using CommerceApi.Authentication.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -32,7 +33,7 @@ public partial class AuthenticationDbContext
     private readonly ValueConverter<string, string> _trimStringConverter = new(v => v.Trim(), v => v.Trim());
     private readonly ILogger<AuthenticationDbContext> _logger;
 
-    public AuthenticationDbContext(DbContextOptions options, ILogger<AuthenticationDbContext> logger) : base(options)
+    public AuthenticationDbContext(DbContextOptions<AuthenticationDbContext> options, ILogger<AuthenticationDbContext> logger) : base(options)
     {
         _logger = logger;
     }
@@ -205,19 +206,24 @@ public partial class AuthenticationDbContext
         }
     }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        OnConfiguringCore(optionsBuilder);
-        base.OnConfiguring(optionsBuilder);
-    }
-
-    partial void OnConfiguringCore(DbContextOptionsBuilder optionsBuilder);
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        OnModelCreatingCore(modelBuilder);
-    }
+        modelBuilder.ApplyConfiguration(new ApplicationUserConfiguration());
+        modelBuilder.ApplyConfiguration(new ApplicationUserRoleConfiguration());
+        modelBuilder.ApplyConfiguration(new AddressConfiguration());
 
-    partial void OnModelCreatingCore(ModelBuilder modelBuilder);
+        foreach (var entity in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entity.GetProperties())
+            {
+                if (property.ClrType == typeof(string))
+                {
+                    modelBuilder.Entity(entity.Name)
+                    .Property(property.Name)
+                    .HasConversion(_trimStringConverter);
+                }
+            }
+        }
+    }
 }

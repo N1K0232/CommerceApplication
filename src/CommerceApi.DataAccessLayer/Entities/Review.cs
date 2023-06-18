@@ -1,5 +1,4 @@
-﻿using CommerceApi.Authentication.Entities;
-using CommerceApi.DataAccessLayer.Entities.Common;
+﻿using CommerceApi.DataAccessLayer.Entities.Common;
 
 namespace CommerceApi.DataAccessLayer.Entities;
 
@@ -14,8 +13,6 @@ public class Review : BaseEntity
     public int Score { get; set; }
 
     public DateTime ReviewDate { get; set; }
-
-    public virtual ApplicationUser User { get; set; }
 
     public virtual Product Product { get; set; }
 }
