@@ -3,7 +3,7 @@ using CommerceApi.DataAccessLayer.Entities.Common;
 
 namespace CommerceApi.DataAccessLayer.Abstractions;
 
-public interface ICommerceApplicationDbContext : IReadOnlyDataContext
+public interface IDataContext : IReadOnlyDataContext
 {
     void Delete<TEntity>(TEntity entity) where TEntity : BaseEntity;
 

@@ -17,7 +17,7 @@ namespace CommerceApi.BusinessLayer.Services;
 
 public class ProductService : IProductService
 {
-    private readonly ICommerceApplicationDbContext _dataContext;
+    private readonly IDataContext _dataContext;
     private readonly IStorageProvider _storageProvider;
     private readonly IPathGenerator _pathGenerator;
     private readonly IMapper _mapper;
@@ -25,7 +25,7 @@ public class ProductService : IProductService
     private readonly IValidator<SaveReviewRequest> _reviewValidator;
     private readonly IUserClaimService _claimService;
 
-    public ProductService(ICommerceApplicationDbContext dataContext,
+    public ProductService(IDataContext dataContext,
         IStorageProvider storageProvider,
         IPathGenerator pathGenerator,
         IMapper mapper,

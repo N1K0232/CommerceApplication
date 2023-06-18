@@ -13,11 +13,11 @@ namespace CommerceApi.BusinessLayer.Services;
 
 public class SupplierService : ISupplierService
 {
-    private readonly ICommerceApplicationDbContext _dataContext;
+    private readonly IDataContext _dataContext;
     private readonly IMapper _mapper;
     private readonly IValidator<SaveSupplierRequest> _supplierValidator;
 
-    public SupplierService(ICommerceApplicationDbContext dataContext, IMapper mapper, IValidator<SaveSupplierRequest> supplierValidator)
+    public SupplierService(IDataContext dataContext, IMapper mapper, IValidator<SaveSupplierRequest> supplierValidator)
     {
         _dataContext = dataContext;
         _mapper = mapper;

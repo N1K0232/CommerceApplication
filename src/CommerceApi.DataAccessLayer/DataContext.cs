@@ -13,16 +13,16 @@ using TinyHelpers.Extensions;
 
 namespace CommerceApi.DataAccessLayer;
 
-public partial class CommerceApplicationDbContext : DbContext, ICommerceApplicationDbContext
+public partial class DataContext : DbContext, IDataContext
 {
     private readonly IConfiguration _configuration;
     private readonly IMemoryCache _memoryCache;
-    private readonly ILogger<CommerceApplicationDbContext> _logger;
+    private readonly ILogger<DataContext> _logger;
 
     private CancellationTokenSource _tokenSource = null;
 
-    public CommerceApplicationDbContext(DbContextOptions<CommerceApplicationDbContext> options,
-        ILogger<CommerceApplicationDbContext> logger,
+    public DataContext(DbContextOptions<DataContext> options,
+        ILogger<DataContext> logger,
         IUserClaimService claimService,
         IConfiguration configuration,
         IMemoryCache memoryCache) : base(options)
@@ -73,7 +73,7 @@ public partial class CommerceApplicationDbContext : DbContext, ICommerceApplicat
         }
     }
 
-    void ICommerceApplicationDbContext.Update<TEntity>(TEntity entity)
+    void IDataContext.Update<TEntity>(TEntity entity)
     {
         ArgumentNullException.ThrowIfNull(entity, nameof(entity));
 
@@ -82,7 +82,7 @@ public partial class CommerceApplicationDbContext : DbContext, ICommerceApplicat
         set.Update(entity);
     }
 
-    void ICommerceApplicationDbContext.Update<TEntity>(IEnumerable<TEntity> entities)
+    void IDataContext.Update<TEntity>(IEnumerable<TEntity> entities)
     {
         var hasItems = entities?.Any() ?? false;
         if (!hasItems)

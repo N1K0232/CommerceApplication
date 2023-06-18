@@ -14,12 +14,12 @@ namespace CommerceApi.BusinessLayer.Services;
 
 public class ImageService : IImageService
 {
-    private readonly ICommerceApplicationDbContext _dataContext;
+    private readonly IDataContext _dataContext;
     private readonly IStorageProvider _storageProvider;
     private readonly IPathGenerator _pathGenerator;
     private readonly IMapper _mapper;
 
-    public ImageService(ICommerceApplicationDbContext dataContext, IStorageProvider storageProvider, IPathGenerator pathGenerator, IMapper mapper)
+    public ImageService(IDataContext dataContext, IStorageProvider storageProvider, IPathGenerator pathGenerator, IMapper mapper)
     {
         _dataContext = dataContext;
         _storageProvider = storageProvider;

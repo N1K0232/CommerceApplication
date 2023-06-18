@@ -13,13 +13,13 @@ using Microsoft.Extensions.Configuration;
 
 namespace CommerceApi.DataAccessLayer;
 
-public partial class CommerceApplicationDbContext
+public partial class DataContext
 {
-    private static readonly MethodInfo _setQueryFilterOnDeletableEntity = typeof(CommerceApplicationDbContext)
+    private static readonly MethodInfo _setQueryFilterOnDeletableEntity = typeof(DataContext)
         .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
         .Single(t => t.IsGenericMethod && t.Name == nameof(SetQueryFilterOnDeletableEntity));
 
-    private static readonly MethodInfo _setQueryFilterOnTenantEntity = typeof(CommerceApplicationDbContext)
+    private static readonly MethodInfo _setQueryFilterOnTenantEntity = typeof(DataContext)
         .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
         .Single(t => t.IsGenericMethod && t.Name == nameof(SetQueryFilterOnTenantEntity));
 

@@ -12,11 +12,11 @@ namespace CommerceApi.BusinessLayer.Services;
 
 public class CategoryService : ICategoryService
 {
-    private readonly ICommerceApplicationDbContext _dataContext;
+    private readonly IDataContext _dataContext;
     private readonly IMapper _mapper;
     private readonly IValidator<SaveCategoryRequest> _categoryValidator;
 
-    public CategoryService(ICommerceApplicationDbContext dataContext, IMapper mapper, IValidator<SaveCategoryRequest> categoryValidator)
+    public CategoryService(IDataContext dataContext, IMapper mapper, IValidator<SaveCategoryRequest> categoryValidator)
     {
         _dataContext = dataContext;
         _mapper = mapper;

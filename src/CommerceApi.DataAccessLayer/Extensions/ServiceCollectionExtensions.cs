@@ -16,7 +16,7 @@ public static class ServiceCollectionExtensions
             return options;
         });
 
-        services.AddScoped<ICommerceApplicationSqlContext, CommerceApplicationSqlContext>();
+        services.AddScoped<ISqlContext, SqlContext>();
 
         return services;
     }
@@ -27,7 +27,7 @@ public static class ServiceCollectionExtensions
         configuration.Invoke(options);
 
         services.AddSingleton(options);
-        services.AddScoped<ICommerceApplicationSqlContext, CommerceApplicationSqlContext>();
+        services.AddScoped<ISqlContext, SqlContext>();
 
         return services;
     }
