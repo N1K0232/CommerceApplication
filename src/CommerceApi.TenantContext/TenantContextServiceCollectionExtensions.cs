@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CommerceApi.TenantContext;
 
@@ -15,5 +16,17 @@ public static class TenantContextServiceCollectionExtensions
         services.AddSingleton(options);
         services.AddSingleton<ITenantContextAccessor, TenantContextAccessor>();
         return services;
+    }
+
+    public static IApplicationBuilder UseTenantContext(this IApplicationBuilder app)
+    {
+        ArgumentNullException.ThrowIfNull(app);
+
+        if (app.ApplicationServices.GetService(typeof(ITenantContextAccessor)) is null)
+        {
+            throw new InvalidOperationException("Unable to find the required services.");
+        }
+
+        return app.UseMiddleware<TenantContextMiddleware>();
     }
 }

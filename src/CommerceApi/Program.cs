@@ -25,6 +25,7 @@ using CommerceApi.DataProtectionLayer;
 using CommerceApi.DataProtectionLayer.Extensions;
 using CommerceApi.Extensions;
 using CommerceApi.Security.Extensions;
+using CommerceApi.TenantContext;
 using Hellang.Middleware.ProblemDetails;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -65,6 +66,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
 
     services.AddHttpContextAccessor();
     services.AddClientContextAccessor();
+    services.AddTenantContextAccessor(options => options.AvailableTenants.Add("application"));
     services.AddMemoryCache();
     services.AddOperationResult();
     services.AddUserClaimService();
@@ -240,6 +242,7 @@ void Configure(IApplicationBuilder app, IApiVersionDescriptionProvider provider)
 
     app.UseCors();
     app.UseClientContext();
+    app.UseTenantContext();
 
     app.UseAuthentication();
     app.UseAuthorization();
