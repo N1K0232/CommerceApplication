@@ -6,10 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Services\bwwzz0ej.y0p~" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="12.0.1" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
     <PackageReference Include="FluentValidation" Version="11.5.2" />
@@ -26,6 +22,7 @@
     <ProjectReference Include="..\CommerceApi.Authentication\CommerceApi.Authentication.csproj" />
     <ProjectReference Include="..\CommerceApi.Client\CommerceApi.Client.csproj" />
     <ProjectReference Include="..\CommerceApi.DataAccessLayer\CommerceApi.DataAccessLayer.csproj" />
+    <ProjectReference Include="..\CommerceApi.DataProtectionLayer\CommerceApi.DataProtectionLayer.csproj" />
     <ProjectReference Include="..\CommerceApi.Security\CommerceApi.Security.csproj" />
     <ProjectReference Include="..\CommerceApi.SharedServices\CommerceApi.SharedServices.csproj" />
     <ProjectReference Include="..\CommerceApi.Shared\CommerceApi.Shared.csproj" />

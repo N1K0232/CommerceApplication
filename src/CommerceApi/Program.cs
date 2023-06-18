@@ -21,6 +21,7 @@ using CommerceApi.ClientContext.TypeConverters;
 using CommerceApi.DataAccessLayer;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.DataAccessLayer.Extensions;
+using CommerceApi.DataProtectionLayer;
 using CommerceApi.DataProtectionLayer.Extensions;
 using CommerceApi.DataProtectionLayer.Services;
 using CommerceApi.DataProtectionLayer.Services.Interfaces;
@@ -72,7 +73,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddPasswordHasher();
     services.AddPathGenerator();
     services.AddStringHasher();
-    services.AddDataProtection().PersistKeysToDbContext<CommerceApplicationDbContext>();
+    services.AddDataProtection().PersistKeysToDbContext<DataProtectionDbContext>();
     services.AddDataProtector();
     services.AddTimeLimitedDataProtector();
 
@@ -85,10 +86,11 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     var sqlConnectionString = configuration.GetConnectionString("SqlConnection");
     services.AddSqlServer<CommerceApplicationDbContext>(sqlConnectionString);
     services.AddSqlServer<AuthenticationDbContext>(sqlConnectionString);
+    services.AddSqlServer<DataProtectionDbContext>(sqlConnectionString);
 
+    services.AddScoped<IDataProtectionKeyContext>(provider => provider.GetRequiredService<DataProtectionDbContext>());
     services.AddScoped<IReadOnlyDataContext>(provider => provider.GetRequiredService<CommerceApplicationDbContext>());
     services.AddScoped<ICommerceApplicationDbContext>(provider => provider.GetRequiredService<CommerceApplicationDbContext>());
-    services.AddScoped<IDataProtectionKeyContext>(provider => provider.GetRequiredService<CommerceApplicationDbContext>());
 
     services.AddSqlContext(options =>
     {
