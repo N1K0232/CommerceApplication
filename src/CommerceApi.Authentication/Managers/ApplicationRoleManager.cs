@@ -43,10 +43,13 @@ public class ApplicationRoleManager : RoleManager<ApplicationRole>
     {
         if (disposing)
         {
-            _tokenSource.Dispose();
-            _tokenSource = null;
-        }
+            if (_tokenSource != null)
+            {
+                _tokenSource.Dispose();
+                _tokenSource = null;
+            }
 
-        base.Dispose(disposing);
+            base.Dispose(disposing);
+        }
     }
 }

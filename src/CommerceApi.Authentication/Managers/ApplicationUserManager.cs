@@ -133,13 +133,19 @@ public class ApplicationUserManager : UserManager<ApplicationUser>
     {
         if (disposing)
         {
-            _authenticationDataContext.Dispose();
-            _authenticationDataContext = null;
+            if (_authenticationDataContext != null)
+            {
+                _authenticationDataContext.Dispose();
+                _authenticationDataContext = null;
+            }
 
-            _tokenSource.Dispose();
-            _tokenSource = null;
+            if (_tokenSource != null)
+            {
+                _tokenSource.Dispose();
+                _tokenSource = null;
+            }
+
+            base.Dispose(disposing);
         }
-
-        base.Dispose(disposing);
     }
 }
