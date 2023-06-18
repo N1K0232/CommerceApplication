@@ -1,4 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Data;
+using System.Data.Common;
 using System.Reflection;
 using System.Security.Cryptography;
 using CommerceApi.DataAccessLayer.Entities.Common;
@@ -43,6 +45,23 @@ public partial class CommerceApplicationDbContext
         }
 
         set.Remove(entity);
+    }
+
+    private async Task<DbCommand> LoadStoredProcedureInternalAsync(string procedureName)
+    {
+        _tokenSource ??= new CancellationTokenSource();
+
+        var connection = Database.GetDbConnection();
+        if (connection.State is ConnectionState.Closed)
+        {
+            await connection.OpenAsync(_tokenSource.Token).ConfigureAwait(false);
+        }
+
+        var command = connection.CreateCommand();
+        command.CommandText = procedureName;
+        command.CommandType = CommandType.StoredProcedure;
+
+        return command;
     }
 
     private async Task ExecuteTransactionCoreAsync(Func<Task> action)

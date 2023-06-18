@@ -1,4 +1,6 @@
-﻿using CommerceApi.Authentication;
+﻿using System.Data.Common;
+using System.Reflection;
+using CommerceApi.Authentication;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.DataAccessLayer.Comparers;
 using CommerceApi.DataAccessLayer.Converters;
@@ -179,6 +181,28 @@ public partial class CommerceApplicationDbContext : AuthenticationDbContext, ICo
         await SaveChangesAsync(token).ConfigureAwait(false);
     }
 #pragma warning restore IDE0007
+
+    public Task<DbCommand> LoadStoredProcedureAsync(string procedureName)
+    {
+        return LoadStoredProcedureInternalAsync(procedureName);
+    }
+
+    public async Task ExecuteStoredProcedureAsync<TEntity>(string procedureName, TEntity entity) where TEntity : BaseEntity
+    {
+        var command = await LoadStoredProcedureInternalAsync(procedureName).ConfigureAwait(false);
+        var properties = entity.GetType().GetRuntimeProperties();
+
+        foreach (var property in properties)
+        {
+            var parameter = command.CreateParameter();
+
+            parameter.ParameterName = property.Name;
+            parameter.Value = property.GetValue(entity);
+            command.Parameters.Add(parameter);
+        }
+
+        await command.ExecuteNonQueryAsync(_tokenSource.Token).ConfigureAwait(false);
+    }
 
     public Task ExecuteTransactionAsync(Func<Task> action)
     {

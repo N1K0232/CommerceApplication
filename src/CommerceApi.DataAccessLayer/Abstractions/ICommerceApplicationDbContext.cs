@@ -1,4 +1,5 @@
-﻿using CommerceApi.DataAccessLayer.Entities.Common;
+﻿using System.Data.Common;
+using CommerceApi.DataAccessLayer.Entities.Common;
 
 namespace CommerceApi.DataAccessLayer.Abstractions;
 
@@ -17,6 +18,10 @@ public interface ICommerceApplicationDbContext : IReadOnlyDataContext
     void Update<TEntity>(IEnumerable<TEntity> entities) where TEntity : BaseEntity;
 
     Task SaveAsync();
+
+    Task<DbCommand> LoadStoredProcedureAsync(string procedureName);
+
+    Task ExecuteStoredProcedureAsync<TEntity>(string procedureName, TEntity entity) where TEntity : BaseEntity;
 
     Task ExecuteTransactionAsync(Func<Task> action);
 
