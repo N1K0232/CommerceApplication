@@ -13,6 +13,10 @@ public class OrderConfiguration : DeletableEntityConfiguration<Order>
         builder.Property(o => o.UserId).IsRequired();
         builder.Property(o => o.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
 
+        builder.Property(o => o.IdentityNumber).UseIdentityColumn(1, 1).IsRequired();
+        builder.Property(o => o.IdentificationNumber).HasMaxLength(50).IsRequired();
+        builder.Property(o => o.IdentificationCode).HasColumnType("NVARCHAR(MAX)").IsRequired();
+
         builder.Property(o => o.Date).ValueGeneratedOnAdd().HasDefaultValueSql("getutcdate()").IsRequired();
         builder.Property(o => o.Time).ValueGeneratedOnAdd().IsRequired();
 

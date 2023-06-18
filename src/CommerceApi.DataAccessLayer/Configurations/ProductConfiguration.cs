@@ -12,6 +12,9 @@ public class ProductConfiguration : DeletableEntityConfiguration<Product>
         builder.Property(p => p.Name).HasMaxLength(256).IsRequired();
         builder.Property(p => p.Description).HasMaxLength(4000).IsRequired();
 
+        builder.Property(p => p.IdentificationCode).HasColumnType("NVARCHAR(MAX)").IsRequired();
+        builder.Property(p => p.Key).HasColumnType("NVARCHAR(MAX)").IsRequired();
+
         builder.Property(p => p.Quantity).IsRequired();
         builder.Property(p => p.Price).HasPrecision(8, 2).IsRequired();
 
