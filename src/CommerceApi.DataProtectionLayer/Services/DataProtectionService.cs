@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.DataProtection;
 
 namespace CommerceApi.DataProtectionLayer.Services;
 
-public class DataProtectionService : IDataProtectionService
+internal class DataProtectionService : IDataProtectionService
 {
     private readonly IDataProtector _dataProtector;
 

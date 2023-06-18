@@ -23,8 +23,6 @@ using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.DataAccessLayer.Extensions;
 using CommerceApi.DataProtectionLayer;
 using CommerceApi.DataProtectionLayer.Extensions;
-using CommerceApi.DataProtectionLayer.Services;
-using CommerceApi.DataProtectionLayer.Services.Interfaces;
 using CommerceApi.Extensions;
 using CommerceApi.Security.Extensions;
 using Hellang.Middleware.ProblemDetails;
@@ -83,10 +81,10 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddSwaggerDocumentation();
     services.AddScoped<IEmailClient, EmailClient>();
 
-    var sqlConnectionString = configuration.GetConnectionString("SqlConnection");
-    services.AddSqlServer<DataContext>(sqlConnectionString);
-    services.AddSqlServer<AuthenticationDbContext>(sqlConnectionString);
-    services.AddSqlServer<DataProtectionDbContext>(sqlConnectionString);
+    var sqlConnection = configuration.GetConnectionString("SqlConnection");
+    services.AddSqlServer<DataContext>(sqlConnection);
+    services.AddSqlServer<AuthenticationDbContext>(sqlConnection);
+    services.AddSqlServer<DataProtectionDbContext>(sqlConnection);
 
     services.AddScoped<IDataProtectionKeyContext>(provider => provider.GetRequiredService<DataProtectionDbContext>());
     services.AddScoped<IReadOnlyDataContext>(provider => provider.GetRequiredService<DataContext>());
@@ -94,7 +92,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
 
     services.AddSqlContext(options =>
     {
-        options.ConnectionString = sqlConnectionString;
+        options.ConnectionString = sqlConnection;
         options.CommandTimeout = configuration.GetValue<int>("AppSettings:CommandTimeout");
     });
 
@@ -176,7 +174,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     {
         try
         {
-            using var connection = new SqlConnection(sqlConnectionString);
+            using var connection = new SqlConnection(sqlConnection);
             await connection.OpenAsync();
         }
         catch (Exception ex)
@@ -211,16 +209,14 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     //add background services
     services.AddHostedService<SqlConnectionControlService>();
 
-    services.AddScoped<IDataProtectionService, DataProtectionService>();
-    services.AddScoped<ITimeLimitedDataProtectionService, TimeLimitedDataProtectionService>();
-
-    var storageConnectionString = configuration.GetConnectionString("StorageConnection");
-    if (!string.IsNullOrWhiteSpace(storageConnectionString))
+    //add storage providers
+    var storageConnection = configuration.GetConnectionString("StorageConnection");
+    if (!string.IsNullOrWhiteSpace(storageConnection))
     {
         var containerName = configuration.GetValue<string>("AppSettings:ContainerName");
         services.AddAzureStorageProvider(options =>
         {
-            options.ConnectionString = storageConnectionString;
+            options.ConnectionString = storageConnection;
             options.ContainerName = containerName;
         });
     }

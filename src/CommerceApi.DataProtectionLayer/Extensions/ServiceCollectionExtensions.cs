@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.DataProtection;
+﻿using CommerceApi.DataProtectionLayer.Services;
+using CommerceApi.DataProtectionLayer.Services.Interfaces;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CommerceApi.DataProtectionLayer.Extensions;
@@ -15,6 +17,7 @@ public static class ServiceCollectionExtensions
             return dataProtector;
         });
 
+        services.AddScoped<IDataProtectionService, DataProtectionService>();
         return services;
     }
 
@@ -28,6 +31,8 @@ public static class ServiceCollectionExtensions
             var timeLimitedDataProtector = dataProtector.ToTimeLimitedDataProtector();
             return timeLimitedDataProtector;
         });
+
+        services.AddScoped<ITimeLimitedDataProtectionService, TimeLimitedDataProtectionService>();
         return services;
     }
 }
