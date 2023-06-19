@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CommerceApi.Authentication.Common;
 using CommerceApi.Authentication.Entities;
+using CommerceApi.BusinessLayer.Extensions;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.Shared.Models.Requests;
 using CommerceApi.Shared.Models.Responses;
@@ -42,12 +43,7 @@ public class UserService : IUserService
             return Result.Ok();
         }
 
-        var validationErrors = new List<ValidationError>();
-        foreach (var error in identityResult.Errors)
-        {
-            validationErrors.Add(new(error.Code, error.Description));
-        }
-
+        var validationErrors = identityResult.ToValidationErrors();
         return Result.Fail(FailureReasons.DatabaseError, validationErrors);
     }
 
@@ -56,12 +52,7 @@ public class UserService : IUserService
         var validationResult = await _loginValidator.ValidateAsync(request);
         if (!validationResult.IsValid)
         {
-            var validationErrors = new List<ValidationError>();
-            foreach (var error in validationResult.Errors)
-            {
-                validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
-            }
-
+            var validationErrors = validationResult.ToValidationErrors();
             return Result.Fail(FailureReasons.ClientError, validationErrors);
         }
 
@@ -91,12 +82,7 @@ public class UserService : IUserService
         var validationResult = await _refreshTokenValidator.ValidateAsync(request);
         if (!validationResult.IsValid)
         {
-            var validationErrors = new List<ValidationError>();
-            foreach (var error in validationResult.Errors)
-            {
-                validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
-            }
-
+            var validationErrors = validationResult.ToValidationErrors();
             return Result.Fail(FailureReasons.ClientError, validationErrors);
         }
 
@@ -109,12 +95,7 @@ public class UserService : IUserService
         var validationResult = await _registerValidator.ValidateAsync(request);
         if (!validationResult.IsValid)
         {
-            var validationErrors = new List<ValidationError>();
-            foreach (var error in validationResult.Errors)
-            {
-                validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
-            }
-
+            var validationErrors = validationResult.ToValidationErrors();
             return Result.Fail(FailureReasons.ClientError, validationErrors);
         }
 

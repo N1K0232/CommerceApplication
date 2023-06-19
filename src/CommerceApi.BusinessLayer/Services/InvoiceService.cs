@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using CommerceApi.BusinessLayer.Extensions;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.Shared.Models;
@@ -31,12 +32,7 @@ public class InvoiceService : IInvoiceService
             var validationResult = await _invoiceValidator.ValidateAsync(invoice);
             if (!validationResult.IsValid)
             {
-                var validationErrors = new List<ValidationError>(validationResult.Errors.Capacity);
-                foreach (var error in validationResult.Errors)
-                {
-                    validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
-                }
-
+                var validationErrors = validationResult.ToValidationErrors();
                 return Result.Fail(FailureReasons.ClientError, "validation errors", validationErrors);
             }
 
@@ -118,12 +114,7 @@ public class InvoiceService : IInvoiceService
             var validationResult = await _invoiceValidator.ValidateAsync(invoice);
             if (!validationResult.IsValid)
             {
-                var validationErrors = new List<ValidationError>(validationResult.Errors.Capacity);
-                foreach (var error in validationResult.Errors)
-                {
-                    validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
-                }
-
+                var validationErrors = validationResult.ToValidationErrors();
                 return Result.Fail(FailureReasons.ClientError, "validation errors", validationErrors);
             }
 

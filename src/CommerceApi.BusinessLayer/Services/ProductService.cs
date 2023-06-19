@@ -1,5 +1,6 @@
 ﻿using System.Linq.Dynamic.Core;
 using AutoMapper;
+using CommerceApi.BusinessLayer.Extensions;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.Security.Abstractions;
@@ -47,12 +48,7 @@ public class ProductService : IProductService
         var validationResult = await _productValidator.ValidateAsync(product);
         if (!validationResult.IsValid)
         {
-            var validationErrors = new List<ValidationError>();
-            foreach (var error in validationResult.Errors)
-            {
-                validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
-            }
-
+            var validationErrors = validationResult.ToValidationErrors();
             return Result.Fail(FailureReasons.ClientError, "Validation errors", validationErrors);
         }
 
@@ -190,12 +186,7 @@ public class ProductService : IProductService
         var validationResult = await _productValidator.ValidateAsync(product);
         if (!validationResult.IsValid)
         {
-            var validationErrors = new List<ValidationError>();
-            foreach (var error in validationResult.Errors)
-            {
-                validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
-            }
-
+            var validationErrors = validationResult.ToValidationErrors();
             return Result.Fail(FailureReasons.ClientError, "Validation errors", validationErrors);
         }
 

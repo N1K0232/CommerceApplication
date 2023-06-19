@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using CommerceApi.BusinessLayer.RemoteServices;
+using CommerceApi.BusinessLayer.Extensions;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.Shared.Enums;
@@ -40,7 +40,7 @@ public class CouponService : ICouponService
         var validationResult = await _couponValidator.ValidateAsync(coupon);
         if (!validationResult.IsValid)
         {
-            var validationErrors = ValidationErrorService.GetErrors(validationResult);
+            var validationErrors = validationResult.ToValidationErrors();
             return Result.Fail(FailureReasons.ClientError, "validation errors", validationErrors);
         }
 
@@ -149,7 +149,7 @@ public class CouponService : ICouponService
         var validationResult = await _couponValidator.ValidateAsync(coupon);
         if (!validationResult.IsValid)
         {
-            var validationErrors = ValidationErrorService.GetErrors(validationResult);
+            var validationErrors = validationResult.ToValidationErrors();
             return Result.Fail(FailureReasons.ClientError, "validation errors", validationErrors);
         }
 

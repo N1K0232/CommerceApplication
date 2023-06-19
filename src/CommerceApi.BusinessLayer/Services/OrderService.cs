@@ -1,5 +1,6 @@
 ﻿using System.Linq.Dynamic.Core;
 using AutoMapper;
+using CommerceApi.BusinessLayer.Extensions;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.Shared.Enums;
@@ -43,12 +44,7 @@ public class OrderService : IOrderService
             var validationResult = await _orderValidator.ValidateAsync(order);
             if (!validationResult.IsValid)
             {
-                var validationErrors = new List<ValidationError>(validationResult.Errors.Capacity);
-                foreach (var error in validationResult.Errors)
-                {
-                    validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
-                }
-
+                var validationErrors = validationResult.ToValidationErrors();
                 return Result.Fail(FailureReasons.ClientError, "validation errors", validationErrors);
             }
 

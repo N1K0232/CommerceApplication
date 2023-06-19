@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using CommerceApi.BusinessLayer.Extensions;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.Shared.Models;
@@ -28,12 +29,7 @@ public class CategoryService : ICategoryService
         var validationResult = await _categoryValidator.ValidateAsync(category);
         if (!validationResult.IsValid)
         {
-            var validationErrors = new List<ValidationError>(validationResult.Errors.Capacity);
-            foreach (var error in validationResult.Errors)
-            {
-                validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
-            }
-
+            var validationErrors = validationResult.ToValidationErrors();
             return Result.Fail(FailureReasons.ClientError, "validation errors", validationErrors);
         }
 
@@ -115,12 +111,7 @@ public class CategoryService : ICategoryService
         var validationResult = await _categoryValidator.ValidateAsync(category);
         if (!validationResult.IsValid)
         {
-            var validationErrors = new List<ValidationError>(validationResult.Errors.Capacity);
-            foreach (var error in validationResult.Errors)
-            {
-                validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
-            }
-
+            var validationErrors = validationResult.ToValidationErrors();
             return Result.Fail(FailureReasons.ClientError, "validation errors", validationErrors);
         }
 
