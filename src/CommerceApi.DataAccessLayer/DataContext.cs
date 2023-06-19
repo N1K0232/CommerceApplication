@@ -120,63 +120,82 @@ public partial class DataContext : DbContext, IDataContext
     {
         _tokenSource ??= new CancellationTokenSource();
 
-        var token = _tokenSource.Token;
-        var entries = GetEntries();
-
-        foreach (var entry in entries)
+        try
         {
-            BaseEntity baseEntity = entry.Entity as BaseEntity;
-            if (entry.State is EntityState.Added)
+            var token = _tokenSource.Token;
+            var entries = GetEntries();
+
+            foreach (var entry in entries)
             {
-                if (baseEntity is DeletableEntity deletableEntity)
+                BaseEntity baseEntity = entry.Entity as BaseEntity;
+                if (entry.State is EntityState.Added)
                 {
-                    deletableEntity.IsDeleted = false;
-                    deletableEntity.DeletedDate = null;
-                    deletableEntity.DeletedTime = null;
+                    if (baseEntity is DeletableEntity deletableEntity)
+                    {
+                        deletableEntity.IsDeleted = false;
+                        deletableEntity.DeletedDate = null;
+                        deletableEntity.DeletedTime = null;
+                    }
+
+                    baseEntity.SecurityStamp = GenerateSecurityStamp();
+                    baseEntity.ConcurrencyStamp = Guid.NewGuid().ToString();
+
+                    baseEntity.CreationDate = DateTime.UtcNow.ToDateOnly();
+                    baseEntity.CreationTime = DateTime.UtcNow.ToTimeOnly();
+
+                    baseEntity.LastModificationDate = null;
+                    baseEntity.LastModificationTime = null;
                 }
 
-                baseEntity.SecurityStamp = GenerateSecurityStamp();
-                baseEntity.ConcurrencyStamp = Guid.NewGuid().ToString();
-
-                baseEntity.CreationDate = DateTime.UtcNow.ToDateOnly();
-                baseEntity.CreationTime = DateTime.UtcNow.ToTimeOnly();
-
-                baseEntity.LastModificationDate = null;
-                baseEntity.LastModificationTime = null;
-            }
-
-            if (entry.State is EntityState.Modified)
-            {
-                if (baseEntity is DeletableEntity deletableEntity)
+                if (entry.State is EntityState.Modified)
                 {
-                    deletableEntity.IsDeleted = false;
-                    deletableEntity.DeletedDate = null;
-                    deletableEntity.DeletedTime = null;
+                    if (baseEntity is DeletableEntity deletableEntity)
+                    {
+                        deletableEntity.IsDeleted = false;
+                        deletableEntity.DeletedDate = null;
+                        deletableEntity.DeletedTime = null;
+                    }
+
+                    baseEntity.SecurityStamp = GenerateSecurityStamp();
+                    baseEntity.ConcurrencyStamp = Guid.NewGuid().ToString();
+
+                    baseEntity.LastModificationDate = DateTime.UtcNow.ToDateOnly();
+                    baseEntity.LastModificationTime = DateTime.UtcNow.ToTimeOnly();
                 }
 
-                baseEntity.SecurityStamp = GenerateSecurityStamp();
-                baseEntity.ConcurrencyStamp = Guid.NewGuid().ToString();
-
-                baseEntity.LastModificationDate = DateTime.UtcNow.ToDateOnly();
-                baseEntity.LastModificationTime = DateTime.UtcNow.ToTimeOnly();
-            }
-
-            if (entry.State is EntityState.Deleted)
-            {
-                if (baseEntity is DeletableEntity deletableEntity)
+                if (entry.State is EntityState.Deleted)
                 {
-                    entry.State = EntityState.Modified;
+                    if (baseEntity is DeletableEntity deletableEntity)
+                    {
+                        entry.State = EntityState.Modified;
 
-                    deletableEntity.IsDeleted = true;
-                    deletableEntity.DeletedDate = DateTime.UtcNow.ToDateOnly();
-                    deletableEntity.DeletedTime = DateTime.UtcNow.ToTimeOnly();
+                        deletableEntity.IsDeleted = true;
+                        deletableEntity.DeletedDate = DateTime.UtcNow.ToDateOnly();
+                        deletableEntity.DeletedTime = DateTime.UtcNow.ToTimeOnly();
+                    }
                 }
+
+                await ValidateAsync(baseEntity).ConfigureAwait(false);
             }
 
-            await ValidateAsync(baseEntity).ConfigureAwait(false);
+            var savedEntries = await SaveChangesAsync(token).ConfigureAwait(false);
+            _logger.LogInformation("saved {savedEntries} in the database", savedEntries);
         }
-
-        await SaveChangesAsync(token).ConfigureAwait(false);
+        catch (DbUpdateConcurrencyException ex)
+        {
+            _logger.LogError(ex, "error while updating database");
+            throw ex;
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "error while updating database");
+            throw ex;
+        }
+        catch (OperationCanceledException ex)
+        {
+            _logger.LogError(ex, "updating task was canceled");
+            throw ex;
+        }
     }
 #pragma warning restore IDE0007
 

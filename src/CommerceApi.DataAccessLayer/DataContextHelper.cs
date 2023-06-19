@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Configuration;
 
 namespace CommerceApi.DataAccessLayer;
@@ -24,6 +25,7 @@ public partial class DataContext
         .Single(t => t.IsGenericMethod && t.Name == nameof(SetQueryFilterOnTenantEntity));
 
     private readonly IUserClaimService _claimService;
+    private readonly ValueConverter<string, string> _trimStringConverter = new ValueConverter<string, string>(v => v.Trim(), v => v.Trim());
 
     private ValidationContext _validationContext = null;
     private IDbContextTransaction _transaction = null;
@@ -121,7 +123,12 @@ public partial class DataContext
     partial void OnModelCreatingCore(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+        SetQueryFilter(modelBuilder);
+        SetStringConverter(modelBuilder);
+    }
 
+    private void SetQueryFilter(ModelBuilder modelBuilder)
+    {
         var entries = modelBuilder.Model.GetEntityTypes()
             .Where(t => typeof(DeletableEntity).IsAssignableFrom(t.ClrType))
             .ToList();
@@ -134,6 +141,22 @@ public partial class DataContext
             {
                 var genericMethod = method.MakeGenericMethod(type);
                 genericMethod.Invoke(this, new object[] { modelBuilder });
+            }
+        }
+    }
+
+    private void SetStringConverter(ModelBuilder modelBuilder)
+    {
+        foreach (var entity in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entity.GetProperties())
+            {
+                if (property.ClrType == typeof(string))
+                {
+                    modelBuilder.Entity(entity.Name)
+                        .Property(property.Name)
+                        .HasConversion(_trimStringConverter);
+                }
             }
         }
     }
