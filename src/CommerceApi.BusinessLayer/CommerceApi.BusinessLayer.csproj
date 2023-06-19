@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CommerceApi.Authentication\CommerceApi.Authentication.csproj" />
+    <ProjectReference Include="..\CommerceApi.Authorization\CommerceApi.Authorization.csproj" />
     <ProjectReference Include="..\CommerceApi.Client\CommerceApi.Client.csproj" />
     <ProjectReference Include="..\CommerceApi.DataAccessLayer\CommerceApi.DataAccessLayer.csproj" />
     <ProjectReference Include="..\CommerceApi.DataProtectionLayer\CommerceApi.DataProtectionLayer.csproj" />

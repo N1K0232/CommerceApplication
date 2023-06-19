@@ -191,15 +191,15 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IAuthenticationService, AuthenticationService>();
     services.AddScoped<ICartService, CartService>();
     services.AddScoped<ICategoryService, CategoryService>();
+    services.AddScoped<ICouponService, CouponService>();
     services.AddScoped<IIdentityService, IdentityService>();
     services.AddScoped<IImageService, ImageService>();
     services.AddScoped<IInvoiceService, InvoiceService>();
+    services.AddScoped<IKeyService, KeyService>();
     services.AddScoped<IOrderService, OrderService>();
     services.AddScoped<IProductService, ProductService>();
     services.AddScoped<ISupplierService, SupplierService>();
     services.AddScoped<IUserService, UserService>();
-    services.AddScoped<ICouponService, CouponService>();
-    services.AddScoped<IKeyService, KeyService>();
 
     //add remote services
     services.AddScoped<IPdfService, PdfService>();
