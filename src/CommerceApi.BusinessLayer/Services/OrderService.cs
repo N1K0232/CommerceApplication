@@ -83,9 +83,11 @@ public class OrderService : IOrderService
     {
         try
         {
+            var random = new Random();
             var dbOrder = new Entities.Order
             {
                 UserId = _claimService.GetId(),
+                IdentificationNumber = random.NextInt64(1, long.MaxValue).ToString(),
                 Date = DateOnly.FromDateTime(DateTime.UtcNow),
                 Time = TimeOnly.FromDateTime(DateTime.UtcNow),
                 Status = OrderStatus.New,
