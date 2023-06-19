@@ -13,7 +13,7 @@ public interface IProductService
 
     Task<Result<Product>> GetAsync(Guid productId);
 
-    Task<ListResult<Product>> GetListAsync(string orderBy, int pageIndex, int itemsPerPage);
+    Task<ListResult<Product>> GetListAsync(string name, string orderBy, int pageIndex, int itemsPerPage);
 
     Task<Result<Product>> UpdateAsync(Guid productId, SaveProductRequest product);
 

@@ -58,6 +58,7 @@ public class ProductService : IProductService
 
         try
         {
+            var random = new Random();
             var query = _dataContext.GetData<Entities.Product>();
             var productExists = await query.AnyAsync(p => p.Name == product.Name);
             if (productExists)
@@ -68,6 +69,7 @@ public class ProductService : IProductService
             var dbProduct = _mapper.Map<Entities.Product>(product);
             dbProduct.HasDiscount = product.DiscountPercentage.GetValueOrDefault() > 0;
             dbProduct.HasShipping = product.ShippingCost.GetValueOrDefault() > 0;
+            dbProduct.IdentificationCode = random.NextInt64(1, long.MaxValue).ToString();
 
             _dataContext.Create(dbProduct);
             await _dataContext.SaveAsync();
@@ -89,7 +91,7 @@ public class ProductService : IProductService
         }
 
         var dbProduct = await _dataContext.GetData<Entities.Product>().FirstOrDefaultAsync(p => p.Id == productId);
-        if (dbProduct is null)
+        if (dbProduct == null)
         {
             return Result.Fail(FailureReasons.ItemNotFound, $"No product found with id {productId}");
         }
@@ -98,9 +100,15 @@ public class ProductService : IProductService
         return product;
     }
 
-    public async Task<ListResult<Product>> GetListAsync(string orderBy, int pageIndex, int itemsPerPage)
+    public async Task<ListResult<Product>> GetListAsync(string name, string orderBy, int pageIndex, int itemsPerPage)
     {
         var query = _dataContext.GetData<Entities.Product>();
+
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            query = query.Where(p => p.Name.Contains(name));
+        }
+
         if (!string.IsNullOrWhiteSpace(orderBy))
         {
             query = query.OrderBy(orderBy);

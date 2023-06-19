@@ -65,9 +65,9 @@ public class ProductsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetList(string orderBy = null, int pageIndex = 0, int itemsPerPage = 50)
+    public async Task<IActionResult> GetList(string name = null, string orderBy = "Name, Price DESC", int pageIndex = 0, int itemsPerPage = 50)
     {
-        var products = await _productService.GetListAsync(orderBy, pageIndex, itemsPerPage);
+        var products = await _productService.GetListAsync(name, orderBy, pageIndex, itemsPerPage);
         return Ok(products);
     }
 
