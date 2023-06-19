@@ -1,4 +1,4 @@
-﻿using CommerceApi.Authentication.Configurations;
+﻿using System.Reflection;
 using CommerceApi.Authentication.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -37,8 +37,6 @@ public partial class AuthenticationDbContext
     {
         _logger = logger;
     }
-
-    public ILogger Logger => _logger;
 
     public override DbSet<ApplicationUser> Users
     {
@@ -191,7 +189,7 @@ public partial class AuthenticationDbContext
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "error while updating");
+            _logger.LogError(ex, "error while updating database");
             throw ex;
         }
         catch (TaskCanceledException ex)
@@ -209,10 +207,13 @@ public partial class AuthenticationDbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.ApplyConfiguration(new ApplicationUserConfiguration());
-        modelBuilder.ApplyConfiguration(new ApplicationUserRoleConfiguration());
-        modelBuilder.ApplyConfiguration(new AddressConfiguration());
 
+        modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+        SetStringConverter(modelBuilder);
+    }
+
+    private void SetStringConverter(ModelBuilder modelBuilder)
+    {
         foreach (var entity in modelBuilder.Model.GetEntityTypes())
         {
             foreach (var property in entity.GetProperties())
