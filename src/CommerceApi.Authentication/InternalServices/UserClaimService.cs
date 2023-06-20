@@ -26,20 +26,30 @@ internal class UserClaimService : IUserClaimService
 
     public Guid GetId() => HttpContext.User.GetId();
 
-    public ClaimsIdentity GetIdentity()
-    {
-        var identity = HttpContext.User.Identity;
-        return identity as ClaimsIdentity;
-    }
+    public ClaimsIdentity GetIdentity() => GetIdentityInternal();
 
     public Guid GetTenantId()
     {
         var tenantIdString = GetClaimValue("TenantId");
-        return Guid.TryParse(tenantIdString, out var tenantId) ? tenantId : Guid.Empty;
+
+        var parsed = Guid.TryParse(tenantIdString, out var tenantId);
+        return parsed ? tenantId : Guid.Empty;
     }
 
-    public string GetUserName() => HttpContext.User.GetUserName();
+    public string GetUserName()
+    {
+        var identity = GetIdentityInternal();
+
+        var userName = identity.Name ?? HttpContext.User.GetUserName();
+        return userName;
+    }
 
     private string GetClaimValue(string claimType)
         => HttpContext.User.GetClaimValueInternal(claimType);
+
+    private ClaimsIdentity GetIdentityInternal()
+    {
+        var identity = HttpContext.User.Identity;
+        return identity as ClaimsIdentity;
+    }
 }
