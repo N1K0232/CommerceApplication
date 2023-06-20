@@ -139,15 +139,15 @@ public class CartService : ICartService
         }
 
         var userId = _claimService.GetId();
-        var query = _dataContext.GetData<Entities.Cart>();
+        var query = _dataContext.GetData<Entities.Cart>().Where(c => c.Id == cartId && c.UserId == userId);
 
-        var cart = await query.Include(c => c.CartItems).ThenInclude(c => c.Product).FirstOrDefaultAsync(c => c.Id == cartId && c.UserId == userId);
-        var hasItems = cart?.CartItems?.Any() ?? false;
-        if (!hasItems)
+        var cartExists = await query.AnyAsync();
+        if (!cartExists)
         {
-            return Result.Fail(FailureReasons.ItemNotFound, "No item in your cart");
+            return 0M;
         }
 
+        var cart = await query.Include(c => c.CartItems).ThenInclude(c => c.Product).FirstAsync();
         var subTotal = 0M;
         foreach (var item in cart.CartItems)
         {
