@@ -1,6 +1,7 @@
 ﻿CREATE TABLE [dbo].[Products] (
     [Id]                   UNIQUEIDENTIFIER DEFAULT (newid()) NOT NULL,
     [CategoryId]           UNIQUEIDENTIFIER NOT NULL,
+    [ConstructorId]        UNIQUEIDENTIFIER NOT NULL,
     [SupplierId]           UNIQUEIDENTIFIER NOT NULL,
     [Name]                 NVARCHAR (256)   NOT NULL,
     [Description]          NVARCHAR (4000)  NOT NULL,
@@ -26,5 +27,6 @@
 
     PRIMARY KEY CLUSTERED ([Id] ASC),
     FOREIGN KEY ([CategoryId]) REFERENCES [dbo].[Categories] ([Id]),
+    FOREIGN KEY ([ConstructorId]) REFERENCES [dbo].[Constructors] ([Id]),
     FOREIGN KEY ([SupplierId]) REFERENCES [dbo].[Suppliers] ([Id])
 );

@@ -6,6 +6,8 @@ public class Product : DeletableEntity
 {
     public Guid CategoryId { get; set; }
 
+    public Guid ConstructorId { get; set; }
+
     public Guid SupplierId { get; set; }
 
     public string Name { get; set; }
@@ -31,6 +33,8 @@ public class Product : DeletableEntity
     public double? AverageScore { get; set; }
 
     public virtual Category Category { get; set; }
+
+    public virtual Constructor Constructor { get; set; }
 
     public virtual Supplier Supplier { get; set; }
 
