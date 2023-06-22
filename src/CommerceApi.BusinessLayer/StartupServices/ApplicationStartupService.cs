@@ -29,14 +29,14 @@ public class ApplicationStartupService : IHostedService
         var dataContextConnectionResult = await dataContext.TestConnectionAsync();
         if (dataContextConnectionResult)
         {
-            _logger.LogInformation("connection test succeeded for {dataContext} object", typeof(DataContext).Name);
+            _logger.LogInformation("connection test succeeded for {dataContext} object", typeof(ApplicationDbContext).Name);
 
             await dataContext.EnsureCreatedAsync();
             await dataContext.MigrateAsync();
         }
         else
         {
-            _logger.LogError("connection test failed for {dataContext} object", typeof(DataContext).Name);
+            _logger.LogError("connection test failed for {dataContext} object", typeof(ApplicationDbContext).Name);
         }
 
         var sqlContext = services.GetRequiredService<ISqlContext>();

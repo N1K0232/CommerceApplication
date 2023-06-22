@@ -13,16 +13,16 @@ using TinyHelpers.Extensions;
 
 namespace CommerceApi.DataAccessLayer;
 
-public partial class DataContext : DbContext, IDataContext
+public partial class ApplicationDbContext : DbContext, IDataContext
 {
     private readonly IConfiguration _configuration;
     private readonly IMemoryCache _memoryCache;
-    private readonly ILogger<DataContext> _logger;
+    private readonly ILogger<ApplicationDbContext> _logger;
 
     private CancellationTokenSource _tokenSource = null;
 
-    public DataContext(DbContextOptions<DataContext> options,
-        ILogger<DataContext> logger,
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options,
+        ILogger<ApplicationDbContext> logger,
         IUserClaimService claimService,
         IConfiguration configuration,
         IMemoryCache memoryCache) : base(options)

@@ -84,13 +84,13 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IEmailClient, EmailClient>();
 
     var sqlConnection = configuration.GetConnectionString("SqlConnection");
-    services.AddSqlServer<DataContext>(sqlConnection);
+    services.AddSqlServer<ApplicationDbContext>(sqlConnection);
     services.AddSqlServer<AuthenticationDbContext>(sqlConnection);
     services.AddSqlServer<DataProtectionDbContext>(sqlConnection);
 
     services.AddScoped<IDataProtectionKeyContext>(provider => provider.GetRequiredService<DataProtectionDbContext>());
-    services.AddScoped<IReadOnlyDataContext>(provider => provider.GetRequiredService<DataContext>());
-    services.AddScoped<IDataContext>(provider => provider.GetRequiredService<DataContext>());
+    services.AddScoped<IReadOnlyDataContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
+    services.AddScoped<IDataContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
     services.AddSqlContext(options =>
     {
