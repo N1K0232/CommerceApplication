@@ -2,11 +2,11 @@
 
 public class TenantContextOptions
 {
-    private IList<string> _availableTenants = null!;
+    private IList<string>? _availableTenants;
 
     public virtual IList<string> AvailableTenants
     {
-        get => _availableTenants;
-        set => _availableTenants = value;
+        get => _availableTenants ?? new List<string>();
+        set => _availableTenants = value ?? new List<string>();
     }
 }

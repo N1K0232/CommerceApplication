@@ -239,8 +239,8 @@ void Configure(IApplicationBuilder app, IApiVersionDescriptionProvider provider)
 
     app.UseHttpsRedirection();
     app.UseRouting();
-
     app.UseCors();
+
     app.UseClientContext();
     app.UseTenantContext();
 
