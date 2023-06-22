@@ -12,6 +12,7 @@ using CommerceApi.StorageProviders.Abstractions;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using OperationResults;
+using TinyHelpers.Extensions;
 using Entities = CommerceApi.DataAccessLayer.Entities;
 
 namespace CommerceApi.BusinessLayer.Services;

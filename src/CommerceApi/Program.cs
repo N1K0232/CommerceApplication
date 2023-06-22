@@ -191,6 +191,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IAuthenticationService, AuthenticationService>();
     services.AddScoped<ICartService, CartService>();
     services.AddScoped<ICategoryService, CategoryService>();
+    services.AddScoped<IConstructorService, ConstructorService>();
     services.AddScoped<ICouponService, CouponService>();
     services.AddScoped<IIdentityService, IdentityService>();
     services.AddScoped<IImageService, ImageService>();
