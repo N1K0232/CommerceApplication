@@ -263,7 +263,8 @@ public class IdentityService : IIdentityService
         generator.GetBytes(randomNumber);
         var refreshToken = Convert.ToBase64String(randomNumber);
 
-        return new LoginResponse(accessToken, refreshToken);
+        var loginResponse = new LoginResponse { AccessToken = accessToken, RefreshToken = refreshToken };
+        return loginResponse;
     }
 
     private async Task<IEnumerable<Claim>> GetClaimsAsync(ApplicationUser user)
