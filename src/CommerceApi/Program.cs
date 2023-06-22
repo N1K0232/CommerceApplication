@@ -98,8 +98,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
         options.CommandTimeout = configuration.GetValue<int>("AppSettings:CommandTimeout");
     });
 
-    services.AddScoped<ApplicationRoleManager>();
+    var jwtSettings = Configure<JwtSettings>(nameof(JwtSettings));
     services.AddScoped<ApplicationUserManager>();
+    services.AddScoped<ApplicationRoleManager>();
     services.AddScoped<ApplicationSignInManager>();
 
     services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
@@ -119,10 +120,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     .AddRoleManager<ApplicationRoleManager>()
     .AddUserManager<ApplicationUserManager>()
     .AddSignInManager<ApplicationSignInManager>();
-
-    var jwtSettingsSection = configuration.GetSection(nameof(JwtSettings));
-    var jwtSettings = jwtSettingsSection.Get<JwtSettings>();
-    services.Configure<JwtSettings>(jwtSettingsSection);
 
     services.AddAuthentication(options =>
     {
@@ -144,6 +141,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
             ClockSkew = TimeSpan.Zero
         };
     });
+
+    //services.AddAuthentication(jwtSettings);
 
     services.AddAuthorization(options =>
     {
@@ -230,6 +229,15 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
         {
             options.StorageFolder = storageFolder;
         });
+    }
+
+    T Configure<T>(string sectionName) where T : class
+    {
+        var section = configuration.GetSection(sectionName);
+        var settings = section.Get<T>();
+
+        services.Configure<T>(section);
+        return settings;
     }
 }
 

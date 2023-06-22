@@ -32,6 +32,10 @@ public class Product : DeletableEntity
 
     public double? AverageScore { get; set; }
 
+    public bool IsPublished { get; set; }
+
+    public bool IsAvailable { get; set; }
+
     public virtual Category Category { get; set; }
 
     public virtual Constructor Constructor { get; set; }

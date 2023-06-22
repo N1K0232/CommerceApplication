@@ -14,6 +14,8 @@
     [ShippingCost]         DECIMAL(5, 2)    NULL,
     [HasShipping]          BIT              NOT NULL,
     [AverageScore]         FLOAT            NULL,
+    [IsPublished]          BIT              NOT NULL,
+    [IsAvailable]          BIT              NOT NULL,
     [SecurityStamp]        NVARCHAR (MAX)   NOT NULL,
     [ConcurrencyStamp]     NVARCHAR (MAX)   NOT NULL,
     [CreationDate]         DATE         NOT NULL DEFAULT getutcdate(),

@@ -64,15 +64,40 @@ public class ProductService : IProductService
             }
 
             var dbProduct = _mapper.Map<Entities.Product>(product);
-            dbProduct.HasDiscount = product.DiscountPercentage.GetValueOrDefault() > 0;
-            dbProduct.HasShipping = product.ShippingCost.GetValueOrDefault() > 0;
             dbProduct.IdentificationCode = random.NextInt64(1, long.MaxValue).ToString();
+            dbProduct.IsPublished = true;
 
             _dataContext.Create(dbProduct);
             await _dataContext.SaveAsync();
 
             var savedProduct = _mapper.Map<Product>(dbProduct);
             return savedProduct;
+        }
+        catch (DbUpdateException ex)
+        {
+            return Result.Fail(FailureReasons.DatabaseError, ex);
+        }
+    }
+
+    public async Task<Result> DeleteAsync(Guid productId)
+    {
+        if (productId == Guid.Empty)
+        {
+            return Result.Fail(FailureReasons.ClientError, "Invalid id");
+        }
+
+        try
+        {
+            var product = await _dataContext.GetData<Entities.Product>().FirstOrDefaultAsync(p => p.Id == productId);
+            if (product is null)
+            {
+                return Result.Fail(FailureReasons.ItemNotFound, $"No product found with id {productId}");
+            }
+
+            _dataContext.Delete(product);
+            await _dataContext.SaveAsync();
+
+            return Result.Ok();
         }
         catch (DbUpdateException ex)
         {
@@ -121,32 +146,6 @@ public class ProductService : IProductService
 
         var result = new ListResult<Product>(products, totalCount, products.Count() > itemsPerPage);
         return result;
-    }
-
-    public async Task<Result> DeleteAsync(Guid productId)
-    {
-        if (productId == Guid.Empty)
-        {
-            return Result.Fail(FailureReasons.ClientError, "Invalid id");
-        }
-
-        try
-        {
-            var product = await _dataContext.GetData<Entities.Product>().FirstOrDefaultAsync(p => p.Id == productId);
-            if (product is null)
-            {
-                return Result.Fail(FailureReasons.ItemNotFound, $"No product found with id {productId}");
-            }
-
-            _dataContext.Delete(product);
-            await _dataContext.SaveAsync();
-
-            return Result.Ok();
-        }
-        catch (DbUpdateException ex)
-        {
-            return Result.Fail(FailureReasons.DatabaseError, ex);
-        }
     }
 
     public async Task<Result> UploadImageAsync(Guid productId, string fileName, Stream fileStream)

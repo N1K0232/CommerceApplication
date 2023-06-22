@@ -27,4 +27,8 @@ public class Product : BaseObject
     public bool HasShipping { get; set; }
 
     public double? AverageScore { get; set; }
+
+    public bool IsPublished { get; set; }
+
+    public bool IsAvailable { get; set; }
 }
