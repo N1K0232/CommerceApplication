@@ -29,6 +29,8 @@ public class ProductConfiguration : DeletableEntityConfiguration<Product>
         builder.HasOne(p => p.Constructor).WithMany(c => c.Products).HasForeignKey(p => p.ConstructorId).IsRequired();
         builder.HasOne(p => p.Supplier).WithMany(s => s.Products).HasForeignKey(p => p.SupplierId).IsRequired();
 
+        builder.HasIndex(p => p.Name).HasDatabaseName("IX_ProductName").IsUnique();
+
         builder.ToTable("Products");
         base.Configure(builder);
     }

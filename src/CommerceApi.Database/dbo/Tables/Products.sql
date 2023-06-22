@@ -24,9 +24,12 @@
     [DeletedDate]          DATE         NULL,
     [DeletedTime]          TIME(7)      NULL,
 
-
     PRIMARY KEY CLUSTERED ([Id] ASC),
     FOREIGN KEY ([CategoryId]) REFERENCES [dbo].[Categories] ([Id]),
     FOREIGN KEY ([ConstructorId]) REFERENCES [dbo].[Constructors] ([Id]),
     FOREIGN KEY ([SupplierId]) REFERENCES [dbo].[Suppliers] ([Id])
 );
+
+GO
+CREATE UNIQUE NONCLUSTERED INDEX [IX_ProductName]
+    ON [dbo].[Products]([Name] ASC)
