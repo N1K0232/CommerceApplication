@@ -1,15 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>preview</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
     <ItemGroup>
-       <PackageReference Include="Dapper" Version="2.0.138" />
-       <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.7" />
-       <PackageReference Include="Microsoft.Extensions.Caching.SqlServer" Version="7.0.7" />
-       <PackageReference Include="TinyHelpers" Version="2.0.31" />
+       <PackageReference Include="Dapper" Version="2.0.143" />
+       <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0-preview.5.23280.1" />
+       <PackageReference Include="Microsoft.Extensions.Caching.SqlServer" Version="8.0.0-preview.5.23302.2" />
+       <PackageReference Include="TinyHelpers" Version="2.0.35" />
     </ItemGroup>
 
     <ItemGroup>
