@@ -1,11 +1,8 @@
 using System.ComponentModel;
 using System.Net.Mime;
-using System.Text;
 using System.Text.Json;
 using CommerceApi.Authentication;
 using CommerceApi.Authentication.Common;
-using CommerceApi.Authentication.Entities;
-using CommerceApi.Authentication.Managers;
 using CommerceApi.Authentication.Settings;
 using CommerceApi.Authorization.Handlers;
 using CommerceApi.Authorization.Requirements;
@@ -27,16 +24,14 @@ using CommerceApi.Extensions;
 using CommerceApi.Security.Extensions;
 using CommerceApi.TenantContext;
 using Hellang.Middleware.ProblemDetails;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.IdentityModel.Tokens;
 using OperationResults.AspNetCore;
 using Serilog;
 
@@ -69,7 +64,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddTenantContextAccessor(options => options.AvailableTenants.Add("application"));
     services.AddMemoryCache();
     services.AddOperationResult();
-    services.AddUserClaimService();
     services.AddPasswordHasher();
     services.AddPathGenerator();
     services.AddStringHasher();
@@ -83,66 +77,37 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddSwaggerDocumentation();
     services.AddScoped<IEmailClient, EmailClient>();
 
-    var sqlConnection = configuration.GetConnectionString("SqlConnection");
-    services.AddSqlServer<ApplicationDbContext>(sqlConnection);
-    services.AddSqlServer<AuthenticationDbContext>(sqlConnection);
-    services.AddSqlServer<DataProtectionDbContext>(sqlConnection);
+    var connectionString = configuration.GetConnectionString("SqlConnection");
+    services.AddSqlServer<AuthenticationDbContext>(connectionString, sqlOptions =>
+    {
+        sqlOptions.EnableRetryOnFailure(10, TimeSpan.FromSeconds(2), null);
+    });
 
-    services.AddScoped<IDataProtectionKeyContext>(provider => provider.GetRequiredService<DataProtectionDbContext>());
+    services.AddSqlServer<ApplicationDbContext>(connectionString, options =>
+    {
+        options.EnableRetryOnFailure(10, TimeSpan.FromSeconds(2), null);
+        options.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+    });
+
+    services.AddDbContext<IDataProtectionKeyContext, DataProtectionDbContext>(options =>
+    {
+        options.UseSqlServer(connectionString, sqlOptions =>
+        {
+            sqlOptions.EnableRetryOnFailure(10, TimeSpan.FromSeconds(2), null);
+        });
+    });
+
     services.AddScoped<IReadOnlyDataContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
     services.AddScoped<IDataContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
     services.AddSqlContext(options =>
     {
-        options.ConnectionString = sqlConnection;
+        options.ConnectionString = connectionString;
         options.CommandTimeout = configuration.GetValue<int>("AppSettings:CommandTimeout");
     });
 
     var jwtSettings = Configure<JwtSettings>(nameof(JwtSettings));
-    services.AddScoped<ApplicationUserManager>();
-    services.AddScoped<ApplicationRoleManager>();
-    services.AddScoped<ApplicationSignInManager>();
-
-    services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
-    {
-        options.Lockout.MaxFailedAccessAttempts = 5;
-        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromHours(3);
-        options.Lockout.AllowedForNewUsers = true;
-        options.User.RequireUniqueEmail = true;
-        options.Password.RequiredLength = 8;
-        options.Password.RequireNonAlphanumeric = true;
-        options.Password.RequireLowercase = true;
-        options.Password.RequireUppercase = true;
-        options.Password.RequireDigit = true;
-    })
-    .AddEntityFrameworkStores<AuthenticationDbContext>()
-    .AddDefaultTokenProviders()
-    .AddRoleManager<ApplicationRoleManager>()
-    .AddUserManager<ApplicationUserManager>()
-    .AddSignInManager<ApplicationSignInManager>();
-
-    services.AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidAudience = jwtSettings.Audience,
-            ValidIssuer = jwtSettings.Issuer,
-            ValidateAudience = true,
-            ValidateIssuer = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.Default.GetBytes(jwtSettings.SecurityKey)),
-            RequireExpirationTime = true,
-            ClockSkew = TimeSpan.Zero
-        };
-    });
-
-    //services.AddAuthentication(jwtSettings);
+    services.AddAuthentication(jwtSettings);
 
     services.AddAuthorization(options =>
     {
@@ -175,7 +140,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     {
         try
         {
-            using var connection = new SqlConnection(sqlConnection);
+            using var connection = new SqlConnection(connectionString);
             await connection.OpenAsync();
         }
         catch (Exception ex)
@@ -212,13 +177,13 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddHostedService<SqlConnectionControlService>();
 
     //add storage providers
-    var storageConnection = configuration.GetConnectionString("StorageConnection");
-    if (!string.IsNullOrWhiteSpace(storageConnection))
+    var azureStorageConnection = configuration.GetConnectionString("StorageConnection");
+    if (!string.IsNullOrWhiteSpace(azureStorageConnection))
     {
         var containerName = configuration.GetValue<string>("AppSettings:ContainerName");
         services.AddAzureStorageProvider(options =>
         {
-            options.ConnectionString = storageConnection;
+            options.ConnectionString = azureStorageConnection;
             options.ContainerName = containerName;
         });
     }

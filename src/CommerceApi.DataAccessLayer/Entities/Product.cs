@@ -44,9 +44,11 @@ public class Product : DeletableEntity
 
     public virtual IList<Review> Reviews { get; set; }
 
-    public virtual IList<CartItem> CartItems { get; set; }
-
     public virtual IList<Invoice> Invoices { get; set; }
+
+    public virtual IList<Question> Questions { get; set; }
+
+    public virtual IList<CartItem> CartItems { get; set; }
 
     public virtual IList<OrderDetail> OrderDetails { get; set; }
 }
