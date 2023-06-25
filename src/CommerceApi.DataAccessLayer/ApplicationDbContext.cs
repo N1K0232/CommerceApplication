@@ -25,7 +25,8 @@ public partial class ApplicationDbContext : DbContext, IDataContext
         ILogger<ApplicationDbContext> logger,
         IUserClaimService claimService,
         IConfiguration configuration,
-        IMemoryCache memoryCache) : base(options)
+        IMemoryCache memoryCache)
+        : base(options)
     {
         _logger = logger;
         _claimService = claimService;

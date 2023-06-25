@@ -273,8 +273,8 @@ public class IdentityService : IIdentityService
         var userAddresses = await _userManager.GetAddressesAsync(user);
         var userClaims = await _userManager.GetClaimsAsync(user);
 
-        var hasItems = userClaims?.Any() ?? false;
-        if (!hasItems)
+        var hasClaims = userClaims?.Any() ?? false;
+        if (!hasClaims)
         {
             userClaims = new List<Claim> { new(ClaimTypes.NameIdentifier, user.Id.ToString()) };
             foreach (var role in userRoles)
@@ -297,8 +297,8 @@ public class IdentityService : IIdentityService
             new Claim(ClaimTypes.Name, user.UserName),
         };
 
-        hasItems = userAddresses?.Any() ?? false;
-        if (hasItems)
+        var hasAddresses = userAddresses?.Any() ?? false;
+        if (hasAddresses)
         {
             foreach (var address in userAddresses)
             {

@@ -3,7 +3,6 @@ using CommerceApi.Authentication.Extensions;
 using CommerceApi.Authorization.Filters;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.Models;
-using CommerceApi.Shared.Models;
 using CommerceApi.Shared.Models.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,10 +12,12 @@ namespace CommerceApi.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly IAuthenticationService _authenticationService;
 
-    public UsersController(IUserService userService)
+    public UsersController(IUserService userService, IAuthenticationService authenticationService)
     {
         _userService = userService;
+        _authenticationService = authenticationService;
     }
 
 
@@ -84,21 +85,9 @@ public class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public IActionResult GetMe()
+    public async Task<IActionResult> GetMe()
     {
-        var user = new User
-        {
-            Id = User.GetId(),
-            FirstName = User.GetFirstName(),
-            LastName = User.GetLastName(),
-            DateOfBirth = User.GetDateOfBirth(),
-            Age = User.GetAge(),
-            PhoneNumber = User.GetPhoneNumber(),
-            Email = User.GetEmail(),
-            UserName = User.GetUserName(),
-            Roles = User.GetRoles()
-        };
-
+        var user = await _authenticationService.GetAsync();
         return Ok(user);
     }
 }

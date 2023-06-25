@@ -20,13 +20,16 @@ internal class TenantContextMiddleware
         _tenantContextAccessor.TenantContext = new DefaultTenantContext();
 
         var host = context.Request.Host.Host;
+        var availableTenants = _tenantContextOptions.AvailableTenants;
+
         var tenants = host?.Split('.') ?? Array.Empty<string>();
         var tenant = tenants[0]?.ToLowerInvariant()?.Trim() ?? string.Empty;
 
-        if (_tenantContextOptions.AvailableTenants.Contains(tenant))
+        if (availableTenants.Contains(tenant))
         {
             _tenantContextAccessor.TenantContext.Name = tenant;
             await _next(context);
+
             return;
         }
 

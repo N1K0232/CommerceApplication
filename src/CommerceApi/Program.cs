@@ -61,7 +61,14 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
 
     services.AddHttpContextAccessor();
     services.AddClientContextAccessor();
-    services.AddTenantContextAccessor(options => options.AvailableTenants.Add("application"));
+    services.AddTenantContextAccessor(options =>
+    {
+        var tenants = Configure<IList<Tenant>>("Tenants");
+        var availableTenants = tenants.Select(t => t.Name).ToList();
+
+        options.AvailableTenants = availableTenants;
+    });
+
     services.AddMemoryCache();
     services.AddOperationResult();
     services.AddPasswordHasher();
@@ -78,25 +85,11 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IEmailClient, EmailClient>();
 
     var connectionString = configuration.GetConnectionString("SqlConnection");
-    services.AddSqlServer<AuthenticationDbContext>(connectionString, sqlOptions =>
-    {
-        sqlOptions.EnableRetryOnFailure(10, TimeSpan.FromSeconds(2), null);
-    });
+    services.AddSqlServer<ApplicationDbContext>(connectionString);
+    services.AddSqlServer<AuthenticationDbContext>(connectionString);
+    services.AddSqlServer<DataProtectionDbContext>(connectionString);
 
-    services.AddSqlServer<ApplicationDbContext>(connectionString, options =>
-    {
-        options.EnableRetryOnFailure(10, TimeSpan.FromSeconds(2), null);
-        options.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
-    });
-
-    services.AddDbContext<IDataProtectionKeyContext, DataProtectionDbContext>(options =>
-    {
-        options.UseSqlServer(connectionString, sqlOptions =>
-        {
-            sqlOptions.EnableRetryOnFailure(10, TimeSpan.FromSeconds(2), null);
-        });
-    });
-
+    services.AddScoped<IDataProtectionKeyContext>(provider => provider.GetRequiredService<DataProtectionDbContext>());
     services.AddScoped<IReadOnlyDataContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
     services.AddScoped<IDataContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
@@ -177,19 +170,18 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddHostedService<SqlConnectionControlService>();
 
     //add storage providers
-    var azureStorageConnection = configuration.GetConnectionString("StorageConnection");
-    if (!string.IsNullOrWhiteSpace(azureStorageConnection))
+    var azureStorageConnectionString = configuration.GetConnectionString("StorageConnection");
+    var storageFolder = configuration.GetValue<string>("AppSettings:StorageFolder");
+    if (!string.IsNullOrWhiteSpace(azureStorageConnectionString))
     {
-        var containerName = configuration.GetValue<string>("AppSettings:ContainerName");
         services.AddAzureStorageProvider(options =>
         {
-            options.ConnectionString = azureStorageConnection;
-            options.ContainerName = containerName;
+            options.ConnectionString = azureStorageConnectionString;
+            options.ContainerName = storageFolder;
         });
     }
     else
     {
-        var storageFolder = configuration.GetValue<string>("AppSettings:StorageFolder");
         services.AddFileSystemStorageProvider(options =>
         {
             options.StorageFolder = storageFolder;

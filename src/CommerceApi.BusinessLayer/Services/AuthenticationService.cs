@@ -24,9 +24,15 @@ public class AuthenticationService : IAuthenticationService
     public async Task<User> GetAsync()
     {
         var userId = await GetUserIdCoreAsync();
+
         var dbUser = await _userManager.FindByIdAsync(userId.ToString());
+        var userRoles = await _userManager.GetRolesAsync(dbUser);
+        var addresses = await _userManager.GetAddressesAsync(dbUser);
 
         var user = _mapper.Map<User>(dbUser);
+        user.Roles = userRoles;
+        user.Addresses = _mapper.Map<IEnumerable<Address>>(addresses);
+
         return user;
     }
 
