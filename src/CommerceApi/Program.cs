@@ -85,9 +85,22 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IEmailClient, EmailClient>();
 
     var connectionString = configuration.GetConnectionString("SqlConnection");
-    services.AddSqlServer<ApplicationDbContext>(connectionString);
-    services.AddSqlServer<AuthenticationDbContext>(connectionString);
-    services.AddSqlServer<DataProtectionDbContext>(connectionString);
+    services.AddSqlServer<ApplicationDbContext>(connectionString, options =>
+    {
+        options.EnableRetryOnFailure(10, TimeSpan.FromSeconds(2), null);
+        options.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+    });
+
+    services.AddSqlServer<AuthenticationDbContext>(connectionString, options =>
+    {
+        options.EnableRetryOnFailure(10, TimeSpan.FromSeconds(2), null);
+        options.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+    });
+
+    services.AddSqlServer<DataProtectionDbContext>(connectionString, options =>
+    {
+        options.EnableRetryOnFailure(10, TimeSpan.FromSeconds(2), null);
+    });
 
     services.AddScoped<IDataProtectionKeyContext>(provider => provider.GetRequiredService<DataProtectionDbContext>());
     services.AddScoped<IReadOnlyDataContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
@@ -126,9 +139,16 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
             policy.RequireRole(RoleNames.PowerUser);
             policy.Requirements.Add(new UserActiveRequirement());
         });
+
+        options.AddPolicy("Tenant", policy =>
+        {
+            policy.Requirements.Add(new TenantRequirement());
+        });
     });
 
     services.AddScoped<IAuthorizationHandler, UserActiveHandler>();
+    services.AddScoped<IAuthorizationHandler, TenantHandler>();
+
     services.AddHealthChecks().AddAsyncCheck("sql", async () =>
     {
         try
