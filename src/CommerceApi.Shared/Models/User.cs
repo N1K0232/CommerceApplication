@@ -4,21 +4,21 @@ namespace CommerceApi.Shared.Models;
 
 public class User : BaseObject
 {
-    public string FirstName { get; init; } = null!;
+    public string FirstName { get; set; } = null!;
 
-    public string? LastName { get; init; }
+    public string? LastName { get; set; }
 
-    public DateTime DateOfBirth { get; init; }
+    public DateTime DateOfBirth { get; set; }
 
-    public int? Age { get; init; }
+    public int? Age { get; set; }
 
-    public string PhoneNumber { get; init; } = null!;
+    public string PhoneNumber { get; set; } = null!;
 
-    public string Email { get; init; } = null!;
+    public string Email { get; set; } = null!;
 
-    public string? UserName { get; init; }
+    public string? UserName { get; set; }
 
     public IEnumerable<Address> Addresses { get; set; } = null!;
 
-    public IEnumerable<string> Roles { get; init; } = null!;
+    public IEnumerable<string> Roles { get; set; } = null!;
 }
