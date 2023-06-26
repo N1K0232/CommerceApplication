@@ -1,9 +1,9 @@
-﻿using CommerceApi.Models;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace CommerceApi.OperationFilters;
+namespace CommerceApi.Swagger;
 
 public class FormFileOperationFilter : IOperationFilter
 {
@@ -13,7 +13,9 @@ public class FormFileOperationFilter : IOperationFilter
             .ActionDescriptor
             .EndpointMetadata
             .OfType<IAcceptsMetadata>()
-            .Any(m => m.RequestType == typeof(IFormFile) || m.RequestType == typeof(FormFileContent));
+            .Any(m => m.RequestType == typeof(IFormFile) ||
+                      m.RequestType == typeof(FormFileContent) ||
+                      m.RequestType == typeof(FormFilesContent));
 
         if (acceptsFormFile)
         {

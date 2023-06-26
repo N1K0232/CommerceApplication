@@ -43,6 +43,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommerceApi.DataProtectionL
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{06819659-57D2-4BA4-8C63-10A6E6953586}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommerceApi.Swagger", "src\CommerceApi.Swagger\CommerceApi.Swagger.csproj", "{CD46534A-59A5-41CA-BE8D-DADF082761F0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,6 +113,10 @@ Global
 		{7C02EF1F-2B80-4719-9465-A4B9290BC0B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C02EF1F-2B80-4719-9465-A4B9290BC0B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7C02EF1F-2B80-4719-9465-A4B9290BC0B7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD46534A-59A5-41CA-BE8D-DADF082761F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD46534A-59A5-41CA-BE8D-DADF082761F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD46534A-59A5-41CA-BE8D-DADF082761F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD46534A-59A5-41CA-BE8D-DADF082761F0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -131,6 +137,7 @@ Global
 		{FC78172E-BA84-4826-BD45-05086833809C} = {06819659-57D2-4BA4-8C63-10A6E6953586}
 		{00D99841-521A-4D23-9172-D18537E24046} = {06819659-57D2-4BA4-8C63-10A6E6953586}
 		{7C02EF1F-2B80-4719-9465-A4B9290BC0B7} = {06819659-57D2-4BA4-8C63-10A6E6953586}
+		{CD46534A-59A5-41CA-BE8D-DADF082761F0} = {06819659-57D2-4BA4-8C63-10A6E6953586}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {390C601E-E068-4BF2-A251-4C5583EB7152}

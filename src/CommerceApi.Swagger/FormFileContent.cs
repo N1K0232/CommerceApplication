@@ -1,10 +1,10 @@
-﻿using CommerceApi.Filters;
+﻿using Microsoft.AspNetCore.Http;
 
-namespace CommerceApi.Models;
+namespace CommerceApi.Swagger;
 
 public class FormFileContent
 {
-    public FormFileContent([AllowedExtensions("*.jpg", "*.jpeg", "*.png")] IFormFile file)
+    public FormFileContent(IFormFile file)
     {
         File = file;
     }
@@ -13,7 +13,7 @@ public class FormFileContent
 
     public Stream GetFileStream() => File.OpenReadStream();
 
-    public static async ValueTask<FormFileContent> BindAsync(HttpContext context)
+    public static async ValueTask<FormFileContent?> BindAsync(HttpContext context)
     {
         var request = context.Request;
         if (!request.HasFormContentType)
@@ -21,7 +21,7 @@ public class FormFileContent
             return null;
         }
 
-        var form = await request.ReadFormAsync();
+        var form = await request.ReadFormAsync().ConfigureAwait(false);
         var file = form.Files?.ElementAtOrDefault(0);
 
         if (file is null)

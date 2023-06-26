@@ -1,4 +1,4 @@
-﻿using CommerceApi.Filters;
+﻿using CommerceApi.Swagger.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace CommerceApi.Requests;

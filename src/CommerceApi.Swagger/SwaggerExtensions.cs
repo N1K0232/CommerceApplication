@@ -2,19 +2,22 @@
 using System.Text.Json.Serialization;
 using CommerceApi.ClientContext;
 using CommerceApi.ClientContext.Converters;
-using CommerceApi.Documentation;
-using CommerceApi.OperationFilters;
+using CommerceApi.Swagger.Documentation;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using TinyHelpers.Json.Serialization;
 
-namespace CommerceApi.Extensions;
+namespace CommerceApi.Swagger.Extensions;
 
-public static class SwaggerOptionServiceCollectionExtensions
+public static class SwaggerExtensions
 {
     public static IServiceCollection AddSwaggerDocumentation(this IServiceCollection services)
     {
@@ -32,6 +35,7 @@ public static class SwaggerOptionServiceCollectionExtensions
         {
             options.ReportApiVersions = true;
         });
+
         services.AddVersionedApiExplorer(options =>
         {
             options.GroupNameFormat = "'v'VVV";
@@ -41,6 +45,8 @@ public static class SwaggerOptionServiceCollectionExtensions
         services.AddEndpointsApiExplorer();
 
         services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
+        services.AddSingleton<IActionResultExecutor<ObjectResult>, ProblemDetailsResultExecutor>();
+
         services.AddSwaggerGen(options =>
         {
             options.OperationFilter<FormFileOperationFilter>();

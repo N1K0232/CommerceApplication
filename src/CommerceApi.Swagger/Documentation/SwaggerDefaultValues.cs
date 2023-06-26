@@ -2,7 +2,7 @@
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace CommerceApi.Documentation;
+namespace CommerceApi.Swagger.Documentation;
 
 public class SwaggerDefaultValues : IOperationFilter
 {

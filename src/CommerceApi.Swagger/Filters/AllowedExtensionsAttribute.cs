@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
-namespace CommerceApi.Filters;
+namespace CommerceApi.Swagger.Filters;
 
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter, AllowMultiple = false)]
 public class AllowedExtensionsAttribute : ValidationAttribute
@@ -12,7 +13,7 @@ public class AllowedExtensionsAttribute : ValidationAttribute
         _extensions = extensions.Select(e => e.ToLowerInvariant().Replace("*.", string.Empty));
     }
 
-    protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+    protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
     {
         if (value is IFormFile file)
         {
