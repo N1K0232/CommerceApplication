@@ -6,7 +6,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace CommerceApi.Swagger.Documentation;
 
-public class ConfigureSwaggerOptions : IConfigureOptions<SwaggerGenOptions>
+internal class ConfigureSwaggerOptions : IConfigureOptions<SwaggerGenOptions>
 {
     private readonly IApiVersionDescriptionProvider _provider;
 

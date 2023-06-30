@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using CommerceApi.ClientContext;
 using CommerceApi.ClientContext.Converters;
 using CommerceApi.Swagger.Documentation;
@@ -19,8 +18,21 @@ namespace CommerceApi.Swagger.Extensions;
 
 public static class SwaggerExtensions
 {
-    public static IServiceCollection AddSwaggerDocumentation(this IServiceCollection services)
+    public static IServiceCollection AddSwaggerDocumentation(this IServiceCollection services, string xmlFile)
     {
+        var supportedCultures = new[] { "en", "it", "de", "fr" };
+        var localizationOptions = new RequestLocalizationOptions()
+            .AddSupportedCultures(supportedCultures)
+            .AddSupportedUICultures(supportedCultures)
+            .SetDefaultCulture(supportedCultures[0]);
+
+        services.Configure<RequestLocalizationOptions>(options =>
+        {
+            options.SupportedCultures = localizationOptions.SupportedCultures;
+            options.SupportedUICultures = localizationOptions.SupportedUICultures;
+            options.DefaultRequestCulture = localizationOptions.DefaultRequestCulture;
+        });
+
         services.AddControllers().AddJsonOptions(options =>
         {
             options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
@@ -49,7 +61,8 @@ public static class SwaggerExtensions
 
         services.AddSwaggerGen(options =>
         {
-            options.OperationFilter<FormFileOperationFilter>();
+            //options.OperationFilter<FormFileOperationFilter>();
+            options.OperationFilter<CultureAwareOperationFilter>();
             options.OperationFilter<SwaggerDefaultValues>();
 
             options.AddClientContextOperationFilter();
@@ -80,8 +93,7 @@ public static class SwaggerExtensions
                 }
             });
 
-            var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+            var xmlPath = Path.Combine(AppContext.BaseDirectory, $"{xmlFile}.xml");
             options.IncludeXmlComments(xmlPath);
 
             options.CustomOperationIds(api => $"{api.ActionDescriptor.RouteValues["controller"]}_{api.ActionDescriptor.RouteValues["action"]}");

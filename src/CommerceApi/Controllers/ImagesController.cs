@@ -1,6 +1,7 @@
 ﻿using CommerceApi.Authentication.Common;
 using CommerceApi.Authorization.Filters;
 using CommerceApi.BusinessLayer.Services.Interfaces;
+using CommerceApi.Swagger.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CommerceApi.Controllers;
@@ -64,9 +65,10 @@ public class ImagesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Upload(IFormFile file, string title, string description)
+    public async Task<IActionResult> Upload([FromForm] FormFileContent content)
     {
-        var uploadResult = await _imageService.UploadAsync(file.OpenReadStream(), file.FileName, title, description);
+        var file = content.File;
+        var uploadResult = await _imageService.UploadAsync(file.OpenReadStream(), file.FileName, content.Title, content.Description);
         return CreateResponse(uploadResult, StatusCodes.Status200OK);
     }
 }

@@ -4,7 +4,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace CommerceApi.Swagger.Documentation;
 
-public class SwaggerDefaultValues : IOperationFilter
+internal class SwaggerDefaultValues : IOperationFilter
 {
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
@@ -18,12 +18,10 @@ public class SwaggerDefaultValues : IOperationFilter
 
         foreach (var parameter in operation.Parameters)
         {
-            var description = apiDescription.ParameterDescriptions.First(p => p.Name == parameter.Name);
+            var descriptions = apiDescription.ParameterDescriptions;
+            var description = descriptions?.FirstOrDefault(p => p.Name == parameter.Name);
 
-            if (parameter.Description == null)
-            {
-                parameter.Description = description.ModelMetadata?.Description;
-            }
+            parameter.Description ??= description?.ModelMetadata.Description ?? string.Empty;
 
             //if (parameter.Default == null)
             //{

@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Net.Mime;
+using System.Reflection;
 using System.Text.Json;
 using CommerceApi.Authentication;
 using CommerceApi.Authentication.Common;
@@ -21,7 +22,7 @@ using CommerceApi.DataAccessLayer.Extensions;
 using CommerceApi.DataProtectionLayer;
 using CommerceApi.DataProtectionLayer.Extensions;
 using CommerceApi.Security.Extensions;
-using CommerceApi.Swagger;
+using CommerceApi.Swagger.Extensions;
 using CommerceApi.TenantContext;
 using Hellang.Middleware.ProblemDetails;
 using Microsoft.AspNetCore.Authorization;
@@ -36,6 +37,8 @@ using OperationResults.AspNetCore;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddJsonFile("appsettings.local.json", optional: true);
+
 ConfigureServices(builder.Services, builder.Configuration, builder.Host);
 
 var app = builder.Build();
@@ -56,7 +59,13 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
 
     services.AddProblemDetails(options =>
     {
-        options.Map<Exception>(ex => new StatusCodeProblemDetails(StatusCodes.Status500InternalServerError));
+        options.Map<Exception>(ex => new StatusCodeProblemDetails(StatusCodes.Status500InternalServerError)
+        {
+            Detail = ex.Message,
+            Instance = ex.GetType().ToString(),
+            Type = ex.GetType().ToString(),
+            Title = ex.Source
+        });
     });
 
     services.AddHttpContextAccessor();
@@ -81,7 +90,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddMapperProfiles();
     services.AddValidators();
 
-    services.AddSwaggerDocumentation();
+    services.AddSwaggerDocumentation(Assembly.GetExecutingAssembly().GetName().Name);
     services.AddScoped<IEmailClient, EmailClient>();
 
     var connectionString = configuration.GetConnectionString("SqlConnection");

@@ -1,15 +1,14 @@
 ﻿using Microsoft.AspNetCore.Http;
 
-namespace CommerceApi.Swagger;
+namespace CommerceApi.Swagger.Models;
 
 public class FormFilesContent
 {
-    public FormFilesContent(IEnumerable<IFormFile> files)
+    public FormFilesContent()
     {
-        Files = files;
     }
 
-    public IEnumerable<IFormFile> Files { get; }
+    public IEnumerable<IFormFile> Files { get; internal set; } = null!;
 
     public IEnumerable<Stream> GetFileStreams()
     {
@@ -35,13 +34,12 @@ public class FormFilesContent
         var form = await request.ReadFormAsync().ConfigureAwait(false);
         var files = form.Files;
 
-        var hasItems = files?.Any() ?? false;
-        if (!hasItems)
+        if (files == null || !files.Any())
         {
             return null;
         }
 
-        var content = new FormFilesContent(files);
+        var content = new FormFilesContent { Files = files };
         return content;
     }
 }
