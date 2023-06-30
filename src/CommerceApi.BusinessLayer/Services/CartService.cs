@@ -65,7 +65,7 @@ public class CartService : ICartService
 
         try
         {
-            var query = _dataContext.GetData<Entities.Cart>();
+            var query = _dataContext.Get<Entities.Cart>();
 
             var dbCart = await query.Include(c => c.CartItems).FirstOrDefaultAsync(c => c.Id == cartId);
             if (dbCart is not null)
@@ -89,7 +89,7 @@ public class CartService : ICartService
         try
         {
             var userId = _claimService.GetId();
-            var cartExists = await _dataContext.GetData<Entities.Cart>().AnyAsync(c => c.UserId == userId);
+            var cartExists = await _dataContext.Get<Entities.Cart>().AnyAsync(c => c.UserId == userId);
             if (cartExists)
             {
                 return Result.Fail(FailureReasons.Conflict, "cart already exists");
@@ -122,7 +122,7 @@ public class CartService : ICartService
         }
 
         var userId = _claimService.GetId();
-        var query = _dataContext.GetData<Entities.Cart>().Where(c => c.Id == cartId && c.UserId == userId);
+        var query = _dataContext.Get<Entities.Cart>().Where(c => c.Id == cartId && c.UserId == userId);
 
         var cart = await query.Include(c => c.CartItems).FirstOrDefaultAsync();
         var cartItems = _mapper.Map<IEnumerable<CartItem>>(cart.CartItems);
@@ -139,7 +139,7 @@ public class CartService : ICartService
         }
 
         var userId = _claimService.GetId();
-        var query = _dataContext.GetData<Entities.Cart>().Where(c => c.Id == cartId && c.UserId == userId);
+        var query = _dataContext.Get<Entities.Cart>().Where(c => c.Id == cartId && c.UserId == userId);
 
         var cartExists = await query.AnyAsync();
         if (!cartExists)
@@ -171,7 +171,7 @@ public class CartService : ICartService
 
         try
         {
-            var query = _dataContext.GetData<Entities.CartItem>(trackingChanges: true);
+            var query = _dataContext.Get<Entities.CartItem>(trackingChanges: true);
             var cartItem = await query.FirstOrDefaultAsync(c => c.Id == itemId && c.CartId == cartId);
             if (cartItem is not null)
             {

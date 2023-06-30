@@ -24,13 +24,13 @@ public class SaveItemValidator : AbstractValidator<SaveItemRequest>
 
     private bool CartExists(Guid cartId)
     {
-        var cartExists = _dataContext.GetData<Cart>().Any(c => c.Id == cartId);
+        var cartExists = _dataContext.Get<Cart>().Any(c => c.Id == cartId);
         return cartExists;
     }
 
     private bool ProductExists(Guid productId)
     {
-        var productExists = _dataContext.GetData<Product>().Any(p => p.Id == productId);
+        var productExists = _dataContext.Get<Product>().Any(p => p.Id == productId);
         return productExists;
     }
 }

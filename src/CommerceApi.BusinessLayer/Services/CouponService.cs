@@ -79,7 +79,7 @@ public class CouponService : ICouponService
 
         try
         {
-            var query = _dataContext.GetData<Entities.Coupon>(trackingChanges: true);
+            var query = _dataContext.Get<Entities.Coupon>(trackingChanges: true);
             var coupon = await query.FirstOrDefaultAsync(c => c.Id == couponId);
             if (coupon != null)
             {
@@ -101,7 +101,7 @@ public class CouponService : ICouponService
 
     public async Task<IEnumerable<Coupon>> GetListAsync(Guid userId)
     {
-        var query = _dataContext.GetData<Entities.Coupon>();
+        var query = _dataContext.Get<Entities.Coupon>();
 
         if (userId != Guid.Empty)
         {
@@ -126,7 +126,7 @@ public class CouponService : ICouponService
             return Result.Fail(FailureReasons.ClientError, "Invalid id");
         }
 
-        var query = _dataContext.GetData<Entities.Coupon>();
+        var query = _dataContext.Get<Entities.Coupon>();
         var dbCoupon = await query.FirstOrDefaultAsync(c => c.Id == couponId);
         if (dbCoupon == null)
         {
@@ -155,7 +155,7 @@ public class CouponService : ICouponService
 
         try
         {
-            var query = _dataContext.GetData<Entities.Coupon>(trackingChanges: true);
+            var query = _dataContext.Get<Entities.Coupon>(trackingChanges: true);
             var dbCoupon = await query.FirstOrDefaultAsync(c => c.Id == couponId);
             if (dbCoupon == null)
             {
@@ -184,7 +184,7 @@ public class CouponService : ICouponService
 
         try
         {
-            var query = _dataContext.GetData<Entities.Coupon>(trackingChanges: true);
+            var query = _dataContext.Get<Entities.Coupon>(trackingChanges: true);
             var dbCoupon = await query.FirstOrDefaultAsync(c => c.Id == couponId);
             if (dbCoupon == null)
             {

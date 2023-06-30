@@ -94,7 +94,7 @@ public class CategoryService : ICategoryService
 
     public async Task<IEnumerable<Category>> GetListAsync()
     {
-        var query = _dataContext.GetData<Entities.Category>();
+        var query = _dataContext.Get<Entities.Category>();
         var dbCategories = await query.OrderBy(c => c.Name).ToListAsync();
 
         var categories = _mapper.Map<IEnumerable<Category>>(dbCategories);

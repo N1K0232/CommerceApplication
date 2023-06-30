@@ -95,7 +95,7 @@ public class SupplierService : ISupplierService
 
     public async Task<IEnumerable<Supplier>> GetListAsync()
     {
-        var query = _dataContext.GetData<Entities.Supplier>();
+        var query = _dataContext.Get<Entities.Supplier>();
 
         var suppliers = await query.OrderBy(s => s.CompanyName).ProjectTo<Supplier>(_mapper.ConfigurationProvider).ToListAsync();
         return suppliers;

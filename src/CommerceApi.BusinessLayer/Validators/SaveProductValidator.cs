@@ -28,7 +28,7 @@ public class SaveProductValidator : AbstractValidator<SaveProductRequest>
 
     private bool ExistsCategory(Guid categoryId)
     {
-        var query = _dataContext.GetData<Category>();
+        var query = _dataContext.Get<Category>();
 
         var categoryExists = query.Any(c => c.Id == categoryId);
         return categoryExists;
@@ -36,7 +36,7 @@ public class SaveProductValidator : AbstractValidator<SaveProductRequest>
 
     private bool ExistsConstructor(Guid constructorId)
     {
-        var query = _dataContext.GetData<Constructor>();
+        var query = _dataContext.Get<Constructor>();
 
         var constructorExists = query.Any(c => c.Id == constructorId);
         return constructorExists;
@@ -44,7 +44,7 @@ public class SaveProductValidator : AbstractValidator<SaveProductRequest>
 
     private bool ExistsSupplier(Guid supplierId)
     {
-        var query = _dataContext.GetData<Supplier>();
+        var query = _dataContext.Get<Supplier>();
 
         var supplierExists = query.Any(s => s.Id == supplierId);
         return supplierExists;

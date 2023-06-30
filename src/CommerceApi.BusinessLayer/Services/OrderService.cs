@@ -49,8 +49,8 @@ public class OrderService : IOrderService
             }
 
 
-            var dbProduct = await _dataContext.GetData<Entities.Product>(trackingChanges: true).FirstOrDefaultAsync(p => p.Id == order.ProductId);
-            var dbOrder = await _dataContext.GetData<Entities.Order>().FirstOrDefaultAsync(o => o.Id == order.OrderId && o.UserId == _claimService.GetId());
+            var dbProduct = await _dataContext.Get<Entities.Product>(trackingChanges: true).FirstOrDefaultAsync(p => p.Id == order.ProductId);
+            var dbOrder = await _dataContext.Get<Entities.Order>().FirstOrDefaultAsync(o => o.Id == order.OrderId && o.UserId == _claimService.GetId());
 
             var orderDetail = new Entities.OrderDetail
             {
@@ -113,7 +113,7 @@ public class OrderService : IOrderService
 
         try
         {
-            var query = _dataContext.GetData<Entities.Order>();
+            var query = _dataContext.Get<Entities.Order>();
             var dbOrder = await query.Include(o => o.OrderDetails).FirstOrDefaultAsync(o => o.Id == orderId);
             if (dbOrder == null)
             {
@@ -146,7 +146,7 @@ public class OrderService : IOrderService
             return Result.Fail(FailureReasons.ClientError, "Invalid id");
         }
 
-        var query = _dataContext.GetData<Entities.Order>();
+        var query = _dataContext.Get<Entities.Order>();
         var dbOrder = await query.FirstOrDefaultAsync(o => o.Id == orderId);
         if (dbOrder == null)
         {
@@ -161,7 +161,7 @@ public class OrderService : IOrderService
 
     public async Task<ListResult<Order>> GetListAsync(string orderBy, int pageIndex, int itemsPerPage)
     {
-        var query = _dataContext.GetData<Entities.Order>();
+        var query = _dataContext.Get<Entities.Order>();
         var userId = _claimService.GetId();
 
         if (userId != Guid.Empty)
@@ -198,7 +198,7 @@ public class OrderService : IOrderService
         var totalPrice = 0M;
         var userId = _claimService.GetId();
 
-        var query = _dataContext.GetData<Entities.Order>();
+        var query = _dataContext.Get<Entities.Order>();
         var order = await query.Include(o => o.OrderDetails).ThenInclude(o => o.Product).FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == userId);
 
         var hasItems = order?.OrderDetails?.Any() ?? false;
@@ -224,7 +224,7 @@ public class OrderService : IOrderService
 
         try
         {
-            var query = _dataContext.GetData<Entities.Order>(trackingChanges: true);
+            var query = _dataContext.Get<Entities.Order>(trackingChanges: true);
             var dbOrder = await query.FirstOrDefaultAsync(o => o.Id == request.OrderId);
             if (dbOrder is null)
             {
@@ -252,7 +252,7 @@ public class OrderService : IOrderService
 
     private async Task<IEnumerable<Product>> GetProductsAsync(Guid orderId)
     {
-        var query = _dataContext.GetData<Entities.OrderDetail>();
+        var query = _dataContext.Get<Entities.OrderDetail>();
         var hasDetails = await query.AnyAsync(o => o.OrderId == orderId);
         if (!hasDetails)
         {

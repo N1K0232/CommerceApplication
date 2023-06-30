@@ -24,7 +24,7 @@ public class SaveReviewValidator : AbstractValidator<SaveReviewRequest>
 
     private bool ProductExists(Guid productId)
     {
-        var query = _dataContext.GetData<Product>();
+        var query = _dataContext.Get<Product>();
 
         var productExists = query.Any(p => p.Id == productId);
         return productExists;

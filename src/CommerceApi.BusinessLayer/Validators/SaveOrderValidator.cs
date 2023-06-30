@@ -26,7 +26,7 @@ public class SaveOrderValidator : AbstractValidator<SaveOrderDetail>
 
     private bool OrderExist(Guid orderId)
     {
-        var orderExists = _dataContext.GetData<Entities.Order>()
+        var orderExists = _dataContext.Get<Entities.Order>()
             .Any(o => o.Id == orderId && o.UserId == _claimService.GetId());
 
         return orderExists;
@@ -34,7 +34,7 @@ public class SaveOrderValidator : AbstractValidator<SaveOrderDetail>
 
     private bool ProductExist(Guid productId)
     {
-        var productExists = _dataContext.GetData<Entities.Product>()
+        var productExists = _dataContext.Get<Entities.Product>()
             .Any(p => p.Id == productId);
 
         return productExists;

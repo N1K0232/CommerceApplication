@@ -105,7 +105,7 @@ public partial class ApplicationDbContext : DbContext, IDataContext
         return await set.FindAsync(keyValues, token).ConfigureAwait(false);
     }
 
-    public IQueryable<TEntity> GetData<TEntity>(bool ignoreQueryFilters = false, bool trackingChanges = false) where TEntity : BaseEntity
+    public IQueryable<TEntity> Get<TEntity>(bool ignoreQueryFilters = false, bool trackingChanges = false) where TEntity : BaseEntity
     {
         var set = Set<TEntity>().AsQueryable();
         if (ignoreQueryFilters)

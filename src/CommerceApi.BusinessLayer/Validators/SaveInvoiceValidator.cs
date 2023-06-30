@@ -24,7 +24,7 @@ public class SaveInvoiceValidator : AbstractValidator<SaveInvoiceRequest>
 
     private bool ProductExists(Guid productId)
     {
-        var productExists = _dataContext.GetData<Product>().Any(p => p.Id == productId);
+        var productExists = _dataContext.Get<Product>().Any(p => p.Id == productId);
         return productExists;
     }
 }

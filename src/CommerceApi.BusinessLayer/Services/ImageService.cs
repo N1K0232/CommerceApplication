@@ -56,7 +56,7 @@ public class ImageService : IImageService
 
     public async Task<IEnumerable<Image>> GetListAsync()
     {
-        var query = _dataContext.GetData<Entities.Image>();
+        var query = _dataContext.Get<Entities.Image>();
 
         var dbImages = await query.OrderBy(i => i.Path).ToListAsync();
         var images = _mapper.Map<IEnumerable<Image>>(dbImages);

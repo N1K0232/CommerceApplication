@@ -36,7 +36,7 @@ public class ConstructorService : IConstructorService
 
         try
         {
-            var query = _dataContext.GetData<Entities.Constructor>();
+            var query = _dataContext.Get<Entities.Constructor>();
             var constructorExists = await query.AnyAsync(c => c.Name == constructor.Name);
             if (constructorExists)
             {
@@ -101,7 +101,7 @@ public class ConstructorService : IConstructorService
 
     public async Task<IEnumerable<Constructor>> GetListAsync(string city)
     {
-        var query = _dataContext.GetData<Entities.Constructor>();
+        var query = _dataContext.Get<Entities.Constructor>();
         if (!string.IsNullOrWhiteSpace(city))
         {
             query = query.Where(c => c.City.Contains(city));
@@ -130,7 +130,7 @@ public class ConstructorService : IConstructorService
 
         try
         {
-            var query = _dataContext.GetData<Entities.Constructor>(trackingChanges: true);
+            var query = _dataContext.Get<Entities.Constructor>(trackingChanges: true);
             var dbConstructor = await query.FirstOrDefaultAsync(c => c.Id == constructorId);
 
             if (dbConstructor == null)

@@ -56,7 +56,7 @@ public class ProductService : IProductService
         try
         {
             var random = new Random();
-            var query = _dataContext.GetData<Entities.Product>();
+            var query = _dataContext.Get<Entities.Product>();
             var productExists = await query.AnyAsync(p => p.Name == product.Name);
             if (productExists)
             {
@@ -88,7 +88,7 @@ public class ProductService : IProductService
 
         try
         {
-            var product = await _dataContext.GetData<Entities.Product>().FirstOrDefaultAsync(p => p.Id == productId);
+            var product = await _dataContext.Get<Entities.Product>().FirstOrDefaultAsync(p => p.Id == productId);
             if (product is null)
             {
                 return Result.Fail(FailureReasons.ItemNotFound, $"No product found with id {productId}");
@@ -112,7 +112,7 @@ public class ProductService : IProductService
             return Result.Fail(FailureReasons.ClientError, "Invalid id");
         }
 
-        var dbProduct = await _dataContext.GetData<Entities.Product>().FirstOrDefaultAsync(p => p.Id == productId);
+        var dbProduct = await _dataContext.Get<Entities.Product>().FirstOrDefaultAsync(p => p.Id == productId);
         if (dbProduct == null)
         {
             return Result.Fail(FailureReasons.ItemNotFound, $"No product found with id {productId}");
@@ -124,7 +124,7 @@ public class ProductService : IProductService
 
     public async Task<ListResult<Product>> GetListAsync(string name, string orderBy, int pageIndex, int itemsPerPage)
     {
-        var query = _dataContext.GetData<Entities.Product>();
+        var query = _dataContext.Get<Entities.Product>();
 
         if (!string.IsNullOrWhiteSpace(name))
         {
@@ -157,7 +157,7 @@ public class ProductService : IProductService
 
         try
         {
-            var query = _dataContext.GetData<Entities.Product>();
+            var query = _dataContext.Get<Entities.Product>();
             var productExists = await query.AnyAsync(p => p.Id == productId);
             if (!productExists)
             {
@@ -192,7 +192,7 @@ public class ProductService : IProductService
 
         try
         {
-            var query = _dataContext.GetData<Entities.Product>(ignoreQueryFilters: true, trackingChanges: true);
+            var query = _dataContext.Get<Entities.Product>(ignoreQueryFilters: true, trackingChanges: true);
             var dbProduct = await query.FirstOrDefaultAsync(p => p.Id == productId);
             if (dbProduct is null)
             {
@@ -248,7 +248,7 @@ public class ProductService : IProductService
 
     private async Task UpdateAverageScoreAsync(Guid productId)
     {
-        var query = _dataContext.GetData<Entities.Product>(trackingChanges: true);
+        var query = _dataContext.Get<Entities.Product>(trackingChanges: true);
         var product = await query.Include(p => p.Reviews).FirstAsync(p => p.Id == productId);
 
         var score = 0;
@@ -269,7 +269,7 @@ public class ProductService : IProductService
             return Result.Fail(FailureReasons.ClientError, "invalid id");
         }
 
-        var query = _dataContext.GetData<Entities.Product>();
+        var query = _dataContext.Get<Entities.Product>();
 
         var productExists = await query.AnyAsync(p => p.Id == productId);
         if (!productExists)

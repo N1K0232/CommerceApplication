@@ -96,7 +96,7 @@ public class InvoiceService : IInvoiceService
 
     public async Task<IEnumerable<Invoice>> GetListAsync()
     {
-        var query = _dataContext.GetData<Entities.Invoice>();
+        var query = _dataContext.Get<Entities.Invoice>();
 
         var invoices = await query.ProjectTo<Invoice>(_mapper.ConfigurationProvider).ToListAsync();
         return invoices;
