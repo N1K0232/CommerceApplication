@@ -16,7 +16,7 @@ public class ImagesController : ControllerBase
     }
 
 
-    [HttpDelete]
+    [HttpDelete("DeleteImage/{imageId:guid}")]
     [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -30,7 +30,7 @@ public class ImagesController : ControllerBase
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
-    [HttpGet]
+    [HttpGet("GetList")]
     [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser, RoleNames.User)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -43,7 +43,7 @@ public class ImagesController : ControllerBase
         return Ok(images);
     }
 
-    [HttpGet("{imageId:guid}")]
+    [HttpGet("GetImage/{imageId:guid}")]
     [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser, RoleNames.User)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -59,16 +59,18 @@ public class ImagesController : ControllerBase
     [HttpPost]
     [Consumes("multipart/form-data")]
     [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser, RoleNames.User)]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Upload([FromForm] FormFileContent content)
+    public async Task<IActionResult> Upload([FromForm] UploadImageRequest request)
     {
-        var file = content.File;
-        var uploadResult = await _imageService.UploadAsync(file.OpenReadStream(), file.FileName, content.Title, content.Description);
-        return CreateResponse(uploadResult, StatusCodes.Status200OK);
+        var stream = request.File.OpenReadStream();
+        var fileName = request.File.FileName;
+
+        var uploadedImage = await _imageService.UploadAsync(stream, fileName, request.Title, request.Description);
+        return CreatedAtRoute("GetImage", uploadedImage.Id, uploadedImage);
     }
 }

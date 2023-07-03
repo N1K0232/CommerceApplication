@@ -11,5 +11,5 @@ public interface IImageService
 
     Task<Result<StreamFileContent>> GetAsync(Guid imageId);
 
-    Task<Result> UploadAsync(Stream stream, string fileName, string title, string description);
+    Task<Image> UploadAsync(Stream stream, string fileName, string title, string description);
 }

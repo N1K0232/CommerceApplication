@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.Security.Abstractions;
@@ -31,35 +32,39 @@ public class ImageService : IImageService
     {
         if (imageId == Guid.Empty)
         {
-            return Result.Fail(FailureReasons.GenericError, "Invalid id");
+            return Result.Fail(FailureReasons.ClientError, "Invalid id");
         }
 
         try
         {
             var image = await _dataContext.GetAsync<Entities.Image>(imageId);
-            _dataContext.Delete(image);
+            if (image == null)
+            {
+                return Result.Fail(FailureReasons.ItemNotFound, $"No image found with id {imageId}");
+            }
 
+            _dataContext.Delete(image);
             await _dataContext.SaveAsync();
             await _storageProvider.DeleteAsync(image.Path);
 
             return Result.Ok();
         }
-        catch (ArgumentNullException ex)
-        {
-            return Result.Fail(FailureReasons.ItemNotFound, ex);
-        }
         catch (DbUpdateException ex)
         {
             return Result.Fail(FailureReasons.DatabaseError, ex);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Result.Fail(FailureReasons.GenericError, ex);
         }
     }
 
     public async Task<IEnumerable<Image>> GetListAsync()
     {
         var query = _dataContext.Get<Entities.Image>();
-
-        var dbImages = await query.OrderBy(i => i.Path).ToListAsync();
-        var images = _mapper.Map<IEnumerable<Image>>(dbImages);
+        var images = await query.OrderBy(i => i.Path)
+            .ProjectTo<Image>(_mapper.ConfigurationProvider)
+            .ToListAsync();
 
         foreach (var image in images)
         {
@@ -80,7 +85,7 @@ public class ImageService : IImageService
         if (image is not null)
         {
             var stream = await _storageProvider.ReadAsync(image.DownloadPath);
-            var contentType = MimeUtility.GetMimeMapping(image.Path);
+            var contentType = image.ContentType ?? MimeUtility.GetMimeMapping(image.Path);
 
             var content = new StreamFileContent(stream, contentType, image.DownloadFileName);
             return content;
@@ -89,45 +94,35 @@ public class ImageService : IImageService
         return Result.Fail(FailureReasons.ItemNotFound, "no image found");
     }
 
-    public async Task<Result> UploadAsync(Stream stream, string fileName, string title, string description)
+    public async Task<Image> UploadAsync(Stream stream, string fileName, string title, string description)
     {
-        try
+        var contentType = MimeUtility.GetMimeMapping(fileName);
+        var extension = Path.GetExtension(fileName);
+
+        var path = _pathGenerator.Generate(fileName);
+
+        var downloadFileName = $"{Guid.NewGuid()}.{extension}";
+        var downloadPath = _pathGenerator.Generate(downloadFileName);
+
+        var image = new Entities.Image
         {
-            var contentType = MimeUtility.GetMimeMapping(fileName);
-            var extension = Path.GetExtension(fileName);
+            Title = title,
+            Description = description,
+            FileName = fileName,
+            Length = stream.Length,
+            Path = path,
+            DownloadFileName = downloadFileName,
+            DownloadPath = downloadPath,
+            ContentType = contentType,
+            Extension = extension
+        };
 
-            var path = _pathGenerator.Generate(fileName);
+        _dataContext.Create(image);
+        await _dataContext.SaveAsync();
+        await _storageProvider.SaveAsync(downloadPath, stream);
 
-            var downloadFileName = $"{Guid.NewGuid()}.{extension}";
-            var downloadPath = _pathGenerator.Generate(downloadFileName);
-
-            var image = new Entities.Image
-            {
-                Title = title,
-                Description = description,
-                FileName = fileName,
-                Length = stream.Length,
-                Path = path,
-                DownloadFileName = downloadFileName,
-                DownloadPath = downloadPath,
-                ContentType = contentType,
-                Extension = extension
-            };
-
-            _dataContext.Create(image);
-            await _dataContext.SaveAsync();
-            await _storageProvider.SaveAsync(downloadPath, stream);
-
-            return Result.Ok();
-        }
-        catch (DbUpdateException ex)
-        {
-            return Result.Fail(FailureReasons.DatabaseError, ex);
-        }
-        catch (IOException ex)
-        {
-            return Result.Fail(FailureReasons.DatabaseError, ex);
-        }
+        var uploadedImage = _mapper.Map<Image>(image);
+        return uploadedImage;
     }
 
     private static string CreatePath(string fileName)

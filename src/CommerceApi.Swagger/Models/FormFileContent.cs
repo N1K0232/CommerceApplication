@@ -1,20 +1,39 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.CodeAnalysis;
-using CommerceApi.Swagger.Filters;
+﻿using CommerceApi.Swagger.Filters;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace CommerceApi.Swagger.Models;
 
 public class FormFileContent
 {
-    [BindRequired]
+    public FormFileContent(IFormFile file)
+    {
+        File = file;
+    }
+
     [AllowedExtensions("*.jpg", "*.jpeg", "*.png")]
-    public IFormFile File { get; set; } = default!;
+    public IFormFile File { get; }
 
-    [Required]
-    [NotNull]
-    public string Title { get; set; } = string.Empty;
+    public static async ValueTask<FormFileContent?> BindAsync(HttpContext httpContext)
+    {
+        var httpRequest = httpContext.Request;
+        if (!httpRequest.HasFormContentType)
+        {
+            return null;
+        }
 
-    public string? Description { get; set; }
+        var form = await httpRequest.ReadFormAsync().ConfigureAwait(false);
+        if (form == null)
+        {
+            return null;
+        }
+
+        var file = form.Files[0];
+        if (file == null)
+        {
+            return null;
+        }
+
+        var content = new FormFileContent(file);
+        return content;
+    }
 }

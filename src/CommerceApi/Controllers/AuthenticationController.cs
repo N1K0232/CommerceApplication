@@ -3,7 +3,6 @@ using CommerceApi.Authentication.Extensions;
 using CommerceApi.Authorization.Filters;
 using CommerceApi.BusinessLayer.Services.Interfaces;
 using CommerceApi.Shared.Models.Requests;
-using CommerceApi.Swagger.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -64,15 +63,6 @@ public class AuthenticationController : ControllerBase
         var email = User.GetEmail();
 
         var result = await _userService.SignOutAsync(email);
-        return CreateResponse(result, StatusCodes.Status200OK);
-    }
-
-    [HttpPost("uploadimage")]
-    [Consumes("multipart/form-data")]
-    [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser, RoleNames.User)]
-    public async Task<IActionResult> UploadPhoto([FromForm] FormFileContent content)
-    {
-        var result = await _userService.UploadPhotoAsync(User.GetId(), content.File.FileName, content.File.OpenReadStream());
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 }
