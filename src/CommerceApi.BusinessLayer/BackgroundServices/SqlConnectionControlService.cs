@@ -1,5 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
+﻿using CommerceApi.DataAccessLayer.Handlers.Common;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -7,12 +7,14 @@ namespace CommerceApi.BusinessLayer.BackgroundServices;
 
 public class SqlConnectionControlService : BackgroundService
 {
-    private readonly IConfiguration _configuration;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<SqlConnectionControlService> _logger;
 
-    public SqlConnectionControlService(IConfiguration configuration, ILogger<SqlConnectionControlService> logger)
+    private PeriodicTimer _timer;
+
+    public SqlConnectionControlService(IServiceProvider serviceProvider, ILogger<SqlConnectionControlService> logger)
     {
-        _configuration = configuration;
+        _serviceProvider = serviceProvider;
         _logger = logger;
     }
 
@@ -20,35 +22,23 @@ public class SqlConnectionControlService : BackgroundService
     {
         _logger.LogInformation("testing connection");
 
-        var periodicTimer = new PeriodicTimer(TimeSpan.FromMinutes(5));
-        while (await periodicTimer.WaitForNextTickAsync(stoppingToken) && !stoppingToken.IsCancellationRequested)
+        using var scope = _serviceProvider.CreateScope();
+        var handler = scope.ServiceProvider.GetRequiredService<IDbConnectionHandler>();
+
+        _timer = new PeriodicTimer(TimeSpan.FromMinutes(10));
+        while (!stoppingToken.IsCancellationRequested && await _timer.WaitForNextTickAsync(stoppingToken))
         {
-            try
-            {
-                var sqlConnectionString = _configuration.GetConnectionString("SqlConnection");
-                using var sqlConnection = new SqlConnection(sqlConnectionString);
-
-                await sqlConnection.OpenAsync(stoppingToken);
-                await sqlConnection.CloseAsync();
-
-                _logger.LogInformation("connection test succeeded");
-            }
-            catch (SqlException ex)
-            {
-                _logger.LogError(ex, "connection test failed");
-            }
-            catch (InvalidOperationException ex)
-            {
-                _logger.LogError(ex, "connection test failed");
-            }
-            catch (TaskCanceledException ex)
-            {
-                _logger.LogError(ex, "the operation was canceled");
-            }
-            catch (OperationCanceledException ex)
-            {
-                _logger.LogError(ex, "the operation was canceled");
-            }
+            await handler.OpenAsync();
+            await handler.CloseAsync();
         }
+    }
+
+    public override void Dispose()
+    {
+        _timer.Dispose();
+        _timer = null;
+
+        base.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
