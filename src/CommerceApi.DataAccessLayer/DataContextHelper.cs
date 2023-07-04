@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace CommerceApi.DataAccessLayer;
 
@@ -58,6 +59,14 @@ public partial class ApplicationDbContext
         command.CommandType = CommandType.StoredProcedure;
 
         return command;
+    }
+
+    private async Task SaveInternalAsync()
+    {
+        _tokenSource ??= new CancellationTokenSource();
+
+        var savedEntries = await SaveChangesAsync(_tokenSource.Token).ConfigureAwait(false);
+        _logger.LogInformation("saved {entries} in the database", savedEntries);
     }
 
     private async Task ExecuteTransactionCoreAsync(Func<Task> action)

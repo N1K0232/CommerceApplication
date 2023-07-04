@@ -1,5 +1,6 @@
 ﻿using System.Data.Common;
 using System.Reflection;
+using CommerceApi.Authentication;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.DataAccessLayer.Comparers;
 using CommerceApi.DataAccessLayer.Converters;
@@ -102,7 +103,9 @@ public partial class ApplicationDbContext : DbContext, IDataContext
 
         var token = _tokenSource.Token;
         var set = Set<TEntity>();
-        return await set.FindAsync(keyValues, token).ConfigureAwait(false);
+
+        var entity = await set.FindAsync(keyValues, token).ConfigureAwait(false);
+        return entity;
     }
 
     public IQueryable<TEntity> Get<TEntity>(bool ignoreQueryFilters = false, bool trackingChanges = false) where TEntity : BaseEntity
@@ -113,22 +116,20 @@ public partial class ApplicationDbContext : DbContext, IDataContext
             set = set.IgnoreQueryFilters();
         }
 
-        return trackingChanges ? set.AsTracking() : set.AsNoTrackingWithIdentityResolution();
+        return trackingChanges ?
+            set.AsTracking() :
+            set.AsNoTrackingWithIdentityResolution();
     }
 
-#pragma warning disable IDE0007 //Use implicit type
     public async Task SaveAsync()
     {
-        _tokenSource ??= new CancellationTokenSource();
-
         try
         {
-            var token = _tokenSource.Token;
             var entries = GetEntries();
 
             foreach (var entry in entries)
             {
-                BaseEntity baseEntity = entry.Entity as BaseEntity;
+                var baseEntity = entry.Entity as BaseEntity;
                 if (entry.State is EntityState.Added)
                 {
                     if (baseEntity is DeletableEntity deletableEntity)
@@ -179,8 +180,7 @@ public partial class ApplicationDbContext : DbContext, IDataContext
                 await ValidateAsync(baseEntity).ConfigureAwait(false);
             }
 
-            var savedEntries = await SaveChangesAsync(token).ConfigureAwait(false);
-            _logger.LogInformation("saved {savedEntries} in the database", savedEntries);
+            await SaveInternalAsync().ConfigureAwait(false);
         }
         catch (DbUpdateConcurrencyException ex)
         {
@@ -198,7 +198,6 @@ public partial class ApplicationDbContext : DbContext, IDataContext
             throw ex;
         }
     }
-#pragma warning restore IDE0007
 
     public Task<DbCommand> LoadStoredProcedureAsync(string procedureName)
     {
@@ -219,7 +218,8 @@ public partial class ApplicationDbContext : DbContext, IDataContext
             command.Parameters.Add(parameter);
         }
 
-        await command.ExecuteNonQueryAsync(_tokenSource.Token).ConfigureAwait(false);
+        var savedEntries = await command.ExecuteNonQueryAsync(_tokenSource.Token).ConfigureAwait(false);
+        _logger.LogInformation("saved {savedEntries} in the database", savedEntries);
     }
 
     public Task ExecuteTransactionAsync(Func<Task> action)
