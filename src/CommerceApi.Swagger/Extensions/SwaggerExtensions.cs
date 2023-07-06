@@ -62,7 +62,6 @@ public static class SwaggerExtensions
         services.AddSwaggerGen(options =>
         {
             //options.OperationFilter<FormFileOperationFilter>();
-            options.OperationFilter<AuthResponseOperationFilter>();
             options.OperationFilter<CultureAwareOperationFilter>();
             options.OperationFilter<SwaggerDefaultValues>();
 

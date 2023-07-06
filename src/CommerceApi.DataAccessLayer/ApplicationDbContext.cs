@@ -1,5 +1,6 @@
 ﻿using System.Data.Common;
 using System.Reflection;
+using CommerceApi.Authentication;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.DataAccessLayer.Comparers;
 using CommerceApi.DataAccessLayer.Converters;

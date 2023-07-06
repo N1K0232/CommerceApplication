@@ -23,7 +23,7 @@ public class AuthenticationStartupService : IHostedService
         using var scope = _serviceProvider.CreateScope();
         var identityService = scope.ServiceProvider.GetRequiredService<IIdentityService>();
 
-        var roleNames = new string[] { RoleNames.Administrator, RoleNames.PowerUser, RoleNames.User, RoleNames.Customer };
+        var roleNames = new string[] { RoleNames.Administrator, RoleNames.PowerUser, RoleNames.User };
         await identityService.CreateRolesAsync(roleNames);
 
         var administratorUserSection = _configuration.GetSection("AdministratorUser");
