@@ -15,12 +15,13 @@ public static class ServiceCollectionExtensions
         configuration.Invoke(fileSystemSettings);
 
         services.AddSingleton(fileSystemSettings);
-        services.AddStorageProvider<FileSystemStorageProvider>();
+        services.AddStorageProvider<FileSystemStorageProvider>(ServiceLifetime.Scoped);
 
         return services;
     }
 
-    public static IServiceCollection AddAzureStorageProvider(this IServiceCollection services, Action<AzureStorageSettings> configuration)
+    public static IServiceCollection AddAzureStorageProvider(this IServiceCollection services,
+        Action<AzureStorageSettings> configuration)
     {
         ArgumentNullException.ThrowIfNull(services, nameof(services));
         ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
@@ -29,7 +30,7 @@ public static class ServiceCollectionExtensions
         configuration.Invoke(azureStorageSettings);
 
         services.AddSingleton(azureStorageSettings);
-        services.AddStorageProvider<AzureStorageProvider>();
+        services.AddStorageProvider<AzureStorageProvider>(ServiceLifetime.Scoped);
 
         return services;
     }
@@ -47,13 +48,18 @@ public static class ServiceCollectionExtensions
             return azureStorageSettings;
         });
 
-        services.AddStorageProvider<AzureStorageProvider>();
+        services.AddStorageProvider<AzureStorageProvider>(ServiceLifetime.Scoped);
         return services;
     }
 
-    private static IServiceCollection AddStorageProvider<TStorage>(this IServiceCollection services) where TStorage : class, IStorageProvider
+    private static IServiceCollection AddStorageProvider<TStorage>(this IServiceCollection services, ServiceLifetime serviceLifetime) where TStorage : class, IStorageProvider
     {
-        services.AddScoped<IStorageProvider, TStorage>();
+        var storageProviderServiceType = typeof(IStorageProvider);
+        var storageProviderServiceImplementation = typeof(TStorage);
+
+        var storageServiceDescriptor = new ServiceDescriptor(storageProviderServiceType, storageProviderServiceImplementation, serviceLifetime);
+        services.Add(storageServiceDescriptor);
+
         return services;
     }
 }
