@@ -9,17 +9,15 @@ public class ListResult<T> where T : BaseObject
     {
     }
 
-    public ListResult(IEnumerable<T>? content)
+    public ListResult(IEnumerable<T>? content) : this(content, content?.Count() ?? 0L, 1L, false)
     {
-        Content = content;
-        TotalCount = content?.LongCount() ?? 0L;
-        HasNextPage = false;
     }
 
-    public ListResult(IEnumerable<T>? content, long totalCount, bool hasNextPage = false)
+    public ListResult(IEnumerable<T>? content, long totalCount, long totalPages, bool hasNextPage = false)
     {
         Content = content;
         TotalCount = totalCount;
+        TotalPages = totalPages;
         HasNextPage = hasNextPage;
     }
 
@@ -27,6 +25,8 @@ public class ListResult<T> where T : BaseObject
     public IEnumerable<T>? Content { get; init; }
 
     public long TotalCount { get; init; }
+
+    public long TotalPages { get; init; }
 
     public bool HasNextPage { get; init; }
 }

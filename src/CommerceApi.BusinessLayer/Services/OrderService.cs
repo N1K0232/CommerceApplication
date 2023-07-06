@@ -174,7 +174,6 @@ public class OrderService : IOrderService
             query = query.OrderBy(orderBy);
         }
 
-        var totalCount = await query.LongCountAsync();
         var dbOrders = await query.Skip(pageIndex * itemsPerPage).Take(itemsPerPage + 1).ToListAsync();
 
         var orders = _mapper.Map<IEnumerable<Order>>(dbOrders).Take(itemsPerPage);
@@ -184,7 +183,11 @@ public class OrderService : IOrderService
             order.Products = products;
         });
 
-        var result = new ListResult<Order>(orders, totalCount, dbOrders.Count > itemsPerPage);
+        var totalCount = await query.LongCountAsync();
+        var totalPages = totalCount / itemsPerPage;
+        var hasNextPage = dbOrders.Count > itemsPerPage;
+
+        var result = new ListResult<Order>(orders, totalCount, totalPages, hasNextPage);
         return result;
     }
 

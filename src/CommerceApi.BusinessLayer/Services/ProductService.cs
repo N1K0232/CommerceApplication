@@ -136,15 +136,16 @@ public class ProductService : IProductService
             query = query.OrderBy(orderBy);
         }
 
-        var totalCount = await query.CountAsync();
         var dbProducts = await query.Include(p => p.Category)
-            .Skip(pageIndex * itemsPerPage)
-            .Take(itemsPerPage + 1)
+            .Skip(pageIndex * itemsPerPage).Take(itemsPerPage + 1)
             .ToListAsync();
 
         var products = _mapper.Map<IEnumerable<Product>>(dbProducts).Take(itemsPerPage);
+        var totalCount = await query.LongCountAsync();
+        var totalPages = totalCount / itemsPerPage;
+        var hasNextPage = dbProducts.Count > itemsPerPage;
 
-        var result = new ListResult<Product>(products, totalCount, products.Count() > itemsPerPage);
+        var result = new ListResult<Product>(products, totalCount, totalPages, hasNextPage);
         return result;
     }
 
