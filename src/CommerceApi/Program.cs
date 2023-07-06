@@ -5,6 +5,7 @@ using System.Text.Json;
 using CommerceApi.Authentication;
 using CommerceApi.Authentication.Common;
 using CommerceApi.Authentication.Settings;
+using CommerceApi.Authorization.Extensions;
 using CommerceApi.Authorization.Handlers;
 using CommerceApi.Authorization.Requirements;
 using CommerceApi.BusinessLayer.BackgroundServices;
@@ -19,6 +20,8 @@ using CommerceApi.ClientContext.TypeConverters;
 using CommerceApi.DataAccessLayer;
 using CommerceApi.DataAccessLayer.Abstractions;
 using CommerceApi.DataAccessLayer.Extensions;
+using CommerceApi.DataAccessLayer.Handlers;
+using CommerceApi.DataAccessLayer.Handlers.Common;
 using CommerceApi.DataProtectionLayer;
 using CommerceApi.DataProtectionLayer.Extensions;
 using CommerceApi.Security.Extensions;
@@ -121,6 +124,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
         options.CommandTimeout = configuration.GetValue<int>("AppSettings:CommandTimeout");
     });
 
+    services.AddScoped<IDbConnectionHandler, SqlConnectionHandler>();
+
     var jwtSettings = Configure<JwtSettings>(nameof(JwtSettings));
     services.AddAuthentication(jwtSettings);
 
@@ -155,8 +160,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
         });
     });
 
-    services.AddScoped<IAuthorizationHandler, UserActiveHandler>();
-    services.AddScoped<IAuthorizationHandler, TenantHandler>();
+    services.AddAuthorizationHandler<UserActiveHandler>();
+    services.AddAuthorizationHandler<TenantHandler>();
 
     services.AddHealthChecks().AddAsyncCheck("sql", async () =>
     {
@@ -179,6 +184,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<ICategoryService, CategoryService>();
     services.AddScoped<IConstructorService, ConstructorService>();
     services.AddScoped<ICouponService, CouponService>();
+    services.AddScoped<ICustomerService, CustomerService>();
     services.AddScoped<IIdentityService, IdentityService>();
     services.AddScoped<IImageService, ImageService>();
     services.AddScoped<IInvoiceService, InvoiceService>();
