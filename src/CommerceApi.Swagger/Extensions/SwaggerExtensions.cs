@@ -63,6 +63,7 @@ public static class SwaggerExtensions
         {
             //options.OperationFilter<FormFileOperationFilter>();
             options.OperationFilter<AuthResponseOperationFilter>();
+            options.OperationFilter<DefaultResponseOperationFilter>();
             options.OperationFilter<CultureAwareOperationFilter>();
             options.OperationFilter<SwaggerDefaultValues>();
 
