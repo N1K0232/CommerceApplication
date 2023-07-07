@@ -9,7 +9,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace CommerceApi.Swagger;
 
-public class AuthResponseOperationFilter : IOperationFilter
+internal class AuthResponseOperationFilter : IOperationFilter
 {
     private readonly IAuthorizationPolicyProvider _authorizationPolicyProvider;
 
