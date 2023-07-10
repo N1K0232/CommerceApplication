@@ -21,6 +21,7 @@
     <ProjectReference Include="..\CommerceApi.Authorization\CommerceApi.Authorization.csproj" />
     <ProjectReference Include="..\CommerceApi.BusinessLayer\CommerceApi.BusinessLayer.csproj" />
     <ProjectReference Include="..\CommerceApi.Logging\CommerceApi.Logging.csproj" />
+    <ProjectReference Include="..\CommerceApi.Proxies\CommerceApi.Proxies.csproj" />
     <ProjectReference Include="..\CommerceApi.Security\CommerceApi.Security.csproj" />
     <ProjectReference Include="..\CommerceApi.Swagger\CommerceApi.Swagger.csproj" />
   </ItemGroup>
