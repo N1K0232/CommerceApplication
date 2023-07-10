@@ -188,7 +188,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IIdentityService, IdentityService>();
     services.AddScoped<IImageService, ImageService>();
     services.AddScoped<IInvoiceService, InvoiceService>();
-    services.AddScoped<IKeyService, KeyService>();
     services.AddScoped<IOrderService, OrderService>();
     services.AddScoped<IProductService, ProductService>();
     services.AddScoped<ISupplierService, SupplierService>();
@@ -196,6 +195,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
 
     //add remote services
     services.AddScoped<IPdfService, PdfService>();
+    services.AddScoped<IKeyService, KeyService>();
 
     //add startup services
     services.AddHostedService<ApplicationStartupService>();
