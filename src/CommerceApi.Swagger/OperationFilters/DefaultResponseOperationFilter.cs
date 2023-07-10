@@ -1,21 +1,16 @@
 ﻿using System.Net.Mime;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace CommerceApi.Swagger;
+namespace CommerceApi.Swagger.OperationFilters;
 
-public class NotFoundResponseOperationFilter : IOperationFilter
+internal class DefaultResponseOperationFilter : IOperationFilter
 {
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
-        var parameters = context.MethodInfo.GetParameters();
-        var hasGuidParameter = parameters.Any(p => p.ParameterType == typeof(Guid));
-        if (hasGuidParameter)
-        {
-            operation.Responses.Add(StatusCodes.Status404NotFound.ToString(), GetResponse("item not found"));
-        }
+        var defaultResponse = GetResponse("Unexpected error");
+        operation.Responses.TryAdd("default", defaultResponse);
     }
 
     private static OpenApiResponse GetResponse(string description)
@@ -27,7 +22,7 @@ public class NotFoundResponseOperationFilter : IOperationFilter
         var apiMediaType = new OpenApiMediaType { Schema = schema };
         var content = new Dictionary<string, OpenApiMediaType> { [jsonMediaType] = apiMediaType };
 
-        var response = new OpenApiResponse { Content = content, Description = description };
+        var response = new OpenApiResponse { Description = description, Content = content };
         return response;
     }
 }

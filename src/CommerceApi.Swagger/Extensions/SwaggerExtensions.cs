@@ -2,6 +2,8 @@
 using CommerceApi.ClientContext;
 using CommerceApi.ClientContext.Converters;
 using CommerceApi.Swagger.Documentation;
+using CommerceApi.Swagger.DocumentFilters;
+using CommerceApi.Swagger.OperationFilters;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -61,13 +63,14 @@ public static class SwaggerExtensions
 
         services.AddSwaggerGen(options =>
         {
-            //options.OperationFilter<FormFileOperationFilter>();
+            options.OperationFilter<FormFileOperationFilter>();
             options.OperationFilter<AuthResponseOperationFilter>();
             options.OperationFilter<DefaultResponseOperationFilter>();
             options.OperationFilter<CultureAwareOperationFilter>();
             options.OperationFilter<SwaggerDefaultValues>();
-
             options.AddClientContextOperationFilter();
+
+            options.DocumentFilter<ProblemDetailsDocumentFilter>();
 
             options.MapType<DateOnly>("string", "date");
             options.MapType<TimeOnly>("string", "date", TimeOnly.FromDateTime(DateTime.Now).ToString("HH:mm:ss"));

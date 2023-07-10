@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace CommerceApi.Swagger;
+namespace CommerceApi.Swagger.OperationFilters;
 
 internal class AuthResponseOperationFilter : IOperationFilter
 {
