@@ -29,6 +29,7 @@ public partial class AuthenticationDbContext
     private DbSet<IdentityUserToken<Guid>> _userTokens;
 
     private DbSet<Address> _addresses;
+    private DbSet<Tenant> _tenants;
 
     private readonly ValueConverter<string, string> _trimStringConverter = new(v => v.Trim(), v => v.Trim());
     private readonly ILogger<AuthenticationDbContext> _logger;
@@ -169,6 +170,22 @@ public partial class AuthenticationDbContext
             if (_addresses != addresses)
             {
                 _addresses = addresses;
+            }
+        }
+    }
+
+    public virtual DbSet<Tenant> Tenants
+    {
+        get
+        {
+            return _tenants;
+        }
+        set
+        {
+            var tenants = value ?? Set<Tenant>();
+            if (_tenants != tenants)
+            {
+                _tenants = tenants;
             }
         }
     }

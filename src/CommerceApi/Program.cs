@@ -196,6 +196,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     //add remote services
     services.AddScoped<IPdfService, PdfService>();
     services.AddScoped<IKeyService, KeyService>();
+    services.AddScoped<ITenantService, TenantService>();
 
     //add startup services
     services.AddHostedService<ApplicationStartupService>();
@@ -205,13 +206,13 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddHostedService<SqlConnectionControlService>();
 
     //add storage providers
-    var azureStorageConnectionString = configuration.GetConnectionString("StorageConnection");
+    var storageConnectionString = configuration.GetConnectionString("StorageConnection");
     var storageFolder = configuration.GetValue<string>("AppSettings:StorageFolder");
-    if (!string.IsNullOrWhiteSpace(azureStorageConnectionString))
+    if (!string.IsNullOrWhiteSpace(storageConnectionString))
     {
         services.AddAzureStorageProvider(options =>
         {
-            options.ConnectionString = azureStorageConnectionString;
+            options.ConnectionString = storageConnectionString;
             options.ContainerName = storageFolder;
         });
     }
