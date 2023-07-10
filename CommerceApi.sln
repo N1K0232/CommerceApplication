@@ -47,6 +47,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommerceApi.Swagger", "src\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommerceApi.Proxies", "src\CommerceApi.Proxies\CommerceApi.Proxies.csproj", "{2950D4CD-AFE4-4731-BD34-0F84E7D73817}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommerceApi.Hosting", "src\CommerceApi.Hosting\CommerceApi.Hosting.csproj", "{7ADB3165-3F79-4F2C-B92F-99E943E01A8F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -123,6 +125,10 @@ Global
 		{2950D4CD-AFE4-4731-BD34-0F84E7D73817}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2950D4CD-AFE4-4731-BD34-0F84E7D73817}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2950D4CD-AFE4-4731-BD34-0F84E7D73817}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7ADB3165-3F79-4F2C-B92F-99E943E01A8F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7ADB3165-3F79-4F2C-B92F-99E943E01A8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7ADB3165-3F79-4F2C-B92F-99E943E01A8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7ADB3165-3F79-4F2C-B92F-99E943E01A8F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -145,6 +151,7 @@ Global
 		{7C02EF1F-2B80-4719-9465-A4B9290BC0B7} = {06819659-57D2-4BA4-8C63-10A6E6953586}
 		{CD46534A-59A5-41CA-BE8D-DADF082761F0} = {06819659-57D2-4BA4-8C63-10A6E6953586}
 		{2950D4CD-AFE4-4731-BD34-0F84E7D73817} = {06819659-57D2-4BA4-8C63-10A6E6953586}
+		{7ADB3165-3F79-4F2C-B92F-99E943E01A8F} = {06819659-57D2-4BA4-8C63-10A6E6953586}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {390C601E-E068-4BF2-A251-4C5583EB7152}
