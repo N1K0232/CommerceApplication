@@ -8,7 +8,7 @@ public class Product : BaseObject
 
     public Constructor Constructor { get; set; } = null!;
 
-    public Supplier? Supplier { get; set; }
+    public Supplier Supplier { get; set; } = null!;
 
     public string Name { get; set; } = null!;
 

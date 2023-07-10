@@ -19,7 +19,7 @@ public class ProductsController : ControllerBase
 
     [HttpPost("AddProduct")]
     [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser, RoleNames.User)]
-    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Product))]
+    [ProducesResponseType(typeof(Product), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -28,7 +28,7 @@ public class ProductsController : ControllerBase
     public async Task<IActionResult> Create([FromBody] SaveProductRequest product)
     {
         var result = await _productService.CreateAsync(product);
-        return CreateResponse(result, StatusCodes.Status201Created);
+        return CreateResponse(result, "GetProduct", new { productId = result.Content?.Id }, StatusCodes.Status201Created);
     }
 
     [HttpDelete("Delete")]
@@ -45,7 +45,7 @@ public class ProductsController : ControllerBase
         return CreateResponse(result, StatusCodes.Status200OK);
     }
 
-    [HttpGet("Get/{productId:guid}")]
+    [HttpGet("GetProduct/{productId:guid}")]
     [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser, RoleNames.User)]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Product))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -53,7 +53,7 @@ public class ProductsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Get(Guid productId)
+    public async Task<IActionResult> GetProduct(Guid productId)
     {
         var result = await _productService.GetAsync(productId);
         return CreateResponse(result, StatusCodes.Status200OK);
@@ -61,13 +61,13 @@ public class ProductsController : ControllerBase
 
     [HttpGet("GetList")]
     [RoleAuthorize(RoleNames.Administrator, RoleNames.PowerUser, RoleNames.User)]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ListResult<Product>))]
+    [ProducesResponseType(typeof(ListResult<Product>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetList(string name = null, string orderBy = "Name, Price DESC", int pageIndex = 0, int itemsPerPage = 50)
+    public async Task<IActionResult> GetList(string name = null, string category = null, string orderBy = "Name, Price DESC", int pageIndex = 0, int itemsPerPage = 50)
     {
-        var products = await _productService.GetListAsync(name, orderBy, pageIndex, itemsPerPage);
+        var products = await _productService.GetListAsync(name, category, orderBy, pageIndex, itemsPerPage);
         return Ok(products);
     }
 

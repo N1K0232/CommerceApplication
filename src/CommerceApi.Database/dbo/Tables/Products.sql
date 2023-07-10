@@ -5,8 +5,7 @@
     [SupplierId]           UNIQUEIDENTIFIER NOT NULL,
     [Name]                 NVARCHAR (256)   NOT NULL,
     [Description]          NVARCHAR (4000)  NOT NULL,
-    [IdentificationCode]   NVARCHAR (MAX)   NOT NULL,
-    [Key]                  NVARCHAR (MAX)   NOT NULL,
+    [IdentificationCode]   NVARCHAR (100)   NOT NULL,
     [Quantity]             INT              NOT NULL,
     [Price]                DECIMAL (8, 2)   NOT NULL,
     [DiscountPercentage]   FLOAT (53)       NULL,
@@ -35,3 +34,7 @@
 GO
 CREATE UNIQUE NONCLUSTERED INDEX [IX_ProductName]
     ON [dbo].[Products]([Name] ASC)
+
+GO
+CREATE UNIQUE NONCLUSTERED INDEX [IX_ProductCode]
+    ON [dbo].[Products]([IdentificationCode] ASC)

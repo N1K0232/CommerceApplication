@@ -10,6 +10,7 @@ using CommerceApi.Shared.Models.Requests;
 using CommerceApi.SharedServices;
 using CommerceApi.StorageProviders.Abstractions;
 using FluentValidation;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using OperationResults;
 using TinyHelpers.Extensions;
@@ -22,6 +23,7 @@ public class ProductService : IProductService
     private readonly IDataContext _dataContext;
     private readonly IStorageProvider _storageProvider;
     private readonly IPathGenerator _pathGenerator;
+    private readonly IDataProtector _dataProtector;
     private readonly IMapper _mapper;
     private readonly IValidator<SaveProductRequest> _productValidator;
     private readonly IValidator<SaveReviewRequest> _reviewValidator;
@@ -30,6 +32,7 @@ public class ProductService : IProductService
     public ProductService(IDataContext dataContext,
         IStorageProvider storageProvider,
         IPathGenerator pathGenerator,
+        IDataProtector dataProtector,
         IMapper mapper,
         IValidator<SaveProductRequest> productValidator,
         IValidator<SaveReviewRequest> reviewValidator,
@@ -38,6 +41,7 @@ public class ProductService : IProductService
         _dataContext = dataContext;
         _storageProvider = storageProvider;
         _pathGenerator = pathGenerator;
+        _dataProtector = dataProtector;
         _mapper = mapper;
         _productValidator = productValidator;
         _reviewValidator = reviewValidator;
@@ -56,7 +60,13 @@ public class ProductService : IProductService
         try
         {
             var random = new Random();
-            var query = _dataContext.Get<Entities.Product>();
+            var query = _dataContext.Get<Entities.Product>()
+                .Include(p => p.Category)
+                .Include(p => p.Constructor)
+                .Include(p => p.Supplier)
+                .AsQueryable();
+
+
             var productExists = await query.AnyAsync(p => p.Name == product.Name);
             if (productExists)
             {
@@ -70,7 +80,8 @@ public class ProductService : IProductService
             _dataContext.Create(dbProduct);
             await _dataContext.SaveAsync();
 
-            var savedProduct = _mapper.Map<Product>(dbProduct);
+            var savedDbProduct = await query.FirstAsync(p => p.Id == dbProduct.Id);
+            var savedProduct = _mapper.Map<Product>(savedDbProduct);
             return savedProduct;
         }
         catch (DbUpdateException ex)
@@ -88,15 +99,17 @@ public class ProductService : IProductService
 
         try
         {
-            var product = await _dataContext.Get<Entities.Product>().FirstOrDefaultAsync(p => p.Id == productId);
-            if (product is null)
+            var query = _dataContext.Get<Entities.Product>().Where(p => p.Id == productId);
+            var productExists = await query.AnyAsync();
+            if (!productExists)
             {
                 return Result.Fail(FailureReasons.ItemNotFound, $"No product found with id {productId}");
             }
 
+            var product = await query.FirstAsync();
             _dataContext.Delete(product);
-            await _dataContext.SaveAsync();
 
+            await _dataContext.SaveAsync();
             return Result.Ok();
         }
         catch (DbUpdateException ex)
@@ -107,28 +120,49 @@ public class ProductService : IProductService
 
     public async Task<Result<Product>> GetAsync(Guid productId)
     {
-        if (productId == Guid.Empty)
+        var query = _dataContext.Get<Entities.Product>()
+            .Include(p => p.Category)
+            .Include(p => p.Constructor)
+            .Include(p => p.Supplier)
+            .AsQueryable();
+
+        if (productId != Guid.Empty)
+        {
+            query = query.Where(p => p.Id == productId);
+        }
+        else
         {
             return Result.Fail(FailureReasons.ClientError, "Invalid id");
         }
 
-        var dbProduct = await _dataContext.Get<Entities.Product>().FirstOrDefaultAsync(p => p.Id == productId);
-        if (dbProduct == null)
+        var productExists = await query.AnyAsync();
+        if (!productExists)
         {
             return Result.Fail(FailureReasons.ItemNotFound, $"No product found with id {productId}");
         }
+
+        var dbProduct = await query.FirstAsync();
 
         var product = _mapper.Map<Product>(dbProduct);
         return product;
     }
 
-    public async Task<ListResult<Product>> GetListAsync(string name, string orderBy, int pageIndex, int itemsPerPage)
+    public async Task<ListResult<Product>> GetListAsync(string name, string category, string orderBy, int pageIndex, int itemsPerPage)
     {
-        var query = _dataContext.Get<Entities.Product>();
+        var query = _dataContext.Get<Entities.Product>()
+            .Include(p => p.Category)
+            .Include(p => p.Constructor)
+            .Include(p => p.Supplier)
+            .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(name))
         {
             query = query.Where(p => p.Name.Contains(name));
+        }
+
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            query = query.Where(p => p.Category.Name == category);
         }
 
         if (!string.IsNullOrWhiteSpace(orderBy))
@@ -136,11 +170,9 @@ public class ProductService : IProductService
             query = query.OrderBy(orderBy);
         }
 
-        var dbProducts = await query.Include(p => p.Category)
-            .Skip(pageIndex * itemsPerPage).Take(itemsPerPage + 1)
-            .ToListAsync();
-
+        var dbProducts = await query.Skip(pageIndex * itemsPerPage).Take(itemsPerPage + 1).ToListAsync();
         var products = _mapper.Map<IEnumerable<Product>>(dbProducts).Take(itemsPerPage);
+
         var totalCount = await query.LongCountAsync();
         var totalPages = totalCount / itemsPerPage;
         var hasNextPage = dbProducts.Count > itemsPerPage;
@@ -193,16 +225,15 @@ public class ProductService : IProductService
 
         try
         {
-            var query = _dataContext.Get<Entities.Product>(ignoreQueryFilters: true, trackingChanges: true);
-            var dbProduct = await query.FirstOrDefaultAsync(p => p.Id == productId);
-            if (dbProduct is null)
+            var query = _dataContext.Get<Entities.Product>(ignoreQueryFilters: true, trackingChanges: true).Where(p => p.Id == productId);
+            var productExists = await query.AnyAsync();
+            if (!productExists)
             {
                 return Result.Fail(FailureReasons.ItemNotFound, $"No product found with id {productId}");
             }
 
+            var dbProduct = await query.FirstAsync();
             _mapper.Map(product, dbProduct);
-            dbProduct.HasDiscount = product.DiscountPercentage.GetValueOrDefault() > 0;
-            dbProduct.HasShipping = product.ShippingCost.GetValueOrDefault() > 0;
 
             _dataContext.Update(dbProduct);
             await _dataContext.SaveAsync();
@@ -247,22 +278,6 @@ public class ProductService : IProductService
         }
     }
 
-    private async Task UpdateAverageScoreAsync(Guid productId)
-    {
-        var query = _dataContext.Get<Entities.Product>(trackingChanges: true);
-        var product = await query.Include(p => p.Reviews).FirstAsync(p => p.Id == productId);
-
-        var score = 0;
-        foreach (var review in product.Reviews)
-        {
-            score += review.Score;
-        }
-
-        product.AverageScore = score / product.Reviews.Count;
-        _dataContext.Update(product);
-        await _dataContext.SaveAsync();
-    }
-
     public async Task<Result<IEnumerable<Review>>> GetReviewsAsync(Guid productId)
     {
         if (productId == Guid.Empty)
@@ -270,20 +285,16 @@ public class ProductService : IProductService
             return Result.Fail(FailureReasons.ClientError, "invalid id");
         }
 
-        var query = _dataContext.Get<Entities.Product>();
+        var query = _dataContext.Get<Entities.Product>().Where(p => p.Id == productId);
 
-        var productExists = await query.AnyAsync(p => p.Id == productId);
+        var productExists = await query.AnyAsync();
         if (!productExists)
         {
             return Result.Fail(FailureReasons.ItemNotFound, "the product doesn't exists");
         }
 
-        var dbReviews = await query.Include(p => p.Reviews)
-            .Where(p => p.Id == productId)
-            .Select(p => p.Reviews)
-            .ToListAsync();
-
-        var reviews = _mapper.Map<IEnumerable<Review>>(dbReviews);
+        var dbProduct = await query.Include(p => p.Reviews).FirstAsync();
+        var reviews = _mapper.Map<IEnumerable<Review>>(dbProduct.Reviews);
         return Result<IEnumerable<Review>>.Ok(reviews);
     }
 
@@ -339,6 +350,7 @@ public class ProductService : IProductService
             {
                 _mapper.Map(review, dbReview);
                 _dataContext.Update(dbReview);
+
                 await _dataContext.SaveAsync();
                 await UpdateAverageScoreAsync(review.ProductId);
 
@@ -351,5 +363,21 @@ public class ProductService : IProductService
         {
             return Result.Fail(FailureReasons.DatabaseError, ex);
         }
+    }
+
+    private async Task UpdateAverageScoreAsync(Guid productId)
+    {
+        var query = _dataContext.Get<Entities.Product>(trackingChanges: true);
+        var product = await query.Include(p => p.Reviews).FirstAsync(p => p.Id == productId);
+
+        var score = 0;
+        foreach (var review in product.Reviews)
+        {
+            score += review.Score;
+        }
+
+        product.AverageScore = score / product.Reviews.Count;
+        _dataContext.Update(product);
+        await _dataContext.SaveAsync();
     }
 }

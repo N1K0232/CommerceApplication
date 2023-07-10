@@ -12,9 +12,6 @@ public class ProductConfiguration : DeletableEntityConfiguration<Product>
         builder.Property(p => p.Name).HasMaxLength(256).IsRequired();
         builder.Property(p => p.Description).HasMaxLength(4000).IsRequired();
 
-        builder.Property(p => p.IdentificationCode).HasColumnType("NVARCHAR(MAX)").IsRequired();
-        builder.Property(p => p.Key).HasColumnType("NVARCHAR(MAX)").IsRequired();
-
         builder.Property(p => p.Quantity).IsRequired();
         builder.Property(p => p.Price).HasPrecision(8, 2).IsRequired();
 
@@ -23,6 +20,8 @@ public class ProductConfiguration : DeletableEntityConfiguration<Product>
 
         builder.Property(p => p.ShippingCost).HasPrecision(5, 2).IsRequired(false);
         builder.Property(p => p.HasShipping).IsRequired();
+
+        builder.Property(p => p.IdentificationCode).HasColumnType("NVARCHAR(MAX)").IsRequired();
         builder.Property(p => p.AverageScore).IsRequired(false);
 
         builder.Property(p => p.IsPublished).IsRequired();
@@ -33,6 +32,7 @@ public class ProductConfiguration : DeletableEntityConfiguration<Product>
         builder.HasOne(p => p.Supplier).WithMany(s => s.Products).HasForeignKey(p => p.SupplierId).IsRequired();
 
         builder.HasIndex(p => p.Name).HasDatabaseName("IX_ProductName").IsUnique();
+        builder.HasIndex(p => p.IdentificationCode).HasDatabaseName("IX_ProductCode").IsUnique();
 
         builder.ToTable("Products");
         base.Configure(builder);

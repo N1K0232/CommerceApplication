@@ -24,4 +24,9 @@ public abstract class ControllerBase : Microsoft.AspNetCore.Mvc.ControllerBase
     {
         return HttpContext.CreateResponse(result, successStatusCode);
     }
+
+    protected IActionResult CreateResponse<T>(Result<T> result, string routeName, object routeValues = null, int? successStatusCode = null)
+    {
+        return HttpContext.CreateResponse(result, routeName, routeValues, successStatusCode);
+    }
 }
