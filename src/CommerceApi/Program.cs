@@ -245,6 +245,8 @@ void Configure(IApplicationBuilder app, IApiVersionDescriptionProvider provider)
     app.UseClientContext();
     app.UseTenantContext();
 
+    app.UseRequestLocalization();
+
     app.UseAuthentication();
     app.UseAuthorization();
 
