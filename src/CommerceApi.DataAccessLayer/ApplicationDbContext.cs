@@ -274,6 +274,7 @@ public partial class ApplicationDbContext : DbContext, IDataContext
     {
         configurationBuilder.Properties<DateOnly>().HaveConversion<DateOnlyConverter, DateOnlyComparer>().HaveColumnType("date");
         configurationBuilder.Properties<TimeOnly>().HaveConversion<TimeOnlyConverter, TimeOnlyComparer>().HaveColumnType("time(7)");
+        configurationBuilder.Properties<IEnumerable<string>>().HaveConversion<StringArrayConverter, StringArrayComparer>().HaveColumnType("NVARCHAR(MAX)");
 
         base.ConfigureConventions(configurationBuilder);
     }
