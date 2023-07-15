@@ -35,7 +35,7 @@ public class SqlConnectionControlService : BackgroundService
 
     public override void Dispose()
     {
-        _timer.Dispose();
+        _timer?.Dispose();
         _timer = null;
 
         base.Dispose();
