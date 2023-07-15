@@ -18,7 +18,7 @@ public class IndexModel : PageModel
         return Task.FromResult<IActionResult>(result);
     }
 
-    public Task<IActionResult> OnPostAsync()
+    public Task<IActionResult> OnPostAsync(string email, string password)
     {
         var result = Page();
         return Task.FromResult<IActionResult>(result);
