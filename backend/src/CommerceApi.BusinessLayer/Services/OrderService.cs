@@ -48,23 +48,30 @@ public class OrderService : IOrderService
                 return Result.Fail(FailureReasons.ClientError, "validation errors", validationErrors);
             }
 
+            var products = _dataContext.Get<Entities.Product>(trackingChanges: true);
+            var orders = _dataContext.Get<Entities.Order>();
 
-            var dbProduct = await _dataContext.Get<Entities.Product>(trackingChanges: true).FirstOrDefaultAsync(p => p.Id == order.ProductId);
-            var dbOrder = await _dataContext.Get<Entities.Order>().FirstOrDefaultAsync(o => o.Id == order.OrderId && o.UserId == _claimService.GetId());
-
-            var orderDetail = new Entities.OrderDetail
+            await _dataContext.ExecuteTransactionAsync(async () =>
             {
-                OrderId = order.OrderId,
-                ProductId = order.ProductId,
-                Quantity = order.Quantity,
-                UnitPrice = dbProduct.Price
-            };
+                var dbProduct = await products.FirstAsync(p => p.Id == order.ProductId);
+                var dbOrder = await orders.FirstAsync(o => o.Id == order.OrderId && o.UserId == _claimService.GetId());
 
-            dbProduct.Quantity -= order.Quantity;
+                var orderDetail = new Entities.OrderDetail
+                {
+                    OrderId = order.OrderId,
+                    ProductId = order.ProductId,
+                    Quantity = order.Quantity,
+                    UnitPrice = dbProduct.Price
+                };
 
-            _dataContext.Update(dbProduct);
-            _dataContext.Create(orderDetail);
-            await _dataContext.SaveAsync();
+                dbProduct.Quantity -= order.Quantity;
+
+                _dataContext.Update(dbProduct);
+                _dataContext.Create(orderDetail);
+                await _dataContext.SaveAsync();
+            });
+
+            var dbOrder = await orders.FirstOrDefaultAsync(o => o.Id == order.OrderId);
 
             var savedOrder = _mapper.Map<Order>(dbOrder);
             return savedOrder;
