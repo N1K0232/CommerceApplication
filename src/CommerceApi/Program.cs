@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Net.Mime;
 using System.Reflection;
 using System.Text.Json;
+using System.Threading.RateLimiting;
 using CommerceApi.Authentication;
 using CommerceApi.Authentication.Common;
 using CommerceApi.Authentication.Settings;
@@ -33,6 +34,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -75,10 +77,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddClientContextAccessor();
     services.AddTenantContextAccessor(options =>
     {
-        var tenants = Configure<IList<Tenant>>("Tenants");
-        var availableTenants = tenants.Select(t => t.Name).ToList();
-
-        options.AvailableTenants = availableTenants;
+        var tenants = Configure<IEnumerable<Tenant>>("Tenants");
+        options.AvailableTenants = tenants.Select(t => t.Name).ToList();
     });
 
     services.AddMemoryCache();
@@ -93,26 +93,24 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddMapperProfiles();
     services.AddValidators();
 
+    services.AddRateLimiter(options =>
+    {
+        options.AddFixedWindowLimiter("default", limiterOptions =>
+        {
+            limiterOptions.PermitLimit = 5;
+            limiterOptions.Window = TimeSpan.FromSeconds(10);
+            limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+            limiterOptions.QueueLimit = 2;
+        });
+    });
+
     services.AddSwaggerDocumentation(Assembly.GetExecutingAssembly().GetName().Name);
     services.AddScoped<IEmailClient, EmailClient>();
 
     var connectionString = configuration.GetConnectionString("SqlConnection");
-    services.AddSqlServer<ApplicationDbContext>(connectionString, options =>
-    {
-        options.EnableRetryOnFailure(10, TimeSpan.FromSeconds(2), null);
-        options.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
-    });
-
-    services.AddSqlServer<AuthenticationDbContext>(connectionString, options =>
-    {
-        options.EnableRetryOnFailure(10, TimeSpan.FromSeconds(2), null);
-        options.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
-    });
-
-    services.AddSqlServer<DataProtectionDbContext>(connectionString, options =>
-    {
-        options.EnableRetryOnFailure(10, TimeSpan.FromSeconds(2), null);
-    });
+    services.AddSqlServer<ApplicationDbContext>(connectionString, options => options.EnableRetryOnFailure(10, TimeSpan.FromSeconds(2), null));
+    services.AddSqlServer<AuthenticationDbContext>(connectionString, options => options.EnableRetryOnFailure(10, TimeSpan.FromSeconds(2), null));
+    services.AddSqlServer<DataProtectionDbContext>(connectionString, options => options.EnableRetryOnFailure(10, TimeSpan.FromSeconds(2), null));
 
     services.AddScoped<IDataProtectionKeyContext>(provider => provider.GetRequiredService<DataProtectionDbContext>());
     services.AddScoped<IReadOnlyDataContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
@@ -236,6 +234,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
 
 void Configure(IApplicationBuilder app, IApiVersionDescriptionProvider provider)
 {
+    app.UseRateLimiter();
     app.UseProblemDetails();
     app.UseSwaggerDocumentation(provider);
 
@@ -272,7 +271,7 @@ void Configure(IApplicationBuilder app, IApiVersionDescriptionProvider provider)
                                 {
                                     Service = e.Key,
                                     Status = Enum.GetName(typeof(HealthStatus), e.Value.Status),
-                                    Description = e.Value.Description
+                                    e.Value.Description
                                 })
                             });
 
