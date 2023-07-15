@@ -1,4 +1,6 @@
-﻿using CommerceApi.DataAccessLayer.Configurations.Common;
+﻿using CommerceApi.DataAccessLayer.Comparers;
+using CommerceApi.DataAccessLayer.Configurations.Common;
+using CommerceApi.DataAccessLayer.Converters;
 using CommerceApi.DataAccessLayer.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -12,6 +14,7 @@ public class ProductConfiguration : DeletableEntityConfiguration<Product>
         builder.Property(p => p.Name).HasMaxLength(256).IsRequired();
         builder.Property(p => p.Description).HasMaxLength(4000).IsRequired();
 
+        builder.Property(p => p.Images).HasConversion<StringArrayConverter, StringArrayComparer>().HasColumnType("NVARCHAR(MAX)").IsRequired();
         builder.Property(p => p.Quantity).IsRequired();
         builder.Property(p => p.Price).HasPrecision(8, 2).IsRequired();
 

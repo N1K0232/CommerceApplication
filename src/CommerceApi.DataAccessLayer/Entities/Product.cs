@@ -16,6 +16,8 @@ public class Product : DeletableEntity
 
     public string IdentificationCode { get; set; }
 
+    public IEnumerable<string> Images { get; set; }
+
     public int Quantity { get; set; }
 
     public decimal Price { get; set; }

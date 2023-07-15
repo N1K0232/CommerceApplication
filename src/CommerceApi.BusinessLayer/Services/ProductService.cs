@@ -12,6 +12,7 @@ using CommerceApi.StorageProviders.Abstractions;
 using FluentValidation;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using MimeMapping;
 using OperationResults;
 using TinyHelpers.Extensions;
 using Entities = CommerceApi.DataAccessLayer.Entities;
@@ -179,6 +180,35 @@ public class ProductService : IProductService
 
         var result = new ListResult<Product>(products, totalCount, totalPages, hasNextPage);
         return result;
+    }
+
+    public async Task<Result<IEnumerable<StreamFileContent>>> GetImagesAsync(Guid productId)
+    {
+        if (productId == Guid.Empty)
+        {
+            return Result.Fail(FailureReasons.ClientError, "Invalid id");
+        }
+
+        var query = _dataContext.Get<Entities.Product>().Where(p => p.Id == productId);
+        var productExists = await query.AnyAsync();
+        if (!productExists)
+        {
+            return Result.Fail(FailureReasons.ItemNotFound, $"No product found with id {productId}");
+        }
+
+        var product = await query.FirstAsync();
+        var images = new List<StreamFileContent>();
+
+        foreach (var image in product.Images)
+        {
+            var stream = await _storageProvider.ReadAsync(image);
+            var contentType = MimeUtility.GetMimeMapping(image);
+
+            var streamFileContent = new StreamFileContent(stream, contentType, image);
+            images.Add(streamFileContent);
+        }
+
+        return images;
     }
 
     public async Task<Result> UploadImageAsync(Guid productId, string fileName, Stream fileStream)

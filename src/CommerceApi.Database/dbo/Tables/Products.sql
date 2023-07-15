@@ -6,6 +6,7 @@
     [Name]                 NVARCHAR (256)   NOT NULL,
     [Description]          NVARCHAR (4000)  NOT NULL,
     [IdentificationCode]   NVARCHAR (100)   NOT NULL,
+    [Images]               NVARCHAR (MAX)   NULL,
     [Quantity]             INT              NOT NULL,
     [Price]                DECIMAL (8, 2)   NOT NULL,
     [DiscountPercentage]   FLOAT (53)       NULL,
