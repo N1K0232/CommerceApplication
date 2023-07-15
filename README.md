@@ -1,4 +1,4 @@
-# CommerceApi
+# Commerce application
 A C# ASP.NET Core project developed with Entity Framework Core and ASP.NET Core Identity
 for a Commerce project
 
