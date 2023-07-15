@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace CommerceApplication.Pages;
+
 public class IndexModel : PageModel
 {
     private readonly ILogger<IndexModel> _logger;
@@ -11,8 +12,15 @@ public class IndexModel : PageModel
         _logger = logger;
     }
 
-    public void OnGet()
+    public Task<IActionResult> OnGetAsync()
     {
+        var result = Page();
+        return Task.FromResult<IActionResult>(result);
+    }
 
+    public Task<IActionResult> OnPostAsync()
+    {
+        var result = Page();
+        return Task.FromResult<IActionResult>(result);
     }
 }

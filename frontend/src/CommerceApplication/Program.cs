@@ -1,3 +1,5 @@
+using CommerceApplication.BusinessLayer.Settings;
+
 var builder = WebApplication.CreateBuilder(args);
 ConfigureServices(builder.Services, builder.Configuration);
 
@@ -9,7 +11,17 @@ await app.RunAsync();
 
 void ConfigureServices(IServiceCollection services, IConfiguration configuration)
 {
+    var appSettings = Configure<AppSettings>(nameof(AppSettings));
     services.AddRazorPages();
+
+    T Configure<T>(string sectionName) where T : class
+    {
+        var section = configuration.GetSection(sectionName);
+        var settings = section.Get<T>();
+
+        services.Configure<T>(section);
+        return settings;
+    }
 }
 
 void Configure(IApplicationBuilder app, IWebHostEnvironment environment)
