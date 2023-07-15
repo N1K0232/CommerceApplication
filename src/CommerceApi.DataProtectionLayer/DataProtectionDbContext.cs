@@ -13,15 +13,13 @@ public class DataProtectionDbContext : DbContext, IDataProtectionKeyContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<DataProtectionKey>(builder =>
-        {
-            builder.ToTable("DataProtectionKeys");
-            builder.HasKey(k => k.Id);
-            builder.Property(k => k.Id).UseIdentityColumn(1, 1).IsRequired();
+        var builder = modelBuilder.Entity<DataProtectionKey>();
+        builder.ToTable("DataProtectionKeys");
+        builder.HasKey(k => k.Id);
+        builder.Property(k => k.Id).UseIdentityColumn(1, 1).IsRequired();
 
-            builder.Property(k => k.FriendlyName).HasColumnType("NVARCHAR(MAX)").IsRequired(false);
-            builder.Property(k => k.Xml).HasColumnType("NVARCHAR(MAX)").IsRequired(false);
-        });
+        builder.Property(k => k.FriendlyName).HasColumnType("NVARCHAR(MAX)").IsRequired(false);
+        builder.Property(k => k.Xml).HasColumnType("NVARCHAR(MAX)").IsRequired(false);
 
         base.OnModelCreating(modelBuilder);
     }
