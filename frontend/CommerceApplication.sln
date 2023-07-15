@@ -11,6 +11,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommerceApplication.Busines
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommerceApi.Shared", "..\backend\src\CommerceApi.Shared\CommerceApi.Shared.csproj", "{E520490F-D286-4527-A5F8-9FEF70E4887D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C3E34236-F5F8-466E-ACBA-5299C4CE0F61}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{52BC7302-BD77-4E10-BE3F-CA113B9E34F5}"
+	ProjectSection(SolutionItems) = preProject
+		..\.editorconfig = ..\.editorconfig
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,6 +43,12 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2DBB3E32-AD43-437B-BE1F-832C2AA8578D} = {C3E34236-F5F8-466E-ACBA-5299C4CE0F61}
+		{4006F41D-982F-47DE-9B13-79C2FBC9027C} = {C3E34236-F5F8-466E-ACBA-5299C4CE0F61}
+		{6FE1D43E-3475-456C-B206-C1D80FCF5480} = {C3E34236-F5F8-466E-ACBA-5299C4CE0F61}
+		{E520490F-D286-4527-A5F8-9FEF70E4887D} = {C3E34236-F5F8-466E-ACBA-5299C4CE0F61}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2A59AF7A-B29D-405B-9168-5D6F375DE976}
