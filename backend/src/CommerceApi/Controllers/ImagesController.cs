@@ -1,6 +1,7 @@
 ﻿using CommerceApi.Authentication.Common;
 using CommerceApi.Authorization.Filters;
 using CommerceApi.BusinessLayer.Services.Interfaces;
+using CommerceApi.Extensions;
 using CommerceApi.Swagger.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -67,10 +68,8 @@ public class ImagesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Upload([FromForm] UploadImageRequest request)
     {
-        var stream = request.File.OpenReadStream();
-        var fileName = request.File.FileName;
-
-        var uploadedImage = await _imageService.UploadAsync(stream, fileName, request.Title, request.Description);
-        return CreatedAtRoute("GetImage", uploadedImage.Id, uploadedImage);
+        var content = request.File.ToStreamFileContent();
+        var uploadResult = await _imageService.UploadAsync(content, request.Title, request.Description);
+        return CreateResponse(uploadResult, "GetImage", new { uploadResult.Content?.Id }, StatusCodes.Status201Created);
     }
 }

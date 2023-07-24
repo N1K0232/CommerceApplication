@@ -45,7 +45,7 @@ public class ImageService : IImageService
 
             _dataContext.Delete(image);
             await _dataContext.SaveAsync();
-            await _storageProvider.DeleteAsync(image.Path);
+            await _storageProvider.DeleteAsync(image.DownloadFileName);
 
             return Result.Ok();
         }
@@ -62,13 +62,13 @@ public class ImageService : IImageService
     public async Task<IEnumerable<Image>> GetListAsync()
     {
         var query = _dataContext.Get<Entities.Image>();
-        var images = await query.OrderBy(i => i.Path)
+        var images = await query.OrderBy(i => i.DownloadFileName)
             .ProjectTo<Image>(_mapper.ConfigurationProvider)
             .ToListAsync();
 
         foreach (var image in images)
         {
-            image.ContentType ??= MimeUtility.GetMimeMapping(image.Path);
+            image.ContentType ??= MimeUtility.GetMimeMapping(image.DownloadFileName);
         }
 
         return images;
@@ -84,8 +84,8 @@ public class ImageService : IImageService
         var image = await _dataContext.GetAsync<Entities.Image>(imageId);
         if (image is not null)
         {
-            var stream = await _storageProvider.ReadAsync(image.DownloadPath);
-            var contentType = image.ContentType ?? MimeUtility.GetMimeMapping(image.Path);
+            var stream = await _storageProvider.ReadAsync(image.DownloadFileName);
+            var contentType = image.ContentType ?? MimeUtility.GetMimeMapping(image.DownloadFileName);
 
             var content = new StreamFileContent(stream, contentType, image.DownloadFileName);
             return content;
@@ -94,40 +94,37 @@ public class ImageService : IImageService
         return Result.Fail(FailureReasons.ItemNotFound, "no image found");
     }
 
-    public async Task<Image> UploadAsync(Stream stream, string fileName, string title, string description)
+    public async Task<Result<Image>> UploadAsync(StreamFileContent content, string title, string description)
     {
-        var contentType = MimeUtility.GetMimeMapping(fileName);
-        var extension = Path.GetExtension(fileName);
-
-        var path = _pathGenerator.Generate(fileName);
-
-        var downloadFileName = $"{Guid.NewGuid()}.{extension}";
-        var downloadPath = _pathGenerator.Generate(downloadFileName);
-
-        var image = new Entities.Image
+        try
         {
-            Title = title,
-            Description = description,
-            FileName = fileName,
-            Length = stream.Length,
-            Path = path,
-            DownloadFileName = downloadFileName,
-            DownloadPath = downloadPath,
-            ContentType = contentType,
-            Extension = extension
-        };
+            var extension = Path.GetExtension(content.DownloadFileName);
+            var contentType = content.ContentType ?? MimeUtility.GetMimeMapping(content.DownloadFileName);
 
-        _dataContext.Create(image);
-        await _dataContext.SaveAsync();
-        await _storageProvider.SaveAsync(downloadPath, stream);
+            var image = new Entities.Image
+            {
+                DownloadFileName = content.DownloadFileName,
+                ContentType = contentType,
+                Extension = extension,
+                Length = content.Content.Length,
+                Title = title,
+                Description = description
+            };
 
-        var uploadedImage = _mapper.Map<Image>(image);
-        return uploadedImage;
-    }
+            _dataContext.Create(image);
+            await _dataContext.SaveAsync();
+            await _storageProvider.SaveAsync(content.DownloadFileName, content.Content);
 
-    private static string CreatePath(string fileName)
-    {
-        var now = DateTime.UtcNow;
-        return Path.Combine(now.Year.ToString("0000"), now.Month.ToString("00"), fileName);
+            var uploadedImage = _mapper.Map<Image>(image);
+            return uploadedImage;
+        }
+        catch (DbUpdateException ex)
+        {
+            return Result.Fail(FailureReasons.DatabaseError, ex);
+        }
+        catch (IOException ex)
+        {
+            return Result.Fail(FailureReasons.DatabaseError, ex);
+        }
     }
 }

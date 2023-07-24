@@ -36,16 +36,19 @@ public class AzureStorageProvider : IStorageProvider
 
     public async Task DeleteAsync(string path)
     {
+        ThrowIfDisposed();
         ArgumentException.ThrowIfNullOrEmpty(path);
 
         var token = CancellationToken;
-        var blobContainerClient = await GetBlobContainerClientAsync(_azureStorageSettings.ContainerName).ConfigureAwait(false);
 
+        var blobContainerClient = await GetBlobContainerClientAsync().ConfigureAwait(false);
         await blobContainerClient.DeleteBlobIfExistsAsync(path, cancellationToken: token).ConfigureAwait(false);
     }
 
     public async Task<Stream?> ReadAsync(string path)
     {
+        ThrowIfDisposed();
+
         if (string.IsNullOrWhiteSpace(path))
         {
             return null;
@@ -58,10 +61,9 @@ public class AzureStorageProvider : IStorageProvider
             return null;
         }
 
-        var blobContainerClient = await GetBlobContainerClientAsync(path).ConfigureAwait(false);
-        var blobClient = blobContainerClient.GetBlobClient(path);
-
+        var blobClient = await GetBlobClientAsync(path).ConfigureAwait(false);
         var stream = await blobClient.OpenReadAsync(cancellationToken: token).ConfigureAwait(false);
+
         if (stream != null && stream.Position != 0)
         {
             stream.Position = 0;
@@ -72,12 +74,12 @@ public class AzureStorageProvider : IStorageProvider
 
     public async Task SaveAsync(string path, Stream stream, bool overwrite = false)
     {
+        ThrowIfDisposed();
         ArgumentException.ThrowIfNullOrEmpty(path, nameof(path));
         ArgumentNullException.ThrowIfNull(stream, nameof(stream));
 
         var token = CancellationToken;
-        var blobContainerClient = await GetBlobContainerClientAsync(_azureStorageSettings.ContainerName, true);
-        var blobClient = blobContainerClient.GetBlobClient(path);
+        var blobClient = await GetBlobClientAsync(path, true);
 
         if (!overwrite)
         {
@@ -89,26 +91,35 @@ public class AzureStorageProvider : IStorageProvider
         }
 
         stream.Position = 0;
-        var contentType = MimeUtility.GetMimeMapping(path);
-        var headers = new BlobHttpHeaders { ContentType = contentType };
 
+        var headers = new BlobHttpHeaders { ContentType = MimeUtility.GetMimeMapping(path) };
         await blobClient.UploadAsync(stream, headers, cancellationToken: token).ConfigureAwait(false);
     }
 
-    public Task<bool> ExistsAsync(string path) => CheckExistsAsync(path);
+    public Task<bool> ExistsAsync(string path)
+    {
+        ThrowIfDisposed();
+        return CheckExistsAsync(path);
+    }
 
     private async Task<bool> CheckExistsAsync(string path)
     {
         var token = CancellationToken;
 
-        var blobContainerClient = await GetBlobContainerClientAsync(path).ConfigureAwait(false);
-        return await blobContainerClient.ExistsAsync(token).ConfigureAwait(false);
+        var blobClient = await GetBlobClientAsync(path).ConfigureAwait(false);
+        return await blobClient.ExistsAsync(token).ConfigureAwait(false);
     }
 
-    private async Task<BlobContainerClient> GetBlobContainerClientAsync(string containerName, bool createIfNotExists = false)
+    private async Task<BlobClient> GetBlobClientAsync(string path, bool createIfNotExists = false)
+    {
+        var blobContainerClient = await GetBlobContainerClientAsync(createIfNotExists).ConfigureAwait(false);
+        return blobContainerClient.GetBlobClient(path);
+    }
+
+    private async Task<BlobContainerClient> GetBlobContainerClientAsync(bool createIfNotExists = false)
     {
         var token = CancellationToken;
-        var blobContainerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+        var blobContainerClient = _blobServiceClient.GetBlobContainerClient(_azureStorageSettings.ContainerName);
         if (createIfNotExists)
         {
             await blobContainerClient.CreateIfNotExistsAsync(PublicAccessType.None, cancellationToken: token).ConfigureAwait(false);
@@ -137,6 +148,14 @@ public class AzureStorageProvider : IStorageProvider
             }
 
             _disposed = true;
+        }
+    }
+
+    private void ThrowIfDisposed()
+    {
+        if (_disposed)
+        {
+            throw new ObjectDisposedException(GetType().FullName);
         }
     }
 }
