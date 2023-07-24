@@ -98,7 +98,7 @@ public class ImageService : IImageService
     {
         try
         {
-            var extension = Path.GetExtension(content.DownloadFileName);
+            var extension = Path.GetExtension(content.DownloadFileName)[1..];
             var contentType = content.ContentType ?? MimeUtility.GetMimeMapping(content.DownloadFileName);
 
             var image = new Entities.Image
