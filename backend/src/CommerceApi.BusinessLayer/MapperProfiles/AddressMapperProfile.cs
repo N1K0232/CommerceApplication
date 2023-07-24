@@ -10,6 +10,6 @@ public class AddressMapperProfile : Profile
     public AddressMapperProfile()
     {
         CreateMap<Entities.Address, Address>();
-        CreateMap<RegisterRequest, Entities.Address>();
+        CreateMap<SaveAddressRequest, Entities.Address>();
     }
 }
