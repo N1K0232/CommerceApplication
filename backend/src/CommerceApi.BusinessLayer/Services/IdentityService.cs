@@ -1,24 +1,24 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Linq.Dynamic.Core;
+﻿using System.Linq.Dynamic.Core;
 using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
+using AutoMapper;
 using CommerceApi.Authentication.Common;
 using CommerceApi.Authentication.Entities;
 using CommerceApi.Authentication.Extensions;
 using CommerceApi.Authentication.Managers;
-using CommerceApi.Authentication.Settings;
+using CommerceApi.Authentication.RemoteServices.Interfaces;
 using CommerceApi.BusinessLayer.Services.Interfaces;
+using CommerceApi.Shared.Models.Requests;
 using CommerceApi.Shared.Models.Responses;
+using FluentValidation;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
+using OperationResults;
 
 namespace CommerceApi.BusinessLayer.Services;
 
 public class IdentityService : IIdentityService
 {
-    private readonly JwtSettings _jwtSettings;
+    private readonly IJwtBearerTokenGeneratorService _jwtBearerTokenGeneratorService;
+
     private readonly ApplicationUserManager _userManager;
     private readonly ApplicationRoleManager _roleManager;
     private readonly ApplicationSignInManager _signInManager;
@@ -26,19 +26,35 @@ public class IdentityService : IIdentityService
     private readonly EmailTokenProvider<ApplicationUser> _emailTokenProvider;
     private readonly PhoneNumberTokenProvider<ApplicationUser> _phoneNumberTokenProvider;
 
-    public IdentityService(IOptions<JwtSettings> jwtSettingsOptions,
+    private readonly IMapper _mapper;
+    private readonly IValidator<LoginRequest> _loginValidator;
+    private readonly IValidator<RegisterRequest> _registerValidator;
+    private readonly IValidator<RefreshTokenRequest> _refreshTokenValidator;
+    private readonly IValidator<SaveAddressRequest> _addressValidator;
+
+    public IdentityService(IJwtBearerTokenGeneratorService jwtBearerTokenGeneratorService,
                            ApplicationUserManager userManager,
                            ApplicationRoleManager roleManager,
                            ApplicationSignInManager signInManager,
                            EmailTokenProvider<ApplicationUser> emailTokenProvider,
-                           PhoneNumberTokenProvider<ApplicationUser> phoneNumberTokenProvider)
+                           PhoneNumberTokenProvider<ApplicationUser> phoneNumberTokenProvider,
+                           IMapper mapper,
+                           IValidator<LoginRequest> loginValidator,
+                           IValidator<RegisterRequest> registerValidator,
+                           IValidator<RefreshTokenRequest> refreshTokenValidator,
+                           IValidator<SaveAddressRequest> addressValidator)
     {
-        _jwtSettings = jwtSettingsOptions.Value;
+        _jwtBearerTokenGeneratorService = jwtBearerTokenGeneratorService;
         _userManager = userManager;
         _roleManager = roleManager;
         _signInManager = signInManager;
         _emailTokenProvider = emailTokenProvider;
         _phoneNumberTokenProvider = phoneNumberTokenProvider;
+        _mapper = mapper;
+        _loginValidator = loginValidator;
+        _registerValidator = registerValidator;
+        _refreshTokenValidator = refreshTokenValidator;
+        _addressValidator = addressValidator;
     }
 
     public async Task CreateRoleAsync(string roleName)
@@ -109,62 +125,105 @@ public class IdentityService : IIdentityService
         return user;
     }
 
-    public async Task<LoginResponse> LoginAsync(string email)
+    public async Task<Result<LoginResponse>> LoginAsync(LoginRequest loginRequest)
     {
-        var user = await _userManager.FindByEmailAsync(email);
-        await _userManager.UpdateSecurityStampAsync(user);
-        await _userManager.GenerateConcurrencyStampAsync(user);
+        var validationResult = await _loginValidator.ValidateAsync(loginRequest);
+        if (!validationResult.IsValid)
+        {
+            var validationErrors = new List<ValidationError>(validationResult.Errors.Count);
+            foreach (var error in validationResult.Errors)
+            {
+                validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
+            }
+
+            return Result.Fail(FailureReasons.ClientError, "invalid request", validationErrors);
+        }
+
+        var user = await _userManager.FindByEmailAsync(loginRequest.Email);
+        if (user == null)
+        {
+            return Result.Fail(FailureReasons.ItemNotFound, "No account associated to the specified email found");
+        }
+
+        var signInResult = await _signInManager.PasswordSignInAsync(user, loginRequest.Password, false, false);
+        if (!signInResult.Succeeded)
+        {
+            return Result.Fail(FailureReasons.DatabaseError, "invalid password");
+        }
 
         var claims = await GetClaimsAsync(user);
-        var loginResponse = CreateLoginResponse(claims);
+        var accessToken = _jwtBearerTokenGeneratorService.GenerateAccessToken(claims);
+        var refreshToken = _jwtBearerTokenGeneratorService.GenerateRefreshToken();
+
+        var loginResponse = new LoginResponse { AccessToken = accessToken, RefreshToken = refreshToken };
 
         await SaveRefreshTokenAsync(user, loginResponse.RefreshToken);
         return loginResponse;
     }
 
-    public async Task<LoginResponse> RefreshTokenAsync(ClaimsPrincipal principal, string refreshToken)
+    public async Task<Result<LoginResponse>> RefreshTokenAsync(RefreshTokenRequest refreshTokenRequest)
     {
+        var validationResult = await _refreshTokenValidator.ValidateAsync(refreshTokenRequest);
+        if (!validationResult.IsValid)
+        {
+            var validationErrors = new List<ValidationError>(validationResult.Errors.Count);
+            foreach (var error in validationResult.Errors)
+            {
+                validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
+            }
+
+            return Result.Fail(FailureReasons.ClientError, "invalid request", validationErrors);
+        }
+
+        var principal = _jwtBearerTokenGeneratorService.ValidateAccessToken(refreshTokenRequest.AccessToken);
         var userId = principal.GetId();
         var user = await _userManager.FindByIdAsync(userId.ToString());
 
-        if (user?.RefreshToken is null || user?.RefreshTokenExpirationDate < DateTime.UtcNow || user.RefreshToken != refreshToken)
+        if (user?.RefreshToken is null || user?.RefreshTokenExpirationDate < DateTime.UtcNow || user.RefreshToken != refreshTokenRequest.RefreshToken)
         {
             return null;
         }
 
-        var loginResponse = CreateLoginResponse(principal.Claims);
+        var accessToken = _jwtBearerTokenGeneratorService.GenerateAccessToken(principal.Claims);
+        var refreshToken = _jwtBearerTokenGeneratorService.GenerateRefreshToken();
+
+        var loginResponse = new LoginResponse { AccessToken = accessToken, RefreshToken = refreshToken };
         await SaveRefreshTokenAsync(user, loginResponse.RefreshToken);
 
         return loginResponse;
     }
 
-    public async Task<IdentityResult> RegisterUserAsync(ApplicationUser user, Address address, string password, string role)
+    public async Task<Result> RegisterAsync(RegisterRequest registerRequest)
     {
-        var identityResult = await RegisterAsync(user, password);
-        if (identityResult.Succeeded)
+        var validationResult = await _registerValidator.ValidateAsync(registerRequest);
+        if (!validationResult.IsValid)
         {
-            await _userManager.AddAddressAsync(user, address);
-            identityResult = await _userManager.AddToRoleAsync(user, role);
+            var validationErrors = new List<ValidationError>(validationResult.Errors.Count);
+            foreach (var error in validationResult.Errors)
+            {
+                validationErrors.Add(new(error.PropertyName, error.ErrorMessage));
+            }
         }
 
-        return identityResult;
-    }
+        var user = _mapper.Map<ApplicationUser>(registerRequest);
+        var roles = new List<string> { registerRequest.Role, RoleNames.User };
 
-    public async Task<IdentityResult> RegisterAsync(ApplicationUser user, string password, params string[] roles)
-    {
-        var identityResult = await RegisterAsync(user, password);
-        if (identityResult.Succeeded)
+        var registerResult = await _userManager.CreateAsync(user, registerRequest.Password);
+        var addRolesResult = await _userManager.AddToRolesAsync(user, roles);
+
+        var errors = GetIdentityErrors(registerResult, addRolesResult);
+        if (errors.Any())
         {
-            identityResult = await _userManager.AddToRolesAsync(user, roles);
+            var validationErrors = new List<ValidationError>(errors.Count());
+            foreach (var error in errors)
+            {
+                validationErrors.Add(new(error.Code, error.Description));
+            }
+
+            return Result.Fail(FailureReasons.DatabaseError, "couldn't registrate your account", validationErrors);
         }
 
-        return identityResult;
-    }
-
-    public async Task<SignInResult> SignInAsync(string email, string password)
-    {
-        var user = await _userManager.FindByEmailAsync(email);
-        return await _signInManager.PasswordSignInAsync(user, password, false, true);
+        return Result.Ok();
     }
 
     public async Task SignOutAsync(string email)
@@ -174,39 +233,6 @@ public class IdentityService : IIdentityService
         {
             await _signInManager.SignOutAsync();
         }
-    }
-
-    public Task<ClaimsPrincipal> ValidateAccessTokenAsync(string accessToken)
-    {
-        var securityKeyBytes = Encoding.UTF8.GetBytes(_jwtSettings.SecurityKey);
-        var parameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = _jwtSettings.Issuer,
-            ValidateAudience = true,
-            ValidAudience = _jwtSettings.Audience,
-            ValidateLifetime = false,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(securityKeyBytes),
-            RequireExpirationTime = true,
-            ClockSkew = TimeSpan.Zero
-        };
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-
-        try
-        {
-            var user = tokenHandler.ValidateToken(accessToken, parameters, out var securityToken);
-            if (securityToken is JwtSecurityToken jwtSecurityToken && jwtSecurityToken.Header.Alg == SecurityAlgorithms.HmacSha256)
-            {
-                return Task.FromResult(user);
-            }
-        }
-        catch
-        {
-        }
-
-        return Task.FromResult<ClaimsPrincipal>(null);
     }
 
     public async Task<IdentityResult> SetLockoutEnabledAsync(string email, DateTimeOffset lockoutEnd, bool enabled)
@@ -244,33 +270,9 @@ public class IdentityService : IIdentityService
         return errors;
     }
 
-    private LoginResponse CreateLoginResponse(IEnumerable<Claim> claims)
-    {
-        var securityKeyBytes = Encoding.UTF8.GetBytes(_jwtSettings.SecurityKey);
-        var securityKey = new SymmetricSecurityKey(securityKeyBytes);
-
-        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-        var jwtSecurityToken = new JwtSecurityToken(_jwtSettings.Issuer, _jwtSettings.Audience, claims,
-            DateTime.UtcNow, DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes), credentials);
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var accessToken = tokenHandler.WriteToken(jwtSecurityToken);
-
-        using var generator = RandomNumberGenerator.Create();
-        var randomNumber = new byte[256];
-
-        generator.GetBytes(randomNumber);
-        var refreshToken = Convert.ToBase64String(randomNumber);
-
-        var loginResponse = new LoginResponse { AccessToken = accessToken, RefreshToken = refreshToken };
-        return loginResponse;
-    }
-
     private async Task<IEnumerable<Claim>> GetClaimsAsync(ApplicationUser user)
     {
         var userRoles = await _userManager.GetRolesAsync(user);
-        var userAddresses = await _userManager.GetAddressesAsync(user);
         var userClaims = await _userManager.GetClaimsAsync(user);
 
         var hasClaims = userClaims?.Any() ?? false;
@@ -289,25 +291,12 @@ public class IdentityService : IIdentityService
         {
             new Claim(ClaimTypes.GivenName, user.FirstName),
             new Claim(ClaimTypes.Surname, user.LastName ?? string.Empty),
-            new Claim(ClaimTypes.DateOfBirth, user.DateOfBirth?.ToString() ?? string.Empty),
             new Claim(ClaimTypes.MobilePhone, user.PhoneNumber ?? string.Empty),
             new Claim(ClaimTypes.SerialNumber, user.SecurityStamp),
             new Claim(ClaimTypes.GroupSid, user.ConcurrencyStamp),
             new Claim(ClaimTypes.Email, user.Email),
             new Claim(ClaimTypes.Name, user.UserName),
         };
-
-        var hasAddresses = userAddresses?.Any() ?? false;
-        if (hasAddresses)
-        {
-            foreach (var address in userAddresses)
-            {
-                claims.Add(new(ClaimTypes.StreetAddress, address.Street));
-                claims.Add(new(CustomClaimTypes.City, address.City));
-                claims.Add(new(ClaimTypes.PostalCode, address.PostalCode));
-                claims.Add(new(ClaimTypes.Country, address.Country));
-            }
-        }
 
         return claims;
     }
@@ -320,17 +309,13 @@ public class IdentityService : IIdentityService
         await _userManager.ReplaceClaimAsync(user, claim, new Claim(type, value));
     }
 
-    private async Task<IdentityResult> RegisterAsync(ApplicationUser user, string password)
-    {
-        var identityResult = await _userManager.CreateAsync(user, password);
-        return identityResult;
-    }
-
     private async Task SaveRefreshTokenAsync(ApplicationUser user, string refreshToken)
     {
-        user.RefreshToken = refreshToken;
-        user.RefreshTokenExpirationDate = DateTime.UtcNow.AddMinutes(_jwtSettings.RefreshTokenExpirationMinutes);
+        var refreshTokenExpirationMinutes = _jwtBearerTokenGeneratorService.JwtSettings.RefreshTokenExpirationMinutes;
+        var refreshTokenExpirationDate = DateTime.UtcNow.AddMinutes(refreshTokenExpirationMinutes);
 
+        user.RefreshToken = refreshToken;
+        user.RefreshTokenExpirationDate = refreshTokenExpirationDate;
         await _userManager.UpdateAsync(user);
     }
 }

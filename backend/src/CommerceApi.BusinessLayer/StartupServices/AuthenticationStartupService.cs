@@ -1,6 +1,6 @@
 ﻿using CommerceApi.Authentication.Common;
 using CommerceApi.Authentication.Entities;
-using CommerceApi.BusinessLayer.Services.Interfaces;
+using CommerceApi.Authentication.Managers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -21,10 +21,19 @@ public class AuthenticationStartupService : IHostedService
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         using var scope = _serviceProvider.CreateScope();
-        var identityService = scope.ServiceProvider.GetRequiredService<IIdentityService>();
+        var roleManager = scope.ServiceProvider.GetRequiredService<ApplicationRoleManager>();
+        var userManager = scope.ServiceProvider.GetRequiredService<ApplicationUserManager>();
 
-        var roleNames = new string[] { RoleNames.Administrator, RoleNames.PowerUser, RoleNames.User };
-        await identityService.CreateRolesAsync(roleNames);
+
+        var roleNames = new string[] { RoleNames.Administrator, RoleNames.PowerUser, RoleNames.User, RoleNames.Customer };
+        foreach (var roleName in roleNames)
+        {
+            var roleExists = await roleManager.RoleExistsAsync(roleName);
+            if (!roleExists)
+            {
+                await roleManager.CreateAsync(new ApplicationRole(roleName));
+            }
+        }
 
         var administratorUserSection = _configuration.GetSection("AdministratorUser");
         var powerUserSection = _configuration.GetSection("PowerUser");
@@ -43,8 +52,17 @@ public class AuthenticationStartupService : IHostedService
             Email = powerUserSection["Email"]
         };
 
-        await identityService.RegisterAsync(administratorUser, administratorUserSection["Password"], RoleNames.Administrator, RoleNames.User);
-        await identityService.RegisterAsync(powerUser, powerUserSection["Password"], RoleNames.PowerUser, RoleNames.User);
+        var administratorUserResult = await userManager.CreateAsync(administratorUser, administratorUserSection["Password"]);
+        if (administratorUserResult.Succeeded)
+        {
+            await userManager.AddToRolesAsync(administratorUser, new List<string> { RoleNames.Administrator, RoleNames.User });
+        }
+
+        var powerUserResult = await userManager.CreateAsync(powerUser, powerUserSection["Password"]);
+        if (powerUserResult.Succeeded)
+        {
+            await userManager.AddToRolesAsync(powerUser, new List<string> { RoleNames.PowerUser, RoleNames.User });
+        }
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

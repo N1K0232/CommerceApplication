@@ -1,7 +1,8 @@
-﻿using System.Security.Claims;
-using CommerceApi.Authentication.Entities;
+﻿using CommerceApi.Authentication.Entities;
+using CommerceApi.Shared.Models.Requests;
 using CommerceApi.Shared.Models.Responses;
 using Microsoft.AspNetCore.Identity;
+using OperationResults;
 
 namespace CommerceApi.BusinessLayer.Services.Interfaces;
 
@@ -17,21 +18,15 @@ public interface IIdentityService
 
     Task<ApplicationUser> GetUserAsync(string userId);
 
-    Task<LoginResponse> LoginAsync(string email);
+    Task<Result<LoginResponse>> LoginAsync(LoginRequest loginRequest);
 
-    Task<LoginResponse> RefreshTokenAsync(ClaimsPrincipal principal, string refreshToken);
+    Task<Result<LoginResponse>> RefreshTokenAsync(RefreshTokenRequest refreshTokenRequest);
 
-    Task<IdentityResult> RegisterUserAsync(ApplicationUser user, Address address, string password, string role);
-
-    Task<IdentityResult> RegisterAsync(ApplicationUser user, string password, params string[] roles);
-
-    Task<SignInResult> SignInAsync(string email, string password);
+    Task<Result> RegisterAsync(RegisterRequest registerRequest);
 
     Task SignOutAsync(string email);
 
     Task<SignInResult> TwoFactorLoginAsync(string token);
-
-    Task<ClaimsPrincipal> ValidateAccessTokenAsync(string accessToken);
 
     Task<IdentityResult> SetLockoutEnabledAsync(string email, DateTimeOffset lockoutEnd, bool enabled);
 }

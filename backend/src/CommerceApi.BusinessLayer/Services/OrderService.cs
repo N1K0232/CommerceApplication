@@ -18,13 +18,13 @@ namespace CommerceApi.BusinessLayer.Services;
 
 public class OrderService : IOrderService
 {
-    private readonly IAuthenticationService _authenticationService;
+    private readonly IAuthenticatedService _authenticationService;
     private readonly IDataContext _dataContext;
     private readonly IMapper _mapper;
     private readonly IUserClaimService _claimService;
     private readonly IValidator<SaveOrderDetail> _orderValidator;
 
-    public OrderService(IAuthenticationService authenticationService,
+    public OrderService(IAuthenticatedService authenticationService,
         IDataContext dataContext,
         IMapper mapper,
         IUserClaimService claimService,

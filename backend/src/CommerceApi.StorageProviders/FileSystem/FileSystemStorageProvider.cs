@@ -25,6 +25,7 @@ public class FileSystemStorageProvider : IStorageProvider
 
     public async Task SaveAsync(string path, Stream stream, bool overwrite = false)
     {
+        ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(path, nameof(path));
         ArgumentNullException.ThrowIfNull(stream, nameof(stream));
 
@@ -34,14 +35,21 @@ public class FileSystemStorageProvider : IStorageProvider
         var fileExists = CheckExists(path);
         if (!fileExists)
         {
-            await CreateDirectoryAsync(path, cancellationToken).ConfigureAwait(false);
             var normalizedPath = NormalizePath(path);
+            var directoryName = Path.GetDirectoryName(normalizedPath);
+            if (!string.IsNullOrWhiteSpace(directoryName))
+            {
+                if (!Directory.Exists(directoryName))
+                {
+                    Directory.CreateDirectory(directoryName);
+                }
+            }
 
             var fileMode = overwrite ? FileMode.Append : FileMode.CreateNew;
             var outputStream = new FileStream(normalizedPath, fileMode, FileAccess.Write);
 
             stream.Position = 0;
-            await stream.CopyToAsync(outputStream, cancellationToken);
+            await stream.CopyToAsync(outputStream, cancellationToken).ConfigureAwait(false);
 
             outputStream.Close();
             await outputStream.DisposeAsync().ConfigureAwait(false);
@@ -50,6 +58,8 @@ public class FileSystemStorageProvider : IStorageProvider
 
     public Task<Stream?> ReadAsync(string path)
     {
+        ThrowIfDisposed();
+
         var fileExists = CheckExists(path);
         if (!fileExists)
         {
@@ -64,6 +74,8 @@ public class FileSystemStorageProvider : IStorageProvider
 
     public Task DeleteAsync(string path)
     {
+        ThrowIfDisposed();
+
         var fileExists = CheckExists(path);
         if (fileExists)
         {
@@ -76,6 +88,8 @@ public class FileSystemStorageProvider : IStorageProvider
 
     public Task<bool> ExistsAsync(string path)
     {
+        ThrowIfDisposed();
+
         var cancellationToken = CancellationToken;
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -90,33 +104,7 @@ public class FileSystemStorageProvider : IStorageProvider
     }
 
     private string NormalizePath(string path)
-    {
-        var storageFolder = _fileSystemSettings.StorageFolder;
-
-        var normalizedPath = Path.Combine(storageFolder, path);
-        return normalizedPath;
-    }
-
-    private Task CreateDirectoryAsync(string path, CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        try
-        {
-            var normalizedPath = NormalizePath(path);
-            var directoryName = Path.GetDirectoryName(normalizedPath) ?? string.Empty;
-            if (!string.IsNullOrWhiteSpace(directoryName) || !Directory.Exists(directoryName))
-            {
-                Directory.CreateDirectory(directoryName);
-            }
-
-            return Task.CompletedTask;
-        }
-        catch (IOException ex)
-        {
-            return Task.FromException(ex);
-        }
-    }
+        => Path.Combine(_fileSystemSettings.StorageFolder, path);
 
     public void Dispose()
     {
@@ -136,6 +124,14 @@ public class FileSystemStorageProvider : IStorageProvider
             }
 
             _disposed = true;
+        }
+    }
+
+    private void ThrowIfDisposed()
+    {
+        if (_disposed)
+        {
+            throw new ObjectDisposedException(GetType().FullName);
         }
     }
 }

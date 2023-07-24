@@ -15,13 +15,13 @@ namespace CommerceApi.BusinessLayer.Services;
 public class CartService : ICartService
 {
     private readonly IDataContext _dataContext;
-    private readonly IAuthenticationService _authenticationService;
+    private readonly IAuthenticatedService _authenticationService;
     private readonly IMapper _mapper;
     private readonly IUserClaimService _claimService;
     private readonly IValidator<SaveItemRequest> _itemValidator;
 
     public CartService(IDataContext dataContext,
-        IAuthenticationService authenticationService,
+        IAuthenticatedService authenticationService,
         IMapper mapper,
         IUserClaimService claimService,
         IValidator<SaveItemRequest> itemValidator)

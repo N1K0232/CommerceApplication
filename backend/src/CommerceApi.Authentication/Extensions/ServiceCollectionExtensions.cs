@@ -1,8 +1,9 @@
 ﻿using System.Text;
 using CommerceApi.Authentication;
 using CommerceApi.Authentication.Entities;
-using CommerceApi.Authentication.InternalServices;
 using CommerceApi.Authentication.Managers;
+using CommerceApi.Authentication.RemoteServices;
+using CommerceApi.Authentication.RemoteServices.Interfaces;
 using CommerceApi.Authentication.Settings;
 using CommerceApi.SharedServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -59,6 +60,7 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddScoped<IUserClaimService, UserClaimService>();
+        services.AddSingleton<IJwtBearerTokenGeneratorService, JwtBearerTokenGeneratorService>();
         return services;
     }
 }
