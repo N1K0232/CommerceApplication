@@ -39,6 +39,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Update="Resources\Messages.de.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+    </EmbeddedResource>
     <EmbeddedResource Update="Resources\Messages.it.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
     </EmbeddedResource>
