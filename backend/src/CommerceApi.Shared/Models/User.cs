@@ -8,10 +8,6 @@ public class User : BaseObject
 
     public string? LastName { get; set; }
 
-    public DateTime DateOfBirth { get; set; }
-
-    public int? Age { get; set; }
-
     public string PhoneNumber { get; set; } = null!;
 
     public string Email { get; set; } = null!;

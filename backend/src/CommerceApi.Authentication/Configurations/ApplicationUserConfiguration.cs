@@ -13,7 +13,6 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
 
         builder.Property(u => u.FirstName).HasMaxLength(256).IsRequired();
         builder.Property(u => u.LastName).HasMaxLength(256).IsRequired(false);
-        builder.Property(u => u.DateOfBirth).IsRequired(false);
 
         builder.Property(u => u.Email).HasMaxLength(256).IsRequired();
         builder.Property(u => u.NormalizedEmail).HasMaxLength(256).IsRequired();
@@ -25,9 +24,9 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
         builder.Property(u => u.SecurityStamp).HasColumnType("NVARCHAR(MAX)").IsRequired();
         builder.Property(u => u.ConcurrencyStamp).HasColumnType("NVARCHAR(MAX)").IsRequired();
 
-        builder.Property(u => u.RegistrationDate).HasDefaultValueSql("getutcdate()").IsRequired();
-
         builder.Property(u => u.RefreshToken).HasMaxLength(512).IsRequired(false);
         builder.Property(u => u.RefreshTokenExpirationDate).IsRequired(false);
+
+        builder.Property(u => u.Photo).HasColumnType("NVARCHAR(MAX)").IsUnicode(false).IsRequired(false);
     }
 }

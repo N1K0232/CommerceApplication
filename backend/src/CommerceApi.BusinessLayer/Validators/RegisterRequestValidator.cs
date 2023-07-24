@@ -17,30 +17,7 @@ internal class RegisterRequestValidator : AbstractValidator<RegisterRequest>
             .NotEmpty()
             .WithMessage("field required");
 
-        RuleFor(r => r.DateOfBirth)
-            .NotNull()
-            .NotEmpty()
-            .WithMessage("field required");
 
-        RuleFor(r => r.Street)
-            .NotNull()
-            .NotEmpty()
-            .WithMessage("field required");
-
-        RuleFor(r => r.City)
-            .NotNull()
-            .NotEmpty()
-            .WithMessage("field required");
-
-        RuleFor(r => r.PostalCode)
-            .NotNull()
-            .NotEmpty()
-            .WithMessage("field required");
-
-        RuleFor(r => r.Country)
-            .NotNull()
-            .NotEmpty()
-            .WithMessage("field required");
 
         RuleFor(r => r.PhoneNumber)
             .NotNull()
